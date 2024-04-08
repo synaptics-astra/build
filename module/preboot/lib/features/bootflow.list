@@ -1,0 +1,4 @@
+# feature	bootflow	chip_name	chip_revision	market_id	flash_type
+bootflow	NR		bg5ct		A0		7		EMMC
+bootflow	AB		bg5ct		A0		7		EMMC
+bootflow	NR		as370		A0		3		NAND

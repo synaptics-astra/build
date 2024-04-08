@@ -1,0 +1,17 @@
+
+config FW_ENC
+        bool
+        default y
+
+config FW_REL_PATH
+	string
+	default "fw_enc"
+	help
+		Path inside fw_enc module
+		Used as ${CONFIG_SYNA_SDK_PATH}/${CONFIG_FW_REL_PATH}
+
+config FW_IMAGE_PATH
+	string
+	default "fw/enc"
+	help
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_FW_IMAGE_PATH}

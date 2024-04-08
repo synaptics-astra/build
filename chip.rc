@@ -1,0 +1,30 @@
+# used in build script
+# must be included after header.rc
+
+if [ "is${CONFIG_BERLIN_DOLPHIN_Z1}" = "isy" ]; then
+    syna_chip_name=dolphin
+    syna_chip_rev=Z1
+fi
+if [ "is${CONFIG_BERLIN_PLATYPUS_A0}" = "isy" ]; then
+    syna_chip_name=platypus
+    syna_chip_rev=A0
+fi
+if [ "is${CONFIG_BERLIN_DOLPHIN_A0}" = "isy" ]; then
+    syna_chip_name=dolphin
+    syna_chip_rev=A0
+fi
+
+if [ "is${CONFIG_BERLIN_MYNA2_A0}" = "isy" ]; then
+    syna_chip_name=myna2
+    syna_chip_rev=A0
+fi
+
+syna_chip_mid=${CONFIG_PREBOOT_MARKET_ID}
+
+if [ -z "${syna_chip_name}" ]; then
+    echo "chip value not selected in config"
+fi
+
+if [ -z "${syna_chip_mid}" ]; then
+    echo "market id not selected in config"
+fi

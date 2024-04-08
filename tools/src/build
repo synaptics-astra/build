@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -o errtrace
+trap 'echo Fatal error: script $0 aborting at ${BASH_SOURCE}:$LINENO, command \"$BASH_COMMAND\" returned $? 1>&2; exit 1' ERR
+
+# Uncomment following line to print a trace of simple commands
+# set -x
+
+########
+# Main #
+########
+
+### Print command line ###
+echo $0 $@
+
+# Absolute path of build topdir
+tools_topdir=$(readlink -f $(dirname $0)/..)
+echo "tools_topdir=$tools_topdir"
+
+### Common setup ###
+source ${tools_topdir}/src/lib/scripts/common.bashrc
+
+### Parse command line arguments ###
+source ${basedir_src_scripts}/parse_args.bashrc
+
+### Build executables ###
+source ${basedir_src_scripts}/build_executables.bashrc

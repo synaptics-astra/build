@@ -1,0 +1,152 @@
+
+stage=$1
+
+if [ "is${CONFIG_OPTEE}" = "isy" ]; then
+ TZ1_BIN="tz1_op_en.bin"
+ TZ2_BIN="tz2_op_en.bin"
+else
+ TZ1_BIN="tz1_en.bin"
+ TZ2_BIN="tz2_en.bin"
+fi
+if [ "is${CONFIG_PRODUCTION_BUILD}" = "isy" ]; then
+  TZ1_BIN="${TZ1_BIN}.mp"
+  TZ2_BIN="${TZ2_BIN}.mp"
+fi
+
+if [ "is${stage}" = "ispack_stage1" ]; then
+  if [ ${tz_rel_ver} == 1 ]; then
+    ### get load addr of tzk and tzkp
+    source ${module_build_topdir}/script/parse_addr.rc
+
+    ### Generate normal raw image with TZK starting address and Boot Parameter address
+    ${opt_bindir_host}genimg \
+      -n tzk_normal \
+      -i "TZK*" -d ${opt_outdir_intermediate}/tee_tzk.bin -a ${tzk_addr} \
+      -i "TZBP" -d ${opt_outdir_intermediate}/bootparam.bin -a ${tzbp_addr} \
+      -o ${opt_outdir_intermediate}/tee_raw.bin
+
+    ${opt_bindir_host}genimg \
+      -n tzk_normal \
+      -i "TZK*" -d ${opt_outdir_intermediate}/tee_tzk.bin -a ${tzk_addr} \
+      -i "TZBP" -d ${opt_outdir_intermediate}/bootparam_recovery.bin -a ${tzbp_addr} \
+      -o ${opt_outdir_intermediate}/tee_recovery_raw.bin
+
+    ### Check raw binaries ###
+    [ -f ${opt_outdir_intermediate}/tee_raw.bin ]
+    ls -l ${opt_outdir_intermediate}/*.bin
+
+    source ${module_build_topdir}/script/common.rc
+
+    ### add header to store SegID
+    ### encrypted with codetype 4
+    gen_tz_enc_tzk_eheader ${opt_outdir_intermediate}/tee_raw.bin ${opt_outdir_intermediate}/tee_raw.eheader
+    gen2_secure_image tz ${opt_outdir_intermediate}/tee_raw_eheader.bin ${opt_outdir_intermediate}/../tee_en.bin
+    if [ -f ${opt_outdir_intermediate}/tee_recovery_raw.bin ]; then
+      gen_tz_enc_tzk_eheader ${opt_outdir_intermediate}/tee_recovery_raw.bin ${opt_outdir_intermediate}/tee_recovery_raw.eheader
+      gen2_secure_image tz ${opt_outdir_intermediate}/tee_recovery_raw_eheader.bin ${opt_outdir_intermediate}/../tee_recovery_en.bin
+    fi
+  fi
+fi
+
+if [ "is${stage}" = "ispack_stage2" ]; then
+  if [ ${tz_rel_ver} == 1 ]; then
+    cp -ad ${opt_outdir_intermediate}/../tee_en.bin ${opt_outdir_intermediate}/raw_tee_en.bin
+    ${opt_bindir_host}genimg \
+      -n tzk_normal_pack \
+	  -v ${tz_rel_ver} \
+      -i "TZKP" -d ${opt_outdir_intermediate}/raw_tee_en.bin -a 0x0 \
+      -i "TZOP" -d ${opt_outdir_intermediate}/oem_setting.bin -a 0x0 \
+      -o ${opt_outdir_intermediate}/tee_en_oem_pack.bin
+
+    [ -f ${opt_outdir_intermediate}/tee_en_oem_pack.bin ]
+    INSTALL_F ${opt_outdir_intermediate}/tee_en_oem_pack.bin ${opt_outdir_intermediate}/../tee_en.bin
+
+    if [ -f ${opt_outdir_intermediate}/../tee_recovery_en.bin ]; then
+      cp -ad ${opt_outdir_intermediate}/../tee_recovery_en.bin ${opt_outdir_intermediate}/raw_tee_recovery_en.bin
+      ${opt_bindir_host}genimg \
+        -n tzk_recovery_pack \
+        -i "TZKP" -d ${opt_outdir_intermediate}/raw_tee_recovery_en.bin -a 0x0 \
+        -i "TZOP" -d ${opt_outdir_intermediate}/oem_setting.bin -a 0x0 \
+        -o ${opt_outdir_intermediate}/tee_recovery_en_oem_pack.bin
+
+      [ -f ${opt_outdir_intermediate}/tee_recovery_en_oem_pack.bin ]
+      INSTALL_F ${opt_outdir_intermediate}/tee_recovery_en_oem_pack.bin ${opt_outdir_intermediate}/../tee_recovery_en.bin
+    fi
+  fi
+  if [ ${tz_rel_ver} == 2 ]; then
+
+    pushd ${opt_outdir_intermediate}
+
+    ${opt_bindir_host}genimg \
+      -n tzk_normal_pack \
+	  -v ${tz_rel_ver} \
+      -i "TZOP" -d ${opt_outdir_intermediate}/oem_setting.bin -a 0x0 \
+      -i "TZBP" -d ${opt_outdir_intermediate}/bootparam_en.bin -a 0x0 \
+      -i "TZK1" -d ${opt_outdir_intermediate}/${TZ1_BIN} -a 0x0 \
+      -i "TZK2" -d ${opt_outdir_intermediate}/${TZ2_BIN} -a 0x0 \
+      -o ${opt_outdir_intermediate}/op_bp_tz12_pack.bin
+
+      [ -f ${opt_outdir_intermediate}/op_bp_tz12_pack.bin ]
+      INSTALL_F ${opt_outdir_intermediate}/op_bp_tz12_pack.bin ${opt_outdir_intermediate}/../tee_en.bin
+
+    ${opt_bindir_host}genimg \
+      -n tzk_normal_pack \
+	  -v ${tz_rel_ver} \
+      -i "TZOP" -d ${opt_outdir_intermediate}/oem_setting.bin -a 0x0 \
+      -i "TZBP" -d ${opt_outdir_intermediate}/bootparam_recovery_en.bin -a 0x0 \
+      -i "TZK1" -d ${opt_outdir_intermediate}/${TZ1_BIN} -a 0x0 \
+      -i "TZK2" -d ${opt_outdir_intermediate}/${TZ2_BIN} -a 0x0 \
+      -o ${opt_outdir_intermediate}/op_bp_tz12_recovery_pack.bin
+
+      [ -f ${opt_outdir_intermediate}/op_bp_tz12_recovery_pack.bin ]
+      INSTALL_F ${opt_outdir_intermediate}/op_bp_tz12_recovery_pack.bin ${opt_outdir_intermediate}/../tee_recovery_en.bin
+
+      popd
+  fi
+  if [ ${tz_rel_ver} == genx ]; then
+    img_type="TZK_CONTAINER_HEADER"
+    img_type_value=0x0000001C
+    format_ver=0x00000001
+    extras=${opt_outdir_intermediate}/tzk_container_extras.bin
+    TZK_CONTAINER=${opt_outdir_intermediate}/../tee_en.bin
+
+    ### tee_en ###
+    atf_len=$(wc -c "${opt_outdir_intermediate}/${TZ1_BIN}" | awk '{print $1}')
+    # echo "atf len is $atf_len"
+
+    tz_kernel_len=$(wc -c "${opt_outdir_intermediate}/${TZ2_BIN}" | awk '{print $1}')
+    # echo "tz kernel len is $tz_kernel_len"
+
+    tzk_boot_param_len=$(wc -c "${opt_outdir_intermediate}/bootparam_en.bin" | awk '{print $1}')
+    #echo "tzk_boot_param len is $tzk_boot_param_len"
+
+    tzk_oem_setting_len=$(wc -c "${opt_outdir_intermediate}/oem_setting.bin" | awk '{print $1}')
+    # echo "tzk_oem_setting len is $tzk_oem_setting_len"
+
+    tzk_container_len=`printf 0x%08x $(($atf_len+$tz_kernel_len+$tzk_boot_param_len+$tzk_oem_setting_len+12))`
+    echo "tzk_container len is $tzk_container_len"
+    ${security_tools_path}in_extras.py $img_type $extras $img_type_value $format_ver $tzk_container_len
+
+    cat $extras ${opt_outdir_intermediate}/${TZ1_BIN} ${opt_outdir_intermediate}/${TZ2_BIN} ${opt_outdir_intermediate}/bootparam_en.bin ${opt_outdir_intermediate}/oem_setting.bin > ${opt_outdir_intermediate}/../tee_en.bin
+
+    ### tee_recovery_en ###
+    atf_len=$(wc -c "${opt_outdir_intermediate}/${TZ1_BIN}" | awk '{print $1}')
+    # echo "atf len is $atf_len"
+
+    tz_kernel_len=$(wc -c "${opt_outdir_intermediate}/${TZ2_BIN}" | awk '{print $1}')
+    # echo "tz kernel len is $tz_kernel_len"
+
+    tzk_boot_param_recovery_len=$(wc -c "${opt_outdir_intermediate}/bootparam_recovery_en.bin" | awk '{print $1}')
+    #echo "tzk_boot_param len is $tzk_boot_param_len"
+
+    tzk_oem_setting_len=$(wc -c "${opt_outdir_intermediate}/oem_setting.bin" | awk '{print $1}')
+    # echo "tzk_oem_setting len is $tzk_oem_setting_len"
+
+    tzk_container_recovery_len=`printf 0x%08x $(($atf_len+$tz_kernel_len+$tzk_boot_param_recovery_len+$tzk_oem_setting_len+12))`
+    echo "tzk_container recovery len is $tzk_container_recovery_len"
+    ${security_tools_path}in_extras.py $img_type $extras $img_type_value $format_ver $tzk_container_recovery_len
+
+    cat $extras ${opt_outdir_intermediate}/${TZ1_BIN} ${opt_outdir_intermediate}/${TZ2_BIN} ${opt_outdir_intermediate}/bootparam_recovery_en.bin ${opt_outdir_intermediate}/oem_setting.bin > ${opt_outdir_intermediate}/../tee_recovery_en.bin
+
+  fi
+fi

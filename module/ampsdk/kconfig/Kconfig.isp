@@ -1,0 +1,28 @@
+menu "Image Processing Pipeline"
+
+config AMP_COMPONENT_ISP_ENABLE
+    bool "ISP Component  Enable"
+    default n
+
+if AMP_COMPONENT_ISP_ENABLE
+config AMP_ISPBE_ENABLE
+    bool "ISP BACKEND Enable"
+    default n
+
+if AMP_ISPBE_ENABLE
+config AMP_COMPONENT_DEWARP_ENABLE
+    bool "ISP Dewarp Enable"
+    default n
+
+config AMP_COMPONENT_ROTATE_ENABLE
+    bool "ISP Rotate Enable"
+    default n
+
+config AMP_COMPONENT_DNS_ENABLE
+    bool "ISP Downscalar Enable"
+    default n
+endif
+endif
+
+endmenu
+

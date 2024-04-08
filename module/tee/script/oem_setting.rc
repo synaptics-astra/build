@@ -1,0 +1,135 @@
+case "${tz_memlayout}" in
+  *_1g*)
+    opt_board_memory_size=0x40000000
+    ;;
+  *_1.5g*)
+    opt_board_memory_size=0x60000000
+    ;;
+  *_2g*)
+    opt_board_memory_size=0x80000000
+    ;;
+  *)
+    opt_board_memory_size=0x80000000
+    ;;
+esac
+
+[ "x${opt_board_memory_size}" != "x" ]
+echo "check board memory size"
+echo ${opt_board_memory_size}
+
+tee_topdir=${topdir}/tee/tee
+
+gen_oem_setting() {
+  local f_oem_setting
+  local memory_size
+  local f_output
+
+  # Process arguments
+  f_oem_setting=$1; shift
+  memory_size=$1; shift
+  f_output=$1; shift
+
+  ### Check input file ###
+  [ "x${f_oem_setting}" != "x" ]
+  [ "x${f_output}" != "x" ]
+
+  [ -f $f_oem_setting ]
+
+  # Prepare commandline
+  local f_temp_out
+  local exec_cmd
+  local exec_args
+
+  f_temp_out="$(dirname ${f_output})/$(basename ${f_output} .bin)_raw_${memory_size}.bin"
+  exec_cmd="python3 ${tee_topdir}/tools/gen_oem_setting/gen_oem_setting.py"
+  exec_args="${f_oem_setting} ${memory_size} ${f_temp_out}"
+
+  # Run command
+  eval ${exec_cmd} "${exec_args}"
+
+  ### For Genx need to sign oem_setting in build stage with K1_REE_A.rsa.priv.pem ###
+  if [ ${tz_rel_ver} == genx ]; then
+    [ -f ${f_temp_out} ]
+
+    ### Exectuable for generating GenX secure image ###
+    unset exec_cmd
+    if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
+        exec_cmd=${security_tools_path}gen_x_secure_image
+    else
+        exec_cmd=gen_x_secure_image
+    fi
+
+    in_extras="$(dirname ${f_output})/oem_setting.extras.bin"
+    ### FIXME: Do we need to transfer OEM setting start address to BM?
+    ### source ${module_build_topdir}/script/parse_addr.rc
+    ### ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SECURITY_TOOL_PATH}/bin/in_extras.py "TZK_OEM_SETTINGS" $in_extras 0x00000000 $tzoem_addr
+	${security_tools_path}in_extras.py "TZK_OEM_SETTINGS" $in_extras 0x00000001 0x000000
+
+    ### Prepare arguments ###
+    unset exec_args
+
+    # Other parameters
+    exec_args="${exec_args} --chip-name=${syna_chip_name}"
+    exec_args="${exec_args} --chip-rev=${syna_chip_rev}"
+    exec_args="${exec_args} --img_type=TZK_OEM_SETTINGS"
+    exec_args="${exec_args} --key_type=ree"
+
+    #exec_args="${exec_args} --seg_id=0x00000000"
+    #exec_args="${exec_args} --seg_id_mask=0xFFFFFFFF"
+    #exec_args="${exec_args} --version=0x00000001"
+    #exec_args="${exec_args} --version_mask=0xFFFFFFFF"
+    exec_args="${exec_args} --length=0x0"
+    exec_args="${exec_args} --extras=$in_extras"
+    exec_args="${exec_args} --workdir-security-tools=${security_tools_path}"
+    exec_args="${exec_args} --workdir-security-keys=${security_keys_path}"
+
+    # Input and output
+    exec_args="${exec_args} --in_payload=${f_temp_out} --out_store=${f_output}"
+
+    ### Generate secure image ###
+    eval ${exec_cmd} "${exec_args}"
+
+  else
+    ### Start to generate secure binary for oem setting ####
+    [ -f ${f_temp_out} ]
+
+    ### Exectuable for generating secure image ###
+    unset exec_cmd
+    if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
+        exec_cmd=${security_tools_path}gen_secure_image
+    else
+        exec_cmd=gen_secure_image
+    fi
+
+    ### Prepare arguments ###
+    unset exec_args
+
+    # Codetype
+    exec_args="${exec_args} --code-type=5"
+
+    local workdir_security_ver=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SECURITY_VERSION_PATH}
+    if [ -f ${workdir_security_ver}/codetype_5/config ]; then
+        exec_args="${exec_args} --security-config-path=${workdir_security_ver}/codetype_5/config"
+    else
+        exec_args="${exec_args} --security-config-path=${security_keys_path}/${syna_chip_mid}/codetype_5/config"
+    fi
+
+    local MARKET_ID=`printf 0x%x ${CONFIG_PREBOOT_MARKET_ID}`
+    # Other parameters
+    exec_args="${exec_args} --chip-name=${syna_chip_name}"
+    exec_args="${exec_args} --chip-rev=${syna_chip_rev}"
+    exec_args="${exec_args} --market-id=${MARKET_ID}"
+    exec_args="${exec_args} --workdir-security-tools=${security_tools_path}"
+    exec_args="${exec_args} --workdir-security-keys=${security_keys_path}"
+
+    # Do not add custk and rsa key stores
+    exec_args="${exec_args} --add-custk-store=0"
+    exec_args="${exec_args} --add-ersak-store=0"
+
+    # Input and output
+    exec_args="${exec_args} --input-file=${f_temp_out} --output-file=${f_output}"
+
+    ### Generate secure image ###
+    eval ${exec_cmd} "${exec_args}"
+  fi
+}

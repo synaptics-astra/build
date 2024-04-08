@@ -1,0 +1,5 @@
+menu "Smartcard Support"
+config SCRD
+	bool "Smartcard driver Enable"
+	default n
+endmenu

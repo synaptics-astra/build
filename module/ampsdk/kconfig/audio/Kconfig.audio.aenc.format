@@ -1,0 +1,23 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+source "module/ampsdk/kconfig/audio/Kconfig.audio.aenc.impl"
+
+comment "Supported Formats"
+
+config AMP_AUDIO_AACE_SUPPORTED
+	bool "AACE (ZSP)"
+	default y
+	select AMP_AUDIO_AACE_USE_ZSP
+
+config AMP_IP_AUDIO_DDCE_SUPPORTED
+	bool "DDCE (ZSP)"
+	default y
+	select AMP_IP_AUDIO_DDCE_USE_ZSP
+
+config AMP_IP_AUDIO_DTSE_SUPPORTED
+	bool "DTSE (ZSP)"
+	default y
+	select AMP_IP_AUDIO_DTSE_USE_ZSP

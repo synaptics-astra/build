@@ -1,0 +1,3 @@
+config AMP_COMPONENT_CLK_ENABLE
+    bool "CLK (AV Sync) Enable"
+    default y

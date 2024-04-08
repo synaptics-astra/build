@@ -1,0 +1,12 @@
+# feature	memory_type	memory_size	memory_speed	ddr_phy_fw	variant
+hwinit		ddr4		1GB		2133		n		default/default
+hwinit		ddr4		2GB		2133		n		default/default
+hwinit		ddr4		4GB		2133		n		default/default
+hwinit		ddr4x16		1GB		2133		n		default/default
+hwinit		ddr4x16		2GB		2133		n		default/default
+hwinit		ddr3		1GB		1866		n		default/default
+hwinit		ddr3		2GB		1866		n		default/default
+hwinit		ddr3		4GB		1866		n		default/default
+hwinit		ddr4		1GB		2133		n		rdk
+hwinit		ddr4		2GB		2133		n		rdk
+hwinit		ddr4		4GB		2133		n		rdk

@@ -1,0 +1,63 @@
+if [[ ! -z "$BUILD_CC" && ! `hash arm-rdkmllib32-linux-gnueabi-gcc 2>/dev/null` ]]; then
+    # NOTE: we can't build the whole vssdk with this settings because the sysroot would
+    # is a different directory the '${STAGING_DIR_TARGET}'
+    CONFIG_TOOLCHAIN_APPLICATION_CFLAG=`echo $CC |sed 's/[^ ]* //'`
+    CONFIG_TOOLCHAIN_APPLICATION_CXXFLAG=`echo $CXX |sed 's/[^ ]* //'`
+    CONFIG_TOOLCHAIN_APPLICATION_LDFLAG=`echo $LD |sed 's/[^ ]* //'`
+
+    if [ -z ${mod_dir} ];then
+        return
+    fi
+
+    if [ ! -f ${mod_dir}/${runtime_dir}/build.rc ];then
+        touch ${mod_dir}/${runtime_dir}/build.rc
+        touch ${mod_dir}/${runtime_dir}/pack.rc
+    fi
+
+    return
+fi
+
+CONFIG_TOOLCHAIN_APPLICATION_CFLAG="-mfpu=neon-fp-armv8 -mfloat-abi=hard -march=armv8-a+crc"
+CONFIG_TOOLCHAIN_APPLICATION_CFLAG+=" --sysroot=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_SYSYROOT} -fuse-ld=bfd"
+
+CONFIG_TOOLCHAIN_APPLICATION_CXXFLAG="-std=c++14"
+#CONFIG_TOOLCHAIN_APPLICATION_LDFLAG="--sysroot=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_SYSYROOT} "
+CONFIG_TOOLCHAIN_APPLICATION_LDFLAG=""
+
+if [ ! -d ${topdir}/toolchain/oe/linux-x64/gcc-6.4.0-rdk/sysroots/x86_64-rdksdk-linux ];then
+    ${topdir}/toolchain/oe/linux-x64/gcc-6.4.0-rdk/x86_64-gcc-6.4.0-rdk-toolchain-2.0.sh -y -d ${topdir}/toolchain/oe/linux-x64/gcc-6.4.0-rdk || exit 1
+fi
+
+if [ -z ${mod_dir} ];then
+    return
+fi
+
+if [ ! -f ${mod_dir}/${runtime_dir}/build.rc ];then
+    mkdir -p ${mod_dir}/${runtime_dir}
+    cat <<'EOF' > ${mod_dir}/${runtime_dir}/build.rc
+build_sysroot=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${runtime_sysroot}
+
+(
+sed -E -i 's,SDKTARGETSYSROOT=.*$,SDKTARGETSYSROOT='"${build_sysroot}"',' \
+   ${topdir}/toolchain/oe/linux-x64/gcc-6.4.0-rdk/environment-setup-cortexa55t2hf-neon-fp-armv8-rdkmllib32-linux-gnueabi
+
+source ${topdir}/toolchain/oe/linux-x64/gcc-6.4.0-rdk/environment-setup-cortexa55t2hf-neon-fp-armv8-rdkmllib32-linux-gnueabi
+
+${topdir}/toolchain/oe/linux-x64/gcc-6.4.0-rdk/sysroots/x86_64-rdksdk-linux/post-relocate-setup.d/meson-setup.py || exit 1
+${topdir}/toolchain/oe/linux-x64/gcc-6.4.0-rdk/sysroots/x86_64-rdksdk-linux/post-relocate-setup.d/meson-setup-tee.py
+)
+wait
+
+mkdir -p ${build_sysroot}/usr
+
+INSTALL_D ${topdir}/toolchain/oe/linux-x64/gcc-6.4.0-rdk/sysroots/aarch64-rdk-linux/lib ${build_sysroot}
+INSTALL_D ${topdir}/toolchain/oe/linux-x64/gcc-6.4.0-rdk/sysroots/aarch64-rdk-linux/usr/include ${build_sysroot}/usr
+INSTALL_D ${topdir}/toolchain/oe/linux-x64/gcc-6.4.0-rdk/sysroots/aarch64-rdk-linux/usr/lib ${build_sysroot}/usr
+if [ ! -e "${build_sysroot}/usr/lib/libjsoncpp.a" ]; then
+    rm -f ${build_sysroot}/usr/lib/libjsoncpp.a
+    ln -sr ${build_sysroot}/usr/lib/libjsoncpp_static.a ${build_sysroot}/usr/lib/libjsoncpp.a
+fi
+EOF
+
+    touch ${mod_dir}/${runtime_dir}/pack.rc
+fi

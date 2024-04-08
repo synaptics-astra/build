@@ -1,0 +1,41 @@
+# install folder
+INSTALL_D() {
+    local d_input
+    local d_output
+
+    d_input=$1; shift
+    d_output=$1; shift
+
+    [ -d ${d_input} ]
+    [ -d $(dirname $d_output) ]
+
+    rsync -az --exclude=".git" ${d_input} ${d_output}
+}
+
+# install file
+INSTALL_F() {
+    local f_input
+    local f_output
+
+    f_input=$1; shift
+    f_output=$1; shift
+
+    [ -f ${f_input} ]
+    [ -d $(dirname $f_output) ]
+
+    rsync -az ${f_input} ${f_output}
+}
+# install file, if softlink, then copy the file that softlink point at.
+INSTALL_F_L() {
+    local f_input
+    local f_output
+
+    f_input=$1; shift
+    f_output=$1; shift
+
+    [ -f ${f_input} ]
+    [ -d $(dirname $f_output) ]
+
+    rsync -azL ${f_input} ${f_output}
+}
+

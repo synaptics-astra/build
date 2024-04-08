@@ -1,0 +1,5 @@
+echo "######!!! ${CONFIG_TEE_DEV_TEEI} is selected"
+CONFIG_TOOLCHAIN_TA_CFLAG="-O2 -fstack-protector-strong -nostdlib -fno-builtin -msoft-float -march=armv7-a -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -Wno-format-security -fno-strict-aliasing -fno-common -fno-delete-null-pointer-checks -fPIC -DCONFIG_SO -I${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TEE_DEV_REL_PATH}/include -I${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TEE_DEV_REL_PATH}/${CONFIG_TEE_DEV_TEEI}/include -I${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TEE_DEV_REL_PATH}/include/openssl -D__TRUSTEDAPP__"
+CONFIG_TOOLCHAIN_TA_CPPFLAG=""
+CONFIG_TOOLCHAIN_TA_LDFLAG="-nostdlib -L ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TEE_DEV_REL_PATH}/lib -L ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TEE_DEV_REL_PATH}/${CONFIG_TEE_DEV_TEEI}/lib -lteei -lssl -lcrypto -lm -lc -lgcc -lgloss"
+CONFIG_TOOLCHAIN_TA_OBJ_FILES="${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TEE_DEV_REL_PATH}/${CONFIG_TEE_DEV_TEEI}/lib/crt0.o"

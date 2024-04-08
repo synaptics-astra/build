@@ -1,0 +1,19 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+menuconfig AMP_COMPONENT_AENC_ENABLE
+	bool "Audio Encoder"
+	default y
+
+if AMP_COMPONENT_AENC_ENABLE
+
+config AMP_IP_AUDIO_MS12_AENC_ENABLE
+	depends on  AMP_IP_AUDIO_MS12_SUPPORTED
+	bool
+	prompt "MS12 AENC"
+	default y
+
+source "module/ampsdk/kconfig/audio/Kconfig.audio.aenc.format"
+endif

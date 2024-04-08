@@ -1,0 +1,71 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+menu "Linux Kernel"
+config LINUX
+	bool
+	default y
+
+if LINUX
+
+choice
+        prompt "Kernel header format"
+        default HEADER_GIH
+config HEADER_GIH
+        bool "GIH header format"
+config HEADER_KDTB
+        bool "KDTB header format"
+endchoice
+
+choice
+        prompt "Kernel compression method"
+        default COMPRESS_LZ4
+config COMPRESS_XZ
+        bool "xz compression"
+config COMPRESS_LZ4
+        bool "lz4 compression"
+endchoice
+
+config NO_PREPEND_IMG_INFO
+	bool "no prepend image info header"
+	default n
+
+config LINUX_SRC_PATH
+	string "Kernel code path"
+	default "linux_4_14"
+	help
+		Used as kernel code path
+
+config LINUX_ARCH
+	string "Arch(arm64/arm32)"
+	default "arm64"
+
+config LINUX_DEFCONFIG
+	string "Defconfig name"
+	default "berlin5ct_defconfig"
+
+config LINUX_DTS
+	string "DTS name"
+	default "marvell/berlin5ct-stb"
+
+config LINUX_REL_PATH
+	string
+	default "linux"
+	help
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_LINUX_REL_PATH}
+
+config LINUX_KASAN_ENABLE
+	bool "Enable Kernel Address Sanitizer"
+	default n
+
+config LINUX_FUZZING
+	bool "Additional options for kernel fuzzing"
+	depends on LINUX_KASAN_ENABLE
+	default n
+
+config LINUX_DEBUG_EXTRA
+	bool "Additional options for kernel bug detection"
+	default n
+endif
+endmenu

@@ -1,0 +1,12 @@
+# feature	chip_name	chip_revision	market_id	flash_type	memory_type	memory_size	memory_speed	variant
+hwinit		bg5ct		A0		7		EMMC		ddr4		2GB		2400		default/default
+hwinit		bg5ct		A0		7		EMMC		ddr4		2GB		2400		stb/micron
+hwinit		bg5ct		A0		7		EMMC		ddr4		2GB		2400		minibox/micron
+hwinit		bg5ct		A0		7		EMMC		ddr4		2GB		2400		grinder/samsung
+hwinit		bg5ct		A0		7		EMMC		ddr3		2GB		1866		default/default
+hwinit		bg5ct		A0		7		EMMC		ddr4		3GB		2400		default/default
+hwinit		bg5ct		A0		7		EMMC		ddr4		4GB		2400		default/default
+hwinit		bg5ct		A0		7		EMMC		ddr3		1.5GB		1866		default/default
+hwinit		as370		A0		3		NAND		ddr3		512MB		1866		default/default
+hwinit		as370		A0		3		NAND		ddr3		1GB		1866		default/default
+hwinit		as370		A0		3		NAND		ddr3		2GB		1866		default/default

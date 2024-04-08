@@ -1,0 +1,34 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+menu "Sysroot Filesystem Configuration"
+
+choice
+    prompt "Prebuilt sysroot"
+    default RUNTIME_ANDROID if ANDROID_OS
+    default RUNTIME_LINUX_BASELINE_BUILDROOT if LINUX_OS
+
+config RUNTIME_ANDROID
+	bool "Android"
+config RUNTIME_LINUX_BASELINE_BUILDROOT
+	bool "buildroot(arm-linux-gnueabihf-)"
+config RUNTIME_LINUX_BASELINE_BUILDROOT64
+	bool "buildroot(aarch64-cros-linux-gnu-)"
+config RUNTIME_RDK
+	bool "RDK runtime"
+config RUNTIME_OE64
+	bool "linux oe aarch64 sysroot"
+config RUNTIME_OE
+	bool "linux oe aarch32 sysroot"
+endchoice
+
+comment "Android toolchain requires android as OS"
+        depends on RUNTIME_ANDROID && LINUX_OS
+
+comment "Linux toolchain requires Linux as OS"
+        depends on RUNTIME_LINUX_BASELINE_BUILDROOT && ANDROID_OS
+
+source "build/module/sysroot/Kconfig.common"
+
+endmenu

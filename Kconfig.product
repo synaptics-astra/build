@@ -1,0 +1,35 @@
+
+comment "Give a Description for VSSDK Configuration"
+config DESCRIPTION
+    string "Description"
+    default "Undefined Configuration"
+    help
+        Give a description of this configuration here
+
+config PRODUCT_NAME
+	string "Product Name"
+	default "bg5ct_a0_android_q_launched_stb_v4"
+	help
+		Used as ${CONFIG_SYNA_SDK_PRODUCT_PATH}/${CONFIG_PRODUCT_NAME}
+
+config BOARD_NAME
+	string "Board Name"
+	default ""
+	help
+                Used as ${CONFIG_BOARD_NAME}
+
+config PRODUCT_IP_LIST
+	string "Product IP CSV file(Synaptics internal use only)"
+	default ""
+	help
+		Synaptics internal use only. Simulate customer build
+
+config PRODUCT_IP_MAPPING_LIST
+        string "Product IP mapping CSV file(Synaptics internal use only)"
+        default ""
+        help
+                Synaptics internal use only. Simulate customer build
+
+config RDK_SYS
+	bool "RDK System"
+	default n

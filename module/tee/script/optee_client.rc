@@ -1,0 +1,75 @@
+opt_lib_outdir_release=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TEE_CLIENT_REL_PATH}
+
+CFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_CFLAG} --sysroot=${opt_build_sysroot}"
+
+LDFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_LDFLAG}"
+
+CLANG_CFLAGS="${CONFIG_TOOLCHAIN_CLANG_CFLAG}"
+CLANG_LDFLAGS="${CONFIG_TOOLCHAIN_CLANG_LDFLAG}"
+CROSS_COMPILE="${CONFIG_TOOLCHAIN_APPLICATION}"
+
+if [ "${CONFIG_TOOLCHAIN_APPLICATION_CC}" = "clang" ]; then
+  APP_CC="clang"
+  CFLAGS="${CLANG_CFLAGS} ${CFLAGS}"
+  LDFLAGS="${CLANG_LDFLAGS} ${LDFLAGS}"
+  CROSS_COMPILE="llvm-"
+fi
+
+optee_dev_dir=${CONFIG_SYNA_SDK_PATH}/tee/optee_dev/
+client_build_dir=${optee_dev_dir}/optee_client
+test_build_dir=${optee_dev_dir}/optee_test
+sample_build_dir=${optee_dev_dir}/optee_examples
+
+teec_export=${opt_client_outdir_intermediate}/export/usr
+ta_dev_kit_dir=${CONFIG_SYNA_SDK_PATH}/tee/optee_dev/${syna_chip_name}/export-ta_arm64
+out_ta_dir="${out_dir_rootfs}/lib/optee_armtz"
+out_ca_dir="${out_dir_rootfs}/opt/syna/bin"
+
+make -C ${client_build_dir} \
+  CROSS_COMPILE="${CROSS_COMPILE}" \
+  CA_CFLAGS="${CFLAGS}" CA_LDFLAGS="${LDFLAGS}" O=${opt_client_outdir_intermediate}
+
+#make -C ${client_build_dir} install DESTDIR=${opt_build_sysroot}/
+make -C ${client_build_dir} install DESTDIR=${opt_lib_outdir_release}
+
+cp -av ${opt_client_outdir_intermediate}/export/usr/lib/*.so* ${opt_client_outdir_intermediate}/
+cp -av ${opt_client_outdir_intermediate}/export/usr/* ${opt_build_sysroot}/usr/
+cp -av ${opt_client_outdir_intermediate}/export/usr/lib/*.so* ${out_dir_rootfs}/usr/lib
+
+## Install prebuilt TAs
+mkdir -pv ${out_ta_dir}
+cp ${ta_dev_kit_dir}/ta/* ${out_ta_dir} -av
+
+if [ "is${CONFIG_OPTEE_SAMPLE}" = "isy" ]; then
+  build_dir="${sample_build_dir}"
+  out_dir="${opt_client_outdir_intermediate}/optee_examples"
+  out_plugin_dir="${out_dir_rootfs}/usr/lib/tee-supplicant/"
+
+  rm -rf ${out_dir}
+  mkdir -pv ${out_dir}
+  mkdir -pv ${out_ta_dir}
+  mkdir -pv ${out_ca_dir}
+  mkdir -pv ${out_plugin_dir}
+
+
+  export CA_CFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_CFLAG} --sysroot=${opt_build_sysroot}"
+  export CA_LDFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_LDFLAG}"
+  make -C ${build_dir} TA_DEV_KIT_DIR=${ta_dev_kit_dir} OUTPUT_DIR=${out_dir} clean
+  make -C ${build_dir} HOST_CROSS_COMPILE=${CROSS_COMPILE}  TA_CROSS_COMPILE=aarch64-linux-gnu- TEEC_EXPORT=${teec_export} --no-builtin-variables TA_DEV_KIT_DIR=${ta_dev_kit_dir} OUTPUT_DIR=${out_dir}
+  cp -av ${out_dir}/ta/* ${out_ta_dir}
+  cp -av ${out_dir}/ca/* ${out_ca_dir}
+  cp -av ${out_dir}/plugins ${out_plugin_dir}
+fi
+
+if [ "is${CONFIG_OPTEE_TEST}" = "isy" ]; then
+  build_dir="${test_build_dir}"
+  out_dir="${opt_client_outdir_intermediate}/optee_test"
+
+  mkdir -pv ${out_dir}
+
+  export CA_CFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_CFLAG} --sysroot=${opt_build_sysroot}"
+  export CA_LDFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_LDFLAG}"
+  make -C ${build_dir} SYSROOT=${opt_build_sysroot} TA_DEV_KIT_DIR=${ta_dev_kit_dir}  CROSS_COMPILE_TA=aarch64-linux-gnu- CROSS_COMPILE_HOST=${CROSS_COMPILE} OPTEE_CLIENT_EXPORT=${teec_export} O=${out_dir} clean
+  make -C ${build_dir} SYSROOT=${opt_build_sysroot} TA_DEV_KIT_DIR=${ta_dev_kit_dir}  CROSS_COMPILE_TA=aarch64-linux-gnu- CROSS_COMPILE_HOST=${CROSS_COMPILE} OPTEE_CLIENT_EXPORT=${teec_export} O=${out_dir} CFG_PKCS11_TA=y
+  make -C ${build_dir}  install DESTDIR=${out_dir_rootfs} O=${out_dir}
+fi

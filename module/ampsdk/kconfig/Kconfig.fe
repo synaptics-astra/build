@@ -1,0 +1,3 @@
+config ENABLE_TUNER_DEMOD
+    bool "FE Support"
+    default n

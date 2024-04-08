@@ -1,0 +1,9 @@
+# feature	memory_type	memory_size	memory_speed	ddr_phy_fw	variant
+hwinit		lpddr4x		2GB		3200		y		default/default
+hwinit		lpddr4x		3GB		3200		y		default/default
+hwinit		lpddr4x		2GB		3733		y		default/default
+hwinit		lpddr4x		3GB		3733		y		default/default
+hwinit		lpddr4x		4GB		3733		y		default/default
+hwinit		lpddr4		2GB		3733		y		default/default
+hwinit		lpddr4		3GB		3733		y		default/default
+hwinit		lpddr4		4GB		3733		y		default/default

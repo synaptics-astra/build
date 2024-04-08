@@ -1,0 +1,89 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+menuconfig AMP_COMPONENT_SNDSRV_ENABLE
+	bool "Audio Service"
+	default y
+
+if AMP_COMPONENT_SNDSRV_ENABLE
+
+comment "General"
+
+config AMP_AUDIO_SHARE_AENC
+	bool
+	prompt "Share AENC (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+
+config AMP_AUDIO_DISABLE_71MIXER
+	bool
+	prompt "7.1 Mixer Disable (DEV)" if AMP_DEVELOPMENT_OPTION
+	default y
+
+config AMP_AUDIO_DISABLE_71SRC
+	bool
+	prompt "7.1 SRC Disable (DEV)" if AMP_DEVELOPMENT_OPTION
+	default y
+
+config AMP_AUDIO_DISABLE_BTSRC
+	bool "BT SRC Disable"
+	default n
+
+config AMP_AUDIO_DISABLE_LBSRC
+	bool "loopback SRC Disable"
+	default n
+
+config AMP_AUDIO_DISABLE_MAINMIXER
+	bool
+	prompt "Main Mixer Disable (DEV)" if AMP_DEVELOPMENT_OPTION
+	default y
+
+config AMP_AUDIO_DISABLE_MAINSRC
+	bool
+	prompt "Main SRC Disable (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+
+config AMP_AUDIO_BT_OUTCTRL
+	bool
+	prompt "BT OUTCTRL Enable (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+
+config AMP_AUDIO_ENABLE_BT_TUNNEL
+	bool "BT Tunnel Enable"
+	default n
+
+config AMP_AUDIO_DISABLE_SNDEXP
+	bool
+	prompt "SNDEXP Disable (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+
+
+comment "Output Paths"
+
+config AMP_AUDIO_SNDSRV_PATH_20_DISABLE
+	bool "2.0 Path Disable"
+	default y
+
+config AMP_AUDIO_SNDSRV_PATH_71_DISABLE
+	bool "7.1 Path Disable"
+	default n
+
+config AMP_AUDIO_SNDSRV_PATH_HDMI_DISABLE
+	bool "HDMI Path Disable"
+	default n
+
+config AMP_AUDIO_SNDSRV_PATH_SPDIF_DISABLE
+	bool "SPDIF Path Disable"
+	default n
+
+config AMP_AUDIO_SNDSRV_PATH_I2S_SPEAKER_REF
+	bool "FFV Ref Path Enable"
+	default n
+
+config AMP_AUDIO_SNDSRV_PATH_HDMI_RELEASE_GOOGLE
+	bool
+	prompt "HDMI Path Release GOOGLE (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+
+endif

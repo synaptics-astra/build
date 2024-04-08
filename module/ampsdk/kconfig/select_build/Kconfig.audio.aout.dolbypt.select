@@ -1,0 +1,5 @@
+choice
+    prompt "Format"
+    default AMP_AUDIO_DOLBY_PT_DCV
+source "module/ampsdk/kconfig/audio/Kconfig.audio.aout.dolbypt.format"
+endchoice

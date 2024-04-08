@@ -1,0 +1,68 @@
+#FW_MODULE_PATH
+fw_path_list=()
+#clear firmware name
+fw_list=()
+#FW_MODULE_VER_PATH
+fw_ver_list=()
+
+#core
+if [ "is${CONFIG_GENX_ENABLE}" = "isy" ] || [ "is${syna_sec_lvl}" = "isgenx" ]; then
+    if [ "${CONFIG_AMP_IP_AUDIO_MS12_SUPPORTED}" = "" ] || [ "${CONFIG_PRODUCT_NAME}" = "sample_feature" ]; then
+        fw_path_list+=('dsp')
+        fw_list+=('dsp')
+        fw_ver_list+=("no_ip")
+    fi
+    if [ "is${CONFIG_AMP_IP_AUDIO_MS12_HIFI_V1_3}" = "isy" ]; then
+        fw_path_list+=('dsp')
+        fw_list+=('dsp')
+        fw_ver_list+=("ms12v1_3")
+    fi
+    if [ "is${CONFIG_AMP_IP_AUDIO_MS12_HIFI_V2_6}" = "isy" ]; then
+        fw_path_list+=('dsp')
+        fw_list+=('dsp')
+        fw_ver_list+=("ms12v2_6")
+    fi
+    fw_path_list+=('tsp')
+    fw_list+=('tsp')
+    fw_ver_list+=("")
+    fw_path_list+=('gpu')
+    fw_list+=('gpu')
+    fw_ver_list+=("")
+    if [ "is${CONFIG_AMP_IP_DRM_IRDETO}" = "isy" ]; then
+        fw_path_list+=('ifcp')
+        fw_list+=('ifcp')
+        fw_ver_list+=("")
+    fi
+fi
+
+# ARM fw list
+fw_path_list_arm=()
+fw_list_arm=()
+
+if [ "is${CONFIG_AMP_IP_AUDIO_MS12_ARM_V2_4}" = "isy" ]; then
+    fw_path_list_arm+=('ms12\/arm-linux-androideabi-')
+    fw_list_arm+=('dolby_ms12')
+    fw_path_list_arm+=('ms12\/arm-linux-gnueabihf-')
+    fw_list_arm+=('dolby_ms12')
+    fw_path_list_arm+=('ms12\/arm-rdkmllib32-linux-gnueabi-')
+    fw_list_arm+=('dolby_ms12')
+fi
+
+if [ "is${CONFIG_AMP_IP_AUDIO_MS12_ARM_V1_3}" = "isy" ]; then
+    fw_path_list_arm+=('ms12_v1\/arm-linux-androideabi-')
+    fw_list_arm+=('dolby_ms12_v1')
+fi
+
+if [ "is${CONFIG_AMP_IP_AUDIO_UDC_LITE_SUPPORTED}" = "isy" ]; then
+    fw_path_list_arm+=('ddudc\/arm-linux-androideabi-')
+    fw_list_arm+=('UDC_LITE_TEST')
+fi
+
+# fw list checking
+if [ ${#fw_list[@]} -eq 0 ]; then
+    if [ ${#fw_path_list_arm[@]} -eq 0 ]; then
+        echo "No fw in fw_enc list, do nothing, exit...."
+        exit 0
+    fi
+fi
+

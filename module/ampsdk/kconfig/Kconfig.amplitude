@@ -1,0 +1,7 @@
+menu "AMPLITUDE middleware"
+
+config AMPLITUDE
+    bool "amplitude"
+    default n
+
+endmenu

@@ -1,0 +1,26 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+menuconfig AMPSDK
+    bool "AMP Enable"
+    default y
+    help
+        AMP support
+
+if AMPSDK
+
+source "module/ampsdk/kconfig/Kconfig.system"
+source "module/ampsdk/kconfig/Kconfig.drm"
+source "module/ampsdk/kconfig/Kconfig.clk"
+source "module/ampsdk/kconfig/Kconfig.avin"
+source "module/ampsdk/kconfig/Kconfig.dmx"
+source "module/ampsdk/kconfig/Kconfig.video"
+source "module/ampsdk/kconfig/Kconfig.audio"
+source "module/ampsdk/kconfig/Kconfig.isp"
+source "module/ampsdk/kconfig/Kconfig.fe"
+source "module/ampsdk/kconfig/Kconfig.scrd"
+source "module/ampsdk/kconfig/Kconfig.amplitude"
+
+endif

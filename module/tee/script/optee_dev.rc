@@ -1,0 +1,17 @@
+if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
+  opt_build_sysroot="${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_SYSYROOT}"
+  out_dir_rootfs="${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_ROOTFS}"
+fi
+
+copy_optee_dev()
+{
+  [ $clean -eq 1 ] && exit 0
+
+  src_dir=${CONFIG_SYNA_SDK_PATH}/tee/optee_dev/${syna_chip_name}/export-ta_arm64
+  dst_dir=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TEE_DEV_REL_PATH}
+
+  out_ta_dir="${out_dir_rootfs}/lib/optee_armtz"
+  mkdir -pv ${out_ta_dir}
+  cp ${src_dir}/ta/* ${out_ta_dir} -av
+
+}

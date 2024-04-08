@@ -1,0 +1,15 @@
+config DOLBYUDC_CA
+	bool "Enable DolbyUDC_CA"
+	default n
+
+config DOLBYUDC_TA
+	bool "Enable DolbyUDC_TA"
+	default n
+
+config DOLBYUDC_TEST
+	bool "Enable DolbyUDC_Test"
+	default n
+
+config DOLBYUDC_TAREG
+	bool "Enable DolbyUDC_TAREG"
+	default n

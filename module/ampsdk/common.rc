@@ -1,0 +1,70 @@
+#############
+# Functions #
+#############
+
+compile_amp() {
+  # Set up environment
+  source build/envsetup.rc
+  lunchproduct
+
+  # Run build
+  if [ is"${1}" = "isclean" ]; then
+    make -C ${basedir_amp} clean
+  else
+    ca_cflag=${CONFIG_TOOLCHAIN_APPLICATION_CFLAG}
+    ca_ld_flag=${CONFIG_TOOLCHAIN_APPLICATION_LDFLAG}
+
+    TARGET_OS=${1}
+    toolchain=${2}
+    # libteec.so
+    ca_ld_flag="${ca_ld_flag} -L${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TEE_CLIENT_REL_PATH}/lib/${toolchain}"
+    ta_cflag=${CONFIG_TOOLCHAIN_TA_CFLAG}
+    ta_ldflag=${CONFIG_TOOLCHAIN_TA_LDFLAG}
+
+    make -j ${CONFIG_CPU_NUMBER} \
+         -C ${basedir_amp} \
+         CA_TOOLS_PREFIX="${toolchain}" \
+         E_CFLAG="${ca_cflag}" \
+         E_CPPFLAG="${CONFIG_TOOLCHAIN_APPLICATION_CPPFLAG}" \
+         E_LDFLAG="${ca_ld_flag}" \
+         TA_TOOLS_PREFIX="${CONFIG_TOOLCHAIN_TA}" \
+         E_TA_CFLAG="${ta_cflag}" \
+         E_TA_LDFLAG="${ta_ldflag}" \
+         E_TA_OBJ="${CONFIG_TOOLCHAIN_TA_OBJ_FILES}" \
+         TARGET_OS="${TARGET_OS}" \
+         CC_NAME="${CONFIG_TOOLCHAIN_APPLICATION_CC}" \
+         CLG_CFLAG="${CONFIG_TOOLCHAIN_CLANG_CFLAG}" \
+         CLG_LDFLAG="${CONFIG_TOOLCHAIN_CLANG_LDFLAG}"
+  fi
+}
+
+create_autoconfig() {
+    [ $# -ne 3 ] && echo "Bad input parameters: outdir config_file release" && exit 1
+    outdir=$1
+    config_f=$2
+    rel=$3
+    if [ "is${rel}" = "isy" ]; then
+        kconfig_file=build/module/ampsdk/Kconfig.feature.dep
+        export AMP_KCONFIG_MODE=release
+    else
+        kconfig_file=build/module/ampsdk/Kconfig.build.dep
+        export AMP_KCONFIG_MODE=build
+    fi
+
+    mkdir -p ${outdir}
+
+    ( cd build && \
+       srctree=../ \
+       KCONFIG_CONFIG=${config_f} \
+       PYTHONPATH=tools/src/kconfiglib/ \
+       TOPDIR='$(TOPDIR)' \
+       KCONFIG_AUTOHEADER=${outdir}/autoconf.h \
+       python3 -B tools/src/kconfiglib/ampconfig.py ${kconfig_file} )
+
+    [ -d "${basedir_amp}/products/profiles" ] && rm -rf ${basedir_amp}/products/profiles
+    if [ "is${rel}" != "isy" ] && [ "is${CONFIG_AMP_BACKUP_PROFILE}" = "isy" ]; then
+        mkdir -p ${basedir_amp}/products/profiles
+        cp ${outdir}/autoconf.h ${basedir_amp}/products/profiles/${CONFIG_AMP_PROFILE}
+    fi
+
+}

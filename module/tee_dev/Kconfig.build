@@ -1,0 +1,10 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+source "build/module/tee_dev/Kconfig.common"
+
+config TEE_DEV_TEEI
+        string "GPD/TZK version"
+        default "GPD11_TZK520"

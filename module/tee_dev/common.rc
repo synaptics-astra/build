@@ -1,0 +1,28 @@
+copy_tee_dev_teei()
+{
+  teei_ver=$1
+
+  src_dir=${CONFIG_SYNA_SDK_PATH}/tee/tee_dev
+  dst_dir=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TEE_DEV_REL_PATH}
+
+  echo "copy ${src_dir}/teei/${teei_ver} to ${dst_dir}"
+  INSTALL_D  ${src_dir}/teei/${teei_ver} ${dst_dir}
+}
+
+copy_tee_dev()
+{
+  [ $clean -eq 1 ] && exit 0
+
+  src_dir=${CONFIG_SYNA_SDK_PATH}/tee/tee_dev
+  dst_dir=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TEE_DEV_REL_PATH}
+
+  mkdir -p ${dst_dir}/lib
+  mkdir -p ${dst_dir}/include
+
+  # libs
+  INSTALL_D  ${src_dir}/lib/openssl/lib ${dst_dir}
+  INSTALL_D  ${src_dir}/lib/newlib/arm-eabi/lib ${dst_dir}
+
+  # header files
+  INSTALL_D  ${src_dir}/lib/openssl/include ${dst_dir}
+}

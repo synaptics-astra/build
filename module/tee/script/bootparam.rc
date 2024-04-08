@@ -1,0 +1,36 @@
+### Generate TZ Boot Parameters
+
+pushd ${module_topdir}
+
+### by default, boot with tee is enabled
+
+if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
+  cmake -DPLATFORM=${syna_chip_name}/${boot_seclvl}/${tz_memlayout} \
+        -DBERLIN_CHIP=${syna_chip_name} \
+        -S ${module_topdir}/tools/gen_boot_param \
+        -B ${opt_outdir_intermediate}/gen_boot_param
+
+  make -C ${opt_outdir_intermediate}/gen_boot_param
+
+  ${opt_outdir_intermediate}/gen_boot_param/gen_boot_param ${opt_outdir_intermediate}/bootparam.bin
+  ${opt_outdir_intermediate}/gen_boot_param/gen_boot_param_recovery ${opt_outdir_intermediate}/bootparam_recovery.bin
+else
+  gen_boot_param ${opt_outdir_intermediate}/bootparam.bin
+  gen_boot_param_recovery ${opt_outdir_intermediate}/bootparam_recovery.bin
+fi
+
+if [ ${tz_rel_ver} == 2 ]; then
+  source ${module_build_topdir}/script/common.rc
+  gen2_secure_image bparam ${opt_outdir_intermediate}/bootparam.bin ${opt_outdir_intermediate}/bootparam_en.bin
+  gen2_secure_image bparam ${opt_outdir_intermediate}/bootparam_recovery.bin ${opt_outdir_intermediate}/bootparam_recovery_en.bin
+fi
+
+if [ ${tz_rel_ver} == genx ]; then
+  source ${module_build_topdir}/script/common.rc
+  source ${module_build_topdir}/script/parse_addr.rc
+  ${security_tools_path}in_extras.py "TZK_BOOT_PARAMETER" ${opt_outdir_intermediate}/boot_param_extras.bin 0x00000000 ${tzbp_addr}
+  genx_secure_image "TZK_BOOT_PARAMETER" ${opt_outdir_intermediate}/boot_param_extras.bin 0x0 ${opt_outdir_intermediate}/bootparam.bin ${opt_outdir_intermediate}/bootparam_en.bin
+  genx_secure_image "TZK_BOOT_PARAMETER" ${opt_outdir_intermediate}/boot_param_extras.bin 0x0 ${opt_outdir_intermediate}/bootparam_recovery.bin ${opt_outdir_intermediate}/bootparam_recovery_en.bin
+fi
+
+popd

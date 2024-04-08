@@ -1,0 +1,19 @@
+menu "Demux"
+
+config AMP_COMPONENT_DATA_EXPORTER_ENABLE
+    bool "Data Exporter Enable"
+    default y
+
+config AMP_COMPONENT_DMX_ENABLE
+    bool "Dmx Enable"
+    default y
+
+config AMP_TSP_NORMAL_CLK
+    bool "set TSP as normal clock"
+    default y
+
+#config AMP_COMPONENT_FE_ENABLE
+#    bool "FE Enable"
+#    default n
+
+endmenu

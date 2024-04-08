@@ -1,0 +1,362 @@
+#
+
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+menu "Bootloader Configuration"
+
+if BOOTLOADER
+
+config BL_REL_PATH
+	string
+	default "bootloader"
+	help
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_BL_REL_PATH}
+
+choice
+	prompt "boot image verify method"
+	default BL_VERIFIEDBOOT20
+
+	config BL_LINUX_BOOT
+		depends on LINUX_OS
+		bool "OEM custkey"
+		help
+			use oem custkey to encrypt/verify kernel image
+
+	config BL_VERIFIEDBOOT10
+		depends on ANDROID_OS && PREBOOT_BOOTFLOW_NR
+		bool "android verified boot 1.0"
+
+	config BL_VERIFIEDBOOT20
+		depends on ANDROID_OS
+		bool "android verified boot 2.0"
+
+endchoice
+
+config BL_AVB_1P2_L
+	bool "AVB1.2 launched"
+	default n
+	help
+		avb1.2 launched version will support new flags passing to recovery
+
+config BL_CPUPLL
+	string "CPUPLL (800, 1200, 1500, etc.)"
+	default "800"
+	help
+		dynamicly change the cpu pll in bootloader
+
+config BL_RPMB
+        bool "RPMB"
+        default y
+        help
+                Replay Protected Memory Block is for trusted storage
+
+config BL_RPMB_AVB
+        bool "RPMB_AVB"
+        default y
+        help
+                Store device lock status and AVB rollback indexes in RPMB
+
+config BL_SYSTEM_AS_ROOT
+	depends on ANDROID_OS
+	bool "System as Root"
+	default n
+	help
+		config to enable system as root
+
+config BL_DTB
+	bool "DTB Modify"
+	default y
+	help
+		config to enable dtb modification for kernel params
+
+config BL_RECOVERY_DTBO
+	depends on ANDROID_OS && PREBOOT_BOOTFLOW_NR
+	bool "DTBO for Recovery"
+	default n
+	help
+		config to enable recovery dtbo
+
+menuconfig BL_PV_COMP
+	bool "PV Compensation"
+	default y
+	help
+		the pv comp is used to control cpu voltage and transfer pv table
+
+if BL_PV_COMP
+
+choice
+	prompt "pv compensation interface"
+	default BL_PV_I2C_NEW
+
+	config BL_PV_I2C
+		bool "i2c interface"
+
+	config BL_PV_I2C_NEW
+		bool "i2c_new interface"
+
+	config BL_PV_AD5231
+		bool "spi interface"
+endchoice
+
+endif
+
+menuconfig BL_FUNCTION_BUTTON
+	bool "Function Button"
+	default n
+	help
+		the function button is used to control the boot flow. For example, press function button to enter recovery mode or fastboot
+
+if BL_FUNCTION_BUTTON
+
+choice
+
+	prompt "function button type"
+	default BL_GPIO_BUTTON
+
+	config BL_ADC_BUTTON
+		bool "adc button"
+
+	config BL_GPIO_BUTTON
+		bool "gpio button"
+
+endchoice
+
+if BL_ADC_BUTTON
+choice
+	prompt "ADC IP select"
+	default BL_ADC_MV_AUXADC10
+	config BL_ADC_MV_AUXADC10
+		bool "Marvell auxadc10"
+
+	config BL_ADC_DWC_ADC12B5MSAR
+		bool "Designware adc12b5msar"
+endchoice
+endif
+
+config BL_ADC_CH
+	depends on BL_ADC_BUTTON
+	string "adc channel 1, 2, 3, 4..."
+	default "1"
+
+config BL_GPIO_PORT
+	depends on BL_GPIO_BUTTON
+	string "sm gpio 7, 8, 9..."
+	default "7"
+
+config BL_HIGH_LEVEL_VALID
+	bool "valid signal is high"
+	default y
+
+config BL_FASTBOOT_FUNCTION_BUTTON
+	bool "use function button to enter fastboot"
+	depends on FASTBOOT_FLOW
+	default n
+
+endif
+
+endif
+
+if BOOTLOADER || UBOOT_SUBOOT
+
+menuconfig BL_PRELOAD_TA
+	bool "Preload TA"
+	default y
+	help
+		Some TA will be loaded by bootloader in early stage to use TA feature
+		before linux file system is ready.
+
+if BL_PRELOAD_TA
+
+config BL_TA_FASTLOGO
+	depends on BL_PRELOAD_TA
+	bool "fastlogo ta"
+	default y
+
+config BL_TA_KEYMASTER
+	depends on BL_PRELOAD_TA
+	bool "keymaster ta"
+	default y
+
+config TA_KEYMASTER_V4
+	depends on BL_TA_KEYMASTER
+	bool "keymaster v4"
+	default n
+
+config BL_TA_DHUB
+	depends on BL_PRELOAD_TA
+	bool "dhub ta"
+	default y
+endif
+
+config BL_FASTLOGO
+	bool "Fastlogo"
+	default n
+	help
+		display fastlogo when system is booting up
+
+if BL_FASTLOGO
+
+config  BL_FASTLOGO_DISPLAY_MODE
+	string "Display Mode"
+	default "0"
+	help
+		Display Mode 0-HDMI 1-MIPI 2-Dual
+
+config  BL_FASTLOGO_RESID
+	string "Primary Display Res ID"
+	default "13"
+	help
+		Display Res ID (13, 24, 102, etc.)
+
+if BL_FASTLOGO_DISPLAY_MODE=2
+config  BL_FASTLOGO_SECONDARY_RESID
+	string "Secondary Display Res ID"
+	default "102"
+	help
+		Display Res ID (13, 24, 102, etc.)
+endif
+
+endif
+
+menuconfig BL_SYSTEM_MANAGER
+	bool "System Manager"
+	default y
+
+if BL_SYSTEM_MANAGER
+config SM_CM3_FW
+	bool "Use CM3 firmware"
+	default n
+
+config SM_CM3_FW_PLATFORM
+	string "cm3 firmware platform"
+	depends on SM_CM3_FW
+	default "dolphin-rdk"
+	help
+	  cm3 firmware platform name
+
+config SM_TEMPERATURE_MONITOR
+	bool "Temperature Sensor"
+	default y
+
+config SM_OVERHEAT_MONITOR
+	bool "Overheat Check"
+	depends on SM_TEMPERATURE_MONITOR
+	default y
+
+config SM_WAKE_ONLINE
+	bool "Wake Online"
+	default y
+
+config SM_GIGA_ETHERNET
+	depends on SM_WAKE_ONLINE
+	bool "Gigabit ethernet"
+	default y
+
+config SM_IR_PROTOCOL
+	bool "IR Remote Controller"
+	default y
+
+if SM_IR_PROTOCOL
+choice
+
+	prompt "IR Protocol"
+	depends on SM_IR_PROTOCOL
+        default SM_IRP_NEC
+
+        config SM_IRP_NEC
+                bool "NEC protocol"
+
+        config SM_IRP_RC5
+                bool "RC5"
+
+        config SM_IRP_XMP
+                bool "XMP"
+
+	config SM_IRP_TC9012
+		bool "tc9012"
+endchoice
+endif
+
+config SM_IR_RC_VENDOR
+	depends on SM_IR_PROTOCOL
+	string "IR remoter vendor"
+	default "NEC_SYNA_RC"
+	help
+		IR remoter vendor ID (NEC_SYNA_RC, RC5_SYNA_RC, etc.)
+
+config SM_WATCHDOG_MONITOR
+	bool "Watchdog Monitor"
+	default y
+	help
+		if enable, watchdog will be used to monitor soc and sm
+
+config SM_ACTIVE_STANDBY
+	bool "Active Standby"
+	default y
+	help
+		if active standby is enabled, soc can be wake up by wfi
+
+config SM_CEC
+	bool "SM CEC"
+	default y
+	help
+		it will work under standby mod
+
+config SM_LED
+	bool "SM LED"
+	default n
+	help
+		a led will flash when wakeup or enter standby
+
+if SM_CM3_FW
+choice
+	prompt "RAM TS Enable"
+	default SM_RAM_TS_DISABLE
+	config SM_RAM_TS_DISABLE
+		bool "RAM TS disable"
+	config SM_RAM_TS_ENABLE
+		bool "RAM TS enable"
+	config SM_RAM_PARAM_ENABLE
+		bool "RAM parameter access directly"
+endchoice
+
+config SM_GPIOBTN
+	bool "SM GPIO BTN"
+	default n
+	help
+		GPIO function button enable
+
+config SM_ADCBTN
+	bool "SM ADC BTN"
+	default n
+	help
+		ADC function button enable
+
+endif
+
+menuconfig SM_MICMUTE_ADC
+	bool "SM Mic Mute button"
+        default n
+        help
+               Mic mute button is used to mute/unmute audio input
+
+if SM_MICMUTE_ADC
+config SM_MICMUTE_ADC_CH
+        int "ADC channel 0 1, 2, 3, 4..."
+        default "0"
+
+config SM_MICMUTE_HIGH_LEV_VALID
+        bool "Valid signal is high"
+        default y
+
+config SM_MICMUTE_EVENT
+        int "Event value need to be reported"
+        default "0"
+endif
+
+endif
+
+endif
+
+endmenu

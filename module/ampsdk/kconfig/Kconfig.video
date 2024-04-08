@@ -1,0 +1,63 @@
+menu "Video Pipeline"
+
+config AMP_COMPONENT_VENC_ENABLE
+    bool "VENC (Video Encoder) Enable"
+    default y
+
+#config AMP_COMPONENT_IMGDEC_ENABLE
+#    bool "Imgdec Enable"
+#    default n
+
+config AMP_COMPONENT_VOUT_ENABLE
+    bool "VOUT (Video Output) Enable"
+    default y
+
+config AMP_COMPONENT_DEINT_ENABLE
+    bool "DEINT (Offline Video Deinterlace) Enable"
+    default y
+
+config AMP_COMPONENT_SCALER_ENABLE
+    bool "SCALER (Offline Video Scaler) Enable"
+    default y
+
+config AMP_COMPONENT_SR_ENABLE
+    bool "SuperRes (AI Video Scaling) Enable"
+    default n
+    depends on SYNAP
+
+config AMP_COMPONENT_VA_ENABLE
+    bool "Video Analytics Enable"
+    default n
+    depends on SYNAP
+
+source "module/ampsdk/kconfig/Kconfig.video.vdec"
+source "module/ampsdk/kconfig/Kconfig.video.dispsrv"
+
+menu "HDR SETTINGS"
+
+config AMP_HLG
+    bool "HLG (Hybrid Log-Gamma) HDR"
+    default y
+
+config AMP_THDR
+    bool "Technicolor HDR"
+    default y
+
+config AMP_DOLBY_VISION
+    bool "Dolby Vision HDR"
+    default y
+    select AMP_COMPONENT_DVS_ENABLE
+
+config AMP_COMPONENT_DVS_ENABLE
+    depends on AMP_DOLBY_VISION
+    bool
+    default y
+
+config AMP_DOLBY_DUMP
+    bool
+    prompt "Overlay Frame Dump" if AMP_DEVELOPMENT_OPTION
+    default n
+
+endmenu
+
+endmenu

@@ -1,0 +1,8 @@
+config AMP_AUDIO_DOLBY_PT_DD
+	bool "DD"
+
+config AMP_AUDIO_DOLBY_PT_DDP
+	bool "DDP"
+
+config AMP_AUDIO_DOLBY_PT_DCV
+	bool "DCV"

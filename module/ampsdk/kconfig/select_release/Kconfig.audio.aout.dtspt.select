@@ -1,0 +1,1 @@
+source "module/ampsdk/kconfig/audio/Kconfig.audio.aout.dtspt.format"

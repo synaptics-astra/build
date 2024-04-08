@@ -1,0 +1,292 @@
+product_path=${CONFIG_SYNA_SDK_PRODUCT_PATH}/${CONFIG_PRODUCT_NAME}
+clear_fw_path=${CONFIG_SYNA_SDK_PATH}/${CONFIG_FW_REL_PATH}/FW_MODULE_PATH/${syna_chip_name}/${syna_chip_rev}/FW_MODULE_VER_PATH
+clear_fw_path_arm=${CONFIG_SYNA_SDK_PATH}/${CONFIG_FW_REL_PATH}/FW_MODULE_PATH
+out_clear_fw_path=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/fw/FW_MODULE_PATH/${syna_chip_name}/${syna_chip_rev}/FW_MODULE_VER_PATH
+out_clear_fw_path_arm=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/fw/FW_MODULE_PATH
+enc_fw_path=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_FW_IMAGE_PATH}
+enc_fw_intermediate_path=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_FW_IMAGE_PATH}/intermediate
+
+
+#############
+# Functions #
+#############
+genx_secure_image() {
+  v_image_type=$1; shift
+  in_extras=$1; shift
+  in_length=$1; shift
+  f_input=$1; shift
+  f_output=$1; shift
+
+  ### Check input file ###
+  [ -f $f_input ]
+
+  ### Exectuable for generating secure image ###
+  if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
+    exec_cmd=${security_tools_path}gen_x_secure_image
+    [ -x $exec_cmd ]
+  else
+    exec_cmd=gen_x_secure_image
+  fi
+
+  ### Prepare arguments ###
+  unset exec_args
+
+  # Other parameters
+  exec_args="${exec_args} --chip-name=${syna_chip_name}"
+  exec_args="${exec_args} --chip-rev=${syna_chip_rev}"
+  exec_args="${exec_args} --img_type=$v_image_type"
+  exec_args="${exec_args} --key_type=tee"
+
+  #exec_args="${exec_args} --seg_id=0x0"
+  #exec_args="${exec_args} --seg_id_mask=0xFFFFFFFF"
+  #exec_args="${exec_args} --version=0x00000001"
+  #exec_args="${exec_args} --version_mask=0xFFFFFFFF"
+  exec_args="${exec_args} --length=$in_length"
+  exec_args="${exec_args} --extras=$in_extras"
+  exec_args="${exec_args} --workdir-security-tools=${security_tools_path}"
+  exec_args="${exec_args} --workdir-security-keys=${security_keys_path}"
+
+  # Input and output
+  exec_args="${exec_args} --in_payload=${f_input} --out_store=${f_output}"
+
+  ### Generate secure image ###
+  eval ${exec_cmd} "${exec_args}"
+}
+
+gen2_secure_image() {
+  f_input=$1; shift
+  f_output=$1; shift
+
+  ### Check input file ###
+  [ -f $f_input ]
+
+  ### Exectuable for generating secure image ###
+  # HACK: fix the hardcode later
+  exec_cmd=$DRM_ENCY_TOOL
+  [ -x $exec_cmd ]
+
+  ### Prepare arguments ###
+  unset exec_args
+
+  # Codetype
+  exec_args="${exec_args} --code-type=3"
+
+  local workdir_security_ver=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SECURITY_VERSION_PATH}
+  if [ -f ${workdir_security_ver}/codetype_3/config ]; then
+      exec_args="${exec_args} --security-config-path=${workdir_security_ver}/codetype_3/config"
+  fi
+
+  local MARKET_ID=`printf 0x%x ${syna_chip_mid}`
+  # Other parameters
+  exec_args="${exec_args} --chip-name=${syna_chip_name}"
+  exec_args="${exec_args} --chip-rev=${syna_chip_rev}"
+  exec_args="${exec_args} --market-id=${MARKET_ID}"
+  exec_args="${exec_args} --workdir-security-tools=${security_tools_path}"
+  exec_args="${exec_args} --workdir-security-keys=${security_keys_path}"
+
+  exec_args="${exec_args} --custk-type=1"
+  exec_args="${exec_args} --rsak-type=1"
+
+  # Input and output
+  exec_args="${exec_args} --input-file=${f_input} --output-file=${f_output}"
+
+  ### Generate secure image ###
+  eval ${exec_cmd} "${exec_args}"
+}
+
+encrypt_genx_fw () {
+  IN_EXTRAS_TOOL=${security_tools_path}in_extras.py
+
+  if [ ! -f $DRM_ENCY_TOOL ];then
+    echo "TOOL $DRM_ENCY_TOOL not exist"
+    exit 1
+  fi
+
+  echo "Generate Encrpted GenX firmware"
+
+  mkdir -p ${enc_fw_intermediate_path}
+  for i in ${!fw_list[*]}; do
+    fw=${fw_list[$i]}
+    clear_fw_path_final=`echo ${clear_fw_path} | sed -e "s/FW_MODULE_PATH/${fw_path_list[$i]}/g"`
+    clear_fw_path_final=`echo ${clear_fw_path_final} | sed -e "s/FW_MODULE_VER_PATH/${fw_ver_list[$i]}/g"`
+    out_clear_fw_path_final=`echo ${out_clear_fw_path} | sed -e "s/FW_MODULE_PATH/${fw_path_list[$i]}/g"`
+    out_clear_fw_path_final=`echo ${out_clear_fw_path_final} | sed -e "s/FW_MODULE_VER_PATH/${fw_ver_list[$i]}/g"`
+
+    enc_fw_path_tmp=${enc_fw_path}/${fw_ver_list[$i]}
+    mkdir -p ${enc_fw_path_tmp}
+
+    if [ -d ${clear_fw_path_final} ]  || [ -d ${out_clear_fw_path_final} ]; then
+      if [ -d ${out_clear_fw_path_final} ]; then
+        cp -v ${out_clear_fw_path_final}/${fw}.bin  ${enc_fw_intermediate_path}/
+        cp -v ${out_clear_fw_path_final}/${fw}.des  ${enc_fw_intermediate_path}/
+      else
+        cp -v ${clear_fw_path_final}/${fw}.bin  ${enc_fw_intermediate_path}/
+        cp -v ${clear_fw_path_final}/${fw}.des  ${enc_fw_intermediate_path}/
+      fi
+      target=${fw}.fw
+      image=${enc_fw_intermediate_path}/${fw}.bin
+      echo "gene ${image} -> ${enc_fw_intermediate_path}/${target}"
+
+      compress_file=${fw}.compress
+      preenc=${fw}.preenc
+      file_des=${fw}.des
+      if [ ! -f ${enc_fw_intermediate_path}/${file_des} ]; then
+        echo "can not find ${enc_fw_intermediate_path}/${file_des}"
+        exit 1
+      fi
+      org_file_len=`stat -c %s ${image}`
+      if [[ "${fw}" =~ "dsp" ]]; then
+         crc64_tool_org=${security_tools_path}gen_bg_crc64
+         crc64_tool=${enc_fw_intermediate_path}/gen_bg_crc64
+         cp -v ${crc64_tool_org} ${crc64_tool}
+         sed 's/\r$//' ${enc_fw_intermediate_path}/${file_des} > ${enc_fw_intermediate_path}/${file_des}.f
+         read_only_size=$(sed -n '/text/p' ${enc_fw_intermediate_path}/${file_des}.f | awk -F ':' '{print $2}')
+         read_write_size=$(sed -n '/data/p' ${enc_fw_intermediate_path}/${file_des}.f | awk -F ':' '{print $2}')
+         size_in_byte=`echo $(($read_only_size))`
+         echo "DSP read only size in bytes: $size_in_byte"
+         ${crc64_tool} ${enc_fw_intermediate_path}/${fw}.bin ${enc_fw_intermediate_path}/${fw}.crc $size_in_byte
+         cat ${enc_fw_intermediate_path}/${fw}.bin ${enc_fw_intermediate_path}/${fw}.crc > ${enc_fw_intermediate_path}/${fw}.con
+         num_crc=$((size_in_byte/2048))
+         echo "DSP number of BGC-CRC entries: $num_crc"
+         num_crc_entry=`printf "%X\n" $num_crc`
+         ${IN_EXTRAS_TOOL} "DSP_FW" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 $read_only_size $read_write_size $num_crc_entry
+         genx_secure_image "DSP_FW" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 ${enc_fw_intermediate_path}/${fw}.con ${enc_fw_path_tmp}/${target}
+         cp ${enc_fw_path_tmp}/${target} ${enc_fw_path}/${target}
+      elif [[ "${fw}" =~ "tsp" ]]; then
+         priv_DTCM_size=$(sed -n '/secure/p' ${enc_fw_intermediate_path}/${file_des} | awk -F ':' '{print $2}')
+         sec_DTCM_size=$(sed -n '/private/p' ${enc_fw_intermediate_path}/${file_des} | awk -F ':' '{print $2}')
+         dbg_access="0x0"
+         ${IN_EXTRAS_TOOL} "TSP_FW" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 $priv_DTCM_size $sec_DTCM_size $dbg_access
+         genx_secure_image "TSP_FW" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 ${enc_fw_intermediate_path}/${fw}.bin ${enc_fw_path}/${target}
+      elif [[ "${fw}" =~ "gpu" ]]; then
+         crc64_tool_org=${security_tools_path}gen_bg_crc64
+         crc64_tool=${enc_fw_intermediate_path}/gen_bg_crc64
+         cp -v ${crc64_tool_org} ${crc64_tool}
+         sed 's/\r$//' ${enc_fw_intermediate_path}/${file_des} > ${enc_fw_intermediate_path}/${file_des}.f
+         read_only_size=$(sed -n '/text/p' ${enc_fw_intermediate_path}/${file_des}.f | awk -F ':' '{print $2}')
+         read_write_size=$(sed -n '/data/p' ${enc_fw_intermediate_path}/${file_des}.f | awk -F ':' '{print $2}')
+         size_in_byte=`echo $(($read_only_size))`
+         echo "GPU read only size in bytes: $size_in_byte"
+         ${crc64_tool} ${enc_fw_intermediate_path}/${fw}.bin ${enc_fw_intermediate_path}/${fw}.crc $size_in_byte
+         cat ${enc_fw_intermediate_path}/${fw}.bin ${enc_fw_intermediate_path}/${fw}.crc > ${enc_fw_intermediate_path}/${fw}.con
+         num_crc=$((size_in_byte/2048))
+         echo "GPU number of BGC-CRC entries: $num_crc"
+         num_crc_entry=`printf "%X\n" $num_crc`
+         ${IN_EXTRAS_TOOL} "GPU_FW" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 $read_only_size $read_write_size $num_crc_entry
+         genx_secure_image "GPU_FW" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 ${enc_fw_intermediate_path}/${fw}.con ${enc_fw_path}/${target}
+      elif [[ "${fw}" =~ "ifcp" ]]; then
+         eval cp ${enc_fw_intermediate_path}/${fw}.bin ${enc_fw_path}/${target}
+      fi
+    else
+      target=${fw}.fw
+      if [ -f ${enc_fw_path}/${target} ]; then
+        rm -rf ${enc_fw_path}/${target}
+      fi
+    fi
+  done
+}
+
+encrypt_zsp_fw () {
+  DRM_ENCY_TOOL=${security_tools_path}gen_secure_image
+  GEN_HEADER_TOOL=${CONFIG_SYNA_SDK_OUT_HOST_REL_PATH}/genimg
+  COMPRESS_TOOL=${CONFIG_SYNA_SDK_PATH}/${CONFIG_TOOLS_BIN_PATH}/compress
+
+  if [ ! -f $DRM_ENCY_TOOL ];then
+    echo "TOOL $DRM_ENCY_TOOL not exist"
+    exit 1
+  fi
+
+  if [ "$1" = "zsp" ]; then
+    target_fw_list=(${fw_list[*]})
+    target_fw_patch_list=(${fw_path_list[*]})
+    target_clear_fw_path=${clear_fw_path}
+    out_target_clear_fw_path=${out_clear_fw_path}
+  elif [ "$1" = "arm" ]; then
+    target_fw_list=(${fw_list_arm[*]})
+    target_fw_patch_list=(${fw_path_list_arm[*]})
+    target_clear_fw_path=${clear_fw_path_arm}
+    out_target_clear_fw_path=${out_clear_fw_path_arm}
+  fi
+
+  mkdir -p ${enc_fw_intermediate_path}
+  for i in ${!target_fw_list[*]}; do
+    fw=${target_fw_list[$i]}
+
+    clear_fw_path_final=`echo ${target_clear_fw_path} | sed -e "s/FW_MODULE_PATH/${target_fw_patch_list[$i]}/g"`
+    out_clear_fw_path_final=`echo ${out_target_clear_fw_path} | sed -e "s/FW_MODULE_PATH/${target_fw_patch_list[$i]}/g"`
+
+    do_enc_fw=No
+    if ([ -d ${clear_fw_path_final} ] || [ -d ${out_clear_fw_path_final} ]) && [ "$1" = "zsp" ]; then
+      echo "Generate Encrpted Audio ZSP firmware"
+      do_enc_fw=Yes
+    fi
+
+    if ([[ "${clear_fw_path_final}" =~ ${CONFIG_TOOLCHAIN_APPLICATION} ]] || [[ "${out_clear_fw_path_final}" =~ ${CONFIG_TOOLCHAIN_APPLICATION} ]]) && [ "$1" = "arm" ]; then
+      echo "Generate Encrpted ARM firmware"
+      do_enc_fw=Yes
+    fi
+
+    if [ "${do_enc_fw}" = "Yes" ] ;then
+      if [ -d ${out_clear_fw_path_final} ]; then
+        cp -v ${out_clear_fw_path_final}/${fw}.bin  ${enc_fw_intermediate_path}/
+        cp -v ${out_clear_fw_path_final}/${fw}.des  ${enc_fw_intermediate_path}/
+      else
+        cp -v ${clear_fw_path_final}/${fw}.bin  ${enc_fw_intermediate_path}/
+        cp -v ${clear_fw_path_final}/${fw}.des  ${enc_fw_intermediate_path}/
+      fi
+      target=${fw}.fw
+      image=${enc_fw_intermediate_path}/${fw}.bin
+      echo "gene ${image} -> ${enc_fw_path}/${target}"
+
+      compress_file=${fw}.compress
+      preenc=${fw}.preenc
+      file_des=${fw}.des
+      if [ ! -f ${enc_fw_intermediate_path}/${file_des} ]; then
+        echo "can not find ${enc_fw_intermediate_path}/${file_des}"
+        exit 1
+      fi
+      org_file_len=`stat -c %s ${image}`
+      fw_address=`cat ${enc_fw_intermediate_path}/$file_des`
+      ${COMPRESS_TOOL} ${image} ${enc_fw_intermediate_path}/${compress_file}
+      ${GEN_HEADER_TOOL} -n firmware -i LDFW -v 0x0 -d ${enc_fw_intermediate_path}/${compress_file} -t attr0 0x01000000 -t attr1 $org_file_len -o ${enc_fw_intermediate_path}/${preenc} -a ${fw_address}
+      gen2_secure_image ${enc_fw_intermediate_path}/${preenc} ${enc_fw_path}/${target}
+    else
+      if [ "$1" = "zsp" ]; then
+        target=${fw}.fw
+        if [ -f ${enc_fw_path}/${target} ]; then
+          rm -rf ${enc_fw_path}/${target}
+        fi
+      fi
+    fi
+  done
+}
+
+mkdir -p ${enc_fw_path}
+if [ ! -f ${CONFIG_SYNA_SDK_PATH}/${CONFIG_FW_REL_PATH}/release ] && [ "is${CONFIG_PRE_CLEAR_IMAGE}" = "is" ]; then
+  if [ "is${CONFIG_GENX_ENABLE}" = "isy" ] || [ "is${syna_sec_lvl}" = "isgenx" ]; then
+    encrypt_genx_fw
+  else
+    encrypt_zsp_fw zsp
+    encrypt_zsp_fw arm
+  fi
+else
+  #install hardware process fw - none-arm/main core
+  for i in ${!fw_list[*]}; do
+    fw=${fw_list[$i]}
+    target=${fw}.fw
+    enc_fw_path_final=`echo ${clear_fw_path} | sed -e "s/FW_MODULE_PATH/${fw_path_list[$i]}/g"`
+    enc_fw_path_final=`echo ${enc_fw_path_final} | sed -e "s/FW_MODULE_VER_PATH/${fw_ver_list[$i]}/g"`
+    if [ -f ${enc_fw_path_final}/${target} ]; then
+      cp -avf ${enc_fw_path_final}/${target} ${enc_fw_path}/${target}
+    fi
+  done
+  # install arm fw (main core)
+  for i in ${!fw_list_arm[*]}; do
+  fw=${fw_list_arm[$i]}
+    target=${fw}.fw
+    enc_fw_path_final=`echo ${clear_fw_path_arm} | sed -e "s/FW_MODULE_PATH/${fw_path_list_arm[$i]}/g"`
+    if [ -f ${enc_fw_path_final}/${target} ] && [[ "${enc_fw_path_final}" =~ ${CONFIG_TOOLCHAIN_APPLICATION} ]]; then
+      cp -avf ${enc_fw_path_final}/${target} ${enc_fw_path}/${target}
+    fi
+  done
+fi

@@ -1,0 +1,27 @@
+if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
+  set -e
+  trap 'echo Fatal error: script $0 aborting at ${BASH_SOURCE}:$LINENO, command \"$BASH_COMMAND\" returned $? 1>&2; exit 1' ERR
+
+  topdir=$(pwd)
+  shopt -s expand_aliases
+  alias TOPDIR="echo $(pwd)"
+  OUT_PRODUCT_DIR=`cat $1 | grep CONFIG_PRODUCT_NAME | cut -d '"' -f 2`
+  config_file=$1
+
+  source ${config_file}
+  if [ "$2" == "clean" ]; then
+    clean=1;
+  else
+    clean=0;
+  fi
+
+  export PATH="${CONFIG_TOOLCHAIN_PATH}:${PATH}"
+
+  if [ "is${CONFIG_TOOLCHAIN_CLANG_PATH}" != "is" ]; then
+    export PATH="${topdir}/toolchain/${CONFIG_TOOLCHAIN_CLANG_PATH}/bin:${PATH}"
+  fi
+
+  if [ "is${CONFIG_TOOLCHAIN_APPLICATION_PATH}" != "is" ]; then
+    export PATH="${topdir}/toolchain/${CONFIG_TOOLCHAIN_APPLICATION_PATH}/bin:${PATH}"
+  fi
+fi

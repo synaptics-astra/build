@@ -1,0 +1,197 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+source "module/ampsdk/kconfig/audio/Kconfig.audio.adec.impl"
+
+comment "Supported Formats"
+
+config AMP_AUDIO_AAC_SUPPORTED
+	bool "AAC"
+	default y
+	select AMP_AUDIO_AAC_USE_ARM if AMP_AUDIO_USE_ARM
+	#select AMP_AUDIO_AAC_USE_ARM if (AMP_AUDIO_USE_ARM_ONLY || AMP_AUDIO_RELEASE)
+	#select AMP_AUDIO_AAC_USE_HIFI if AMP_AUDIO_USE_DSP_HIFI
+
+config AMP_AUDIO_ADPCM_SUPPORTED
+	bool "ADPCM"
+	default y
+	depends on AMP_AUDIO_USE_ARM
+	select AMP_AUDIO_ADPCM_USE_ARM
+
+config AMP_AUDIO_AMR_SUPPORTED
+	bool "AMR"
+	default y
+	depends on AMP_AUDIO_USE_ARM
+	select AMP_AUDIO_AMR_USE_ARM
+
+if AMP_AUDIO_USE_ZSP
+config AMP_IP_AUDIO_DDP_SUPPORTED
+	bool "DDP (ZSP)"
+	default n
+	select AMP_IP_AUDIO_DDP_USE_ZSP
+
+
+config AMP_IP_AUDIO_DTS_SUPPORTED
+	bool
+	default n
+
+config AMP_IP_AUDIO_DTS_CORE_SUPPORTED
+	bool "DTS Core (ZSP)"
+	select AMP_IP_AUDIO_DTS_SUPPORTED
+	select AMP_IP_AUDIO_DTS_CORE_USE_ZSP
+	default n
+
+config AMP_IP_AUDIO_DTS_DUMMY_SUPPORTED
+	bool "DTS Dummy (ZSP)"
+	select AMP_IP_AUDIO_DTS_SUPPORTED
+	select AMP_IP_AUDIO_DTS_DUMMY_USE_ZSP
+	default n
+
+config AMP_IP_AUDIO_DTS_HD_SUPPORTED
+	bool "DTS HD (ZSP)"
+	select AMP_IP_AUDIO_DTS_SUPPORTED
+	select AMP_IP_AUDIO_DTS_HD_USE_ZSP
+	default n
+
+config AMP_IP_AUDIO_DTS_MA_SUPPORTED
+	bool "DTS MA (ZSP)"
+	select AMP_IP_AUDIO_DTS_SUPPORTED
+	select AMP_IP_AUDIO_DTS_MA_USE_ZSP
+	default n
+
+config AMP_IP_AUDIO_MS11_SUPPORTED
+	bool "MS11 (ZSP)"
+	default n
+	select AMP_IP_AUDIO_MS11_USE_ZSP
+endif
+
+config AMP_AUDIO_FLAC_SUPPORTED
+	bool "FLAC"
+	default y
+	select AMP_AUDIO_FLAC_USE_ARM if AMP_AUDIO_USE_ARM
+	#select AMP_AUDIO_FLAC_USE_ARM if (AMP_AUDIO_USE_ARM_ONLY || AMP_AUDIO_RELEASE)
+	#select AMP_AUDIO_FLAC_USE_HIFI if AMP_AUDIO_USE_DSP_HIFI
+
+config AMP_AUDIO_G711_SUPPORTED
+	bool "G711"
+	default y
+	depends on AMP_AUDIO_USE_ARM
+	select AMP_AUDIO_G711_USE_ARM
+
+config AMP_AUDIO_LATM_SUPPORTED
+	bool "LATM"
+	default y
+	depends on AMP_AUDIO_USE_ARM
+	select AMP_AUDIO_LATM_USE_ARM
+
+config AMP_AUDIO_LPCM_SUPPORTED
+	bool "LPCM"
+	default y
+	depends on AMP_AUDIO_USE_ARM
+	select AMP_AUDIO_LPCM_USE_ARM
+
+config AMP_IP_AUDIO_MPEG_SUPPORTED
+	bool "MP3"
+	default y
+	select AMP_IP_AUDIO_MPEG_USE_ARM if AMP_AUDIO_USE_ARM
+	#select AMP_IP_AUDIO_MPEG_USE_ARM if (AMP_AUDIO_USE_ARM_ONLY || AMP_AUDIO_RELEASE)
+	#select AMP_IP_AUDIO_MPEG_USE_HIFI if AMP_AUDIO_USE_DSP_HIFI
+	select AMP_AUDIO_MP3_USE_ARM if (AMP_AUDIO_USE_ARM_ONLY || AMP_AUDIO_RELEASE)
+	select AMP_AUDIO_MP3_USE_HIFI if AMP_AUDIO_USE_DSP_HIFI
+
+config AMP_IP_AUDIO_ADECCA_SUPPORTED
+	bool "ADECCA"
+	default n
+
+config AMP_AUDIO_RAWPCM_SUPPORTED
+	bool "RAWPCM"
+	default y
+	depends on AMP_AUDIO_USE_ARM
+	select AMP_AUDIO_RAWPCM_USE_ARM
+
+config AMP_IP_AUDIO_UDC_SUPPORTED
+	bool "UDC"
+	default n
+	depends on AMP_AUDIO_USE_ARM
+	select AMP_IP_AUDIO_UDC_USE_ARM
+
+config  AMP_IP_AUDIO_UDC_LITE_SUPPORTED
+	bool "UDC LITE"
+	default n
+	depends on AMP_AUDIO_USE_ARM
+	select AMP_IP_AUDIO_UDC_LITE_USE_ARM
+
+config AMP_AUDIO_VORBIS_SUPPORTED
+	bool "VORBIS"
+	default y
+	select AMP_AUDIO_VORBIS_USE_ARM if AMP_AUDIO_USE_ARM
+	#select AMP_AUDIO_VORBIS_USE_ARM if (AMP_AUDIO_USE_ARM_ONLY || AMP_AUDIO_RELEASE)
+	#select AMP_AUDIO_VORBIS_USE_HIFI if AMP_AUDIO_USE_DSP_HIFI
+
+config  AMP_AUDIO_WMA_SUPPORTED
+	bool "WMA"
+	default n
+	select AMP_AUDIO_WMA_USE_ARM if AMP_AUDIO_USE_ARM
+	#select AMP_AUDIO_WMA_USE_ARM if  (AMP_AUDIO_USE_ARM_ONLY || AMP_AUDIO_RELEASE)
+	#select AMP_AUDIO_WMA_USE_HIFI if AMP_AUDIO_USE_DSP_HIFI
+
+config AMP_IP_AUDIO_DOLBYPASS_SUPPORTED
+	bool
+	prompt "DOLBYPASS (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+	depends on AMP_AUDIO_USE_ARM
+	select AMP_IP_AUDIO_DOLBYPASS_USE_ARM
+
+config AMP_AUDIO_OPUS_SUPPORTED
+	bool "OPUS"
+	default n
+	select AMP_AUDIO_OPUS_USE_HIFI if AMP_AUDIO_USE_DSP_HIFI
+
+menu "Format Options"
+
+config AMP_AUDIO_MAX_CH_AAC
+	depends on AMP_AUDIO_AAC_SUPPORTED
+	int "AAC MAX Channel Num"
+	default 8
+
+config AMP_AUDIO_MAX_CH_DOLBY
+	depends on AMP_IP_AUDIO_MS11_SUPPORTED || AMP_IP_AUDIO_DDP_SUPPORTED
+	int "DOLBY MAX Channel Num"
+	default 6
+
+config AMP_IP_AUDIO_MAX_CH_DTS
+	depends on AMP_IP_AUDIO_DTS_SUPPORTED
+	int "DTS MAX Channel Num"
+	default 6
+
+config AMP_IP_AUDIO_MAX_CH_WMA
+	depends on AMP_AUDIO_WMA_SUPPORTED
+	int "WMA MAX Channel Num"
+	default 8
+
+config AMP_IP_AUDIO_AC3ONLY
+	depends on AMP_IP_AUDIO_DDP_SUPPORTED
+	bool "AC3 Only"
+	default n
+
+config AMP_AUDIO_ENABLE_MS10_MODE
+	depends on AMP_IP_AUDIO_MS11_SUPPORTED
+	bool
+	prompt "MS10 Mode Enable (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+
+config AMP_AUDIO_ENABLE_FILTER_FOR_RAWPCM
+	depends on AMP_AUDIO_RAWPCM_SUPPORTED
+	bool
+	prompt "RAWPCM Filter Enable (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+
+config AMP_AUDIO_UDC_CERF_ENABLE
+	depends on AMP_IP_AUDIO_UDC_SUPPORTED || AMP_IP_AUDIO_UDC_LITE_SUPPORTED
+	bool
+	prompt "UDC Certification Enable (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+
+endmenu

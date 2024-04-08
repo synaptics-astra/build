@@ -1,0 +1,141 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+mainmenu "VSSDK BUILD Configuration"
+
+menu "Build Configuration"
+source "Kconfig.product"
+endmenu
+
+menu "Target Options"
+
+source "kconfig/Kconfig.chip"
+
+choice
+	prompt "Target OS"
+	default ANDROID_OS
+
+source "kconfig/Kconfig.os"
+endchoice
+
+config JTAG_ENABLE
+	bool "Enable JTAG"
+		default n
+		help
+			enable JTAG
+
+source "module/sysroot/Kconfig.build"
+choice
+	prompt "Image Type"
+	default IMAGE_EMMC
+config IMAGE_EMMC
+	bool "EMMC image"
+config IMAGE_NAND
+	bool "NAND image"
+config IMAGE_USBBOOT
+	bool "USBBOOT image"
+endchoice
+
+source "kconfig/Kconfig.bootflow"
+
+source "module/image/Kconfig.build"
+
+endmenu
+
+menu "Host Options"
+
+config CPU_NUMBER
+	int "CPU for compiling"
+	default 18
+
+source "kconfig/Kconfig.path"
+config SYNA_SDK_OUT_SYSYROOT
+	string
+	default "build_sysroot"
+	help
+		System root for build.
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_SYSYROOT}
+
+config SYNA_SDK_OUT_ROOTFS
+	string
+	default "system"
+	help
+		Root FS for image generation
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_ROOTFS}
+
+
+source "module/toolchain/Kconfig.build"
+source "kconfig/Kconfig.tool"
+endmenu
+
+
+source "module/linux/Kconfig.build"
+
+menu "Boot"
+
+config PREBOOT_PLATFORM
+	string "platform for boot"
+	default "bg5ct_stb"
+	help
+		bg5ct_stb/bg5ct_minibox/bg5ct_sec/bg5ct_pek/bg5ct_ffv/bg5ct_IP1500/bg5ct_ginkgo/bg5ct_mozart
+
+config GENX_ENABLE
+	bool "GenX enable"
+		default n
+		help
+			enable GenX secure boot flow
+
+config FASTBOOT_FLOW
+	bool "enable fastboot in bootflow"
+	depends on ANDROID_OS
+	default y
+
+choice
+	prompt "PREBOOT type"
+	default PREBOOT
+config PREBOOT
+	bool "standard preboot"
+endchoice
+
+source "module/preboot/Kconfig.build"
+
+choice
+        prompt "BOOTLOADER type"
+	default BOOTLOADER
+config BOOTLOADER
+        bool "standard bootloader"
+config UBOOT_SUBOOT
+        bool "U-Boot as bootloader"
+endchoice
+
+source "module/bootloader/Kconfig.build"
+
+source "module/uboot/Kconfig.build"
+endmenu
+
+menu "Trusted Environment Options"
+
+source "module/tee/Kconfig.build"
+source "module/tee_dev/Kconfig.build"
+endmenu
+
+source "module/drm/Kconfig.build"
+
+source "module/ampsdk/Kconfig.build"
+source "module/ta_enc/Kconfig.build"
+source "module/fw_enc/Kconfig.build"
+source "module/drivers/Kconfig.build"
+
+menu "SYNAP Configuration"
+source "module/synap/Kconfig.build"
+source "module/synap_tools/Kconfig.build"
+endmenu
+
+menu "Target Packages"
+source "module/application/Kconfig.build"
+source "module/external/Kconfig.build"
+source "module/ta_app/Kconfig.build"
+endmenu
+
+source "module/security/Kconfig.build"

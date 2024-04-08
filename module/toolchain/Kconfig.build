@@ -1,0 +1,42 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+menu "Toolchain Configuration"
+
+source "build/module/toolchain/Kconfig.common"
+
+config LINUX_CROSS_COMPILE
+	string "linux kernel cross compile prefix"
+	default "aarch64-linux-gnu-"
+	help
+		Specify the pre-fix for differen toolchain.
+		Use "llvm-clang-" for llvm/clang
+
+config LINUX_CROSS_COMPILE_PATH
+	string "linux kernel cross compile path"
+	default "aarch64/gcc-arm-aarch64-linux-gnu-8.3"
+	help
+		Path under VSSDK/toolchain/
+
+config LINUX_CROSS_COMPILE_CC
+	string "linux kernel CC over-write option"
+	default "aarch64-linux-gnu-gcc"
+	help
+		Change to "clang" to enable CLANG compiling for linux
+
+config LINUX_CROSS_COMPILE_LLVM_UTILS
+	depends on LINUX_CROSS_COMPILE_CC="clang"
+	bool "building linux kernel with llvm utilities"
+	default n
+	help
+		Enable LLVM=1 in Kbuild
+
+config TOOLCHAIN_CLANG_PATH
+	string "CLANG toolchain path"
+        depends on LINUX_CROSS_COMPILE_CC="clang" || TOOLCHAIN_APPLICATION_CC="clang"
+	default "clang/linux-x86/clang-r353983c"
+	help
+		Path under VSSDK/toolchain/clang
+
+endmenu

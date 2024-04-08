@@ -1,0 +1,3 @@
+config BERLIN_LIST_SOC
+	string "Supported SoC"
+	default "DOLPHIN PLATYPUS MYNA2"

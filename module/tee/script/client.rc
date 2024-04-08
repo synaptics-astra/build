@@ -1,0 +1,69 @@
+opt_lib_outdir_release=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TEE_CLIENT_REL_PATH}
+
+if [ "is${CONFIG_BERLIN_AS470_A0}" = "isy" ]; then
+CFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_CFLAG}"
+else
+CFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_CFLAG} --sysroot=${opt_build_sysroot}"
+fi
+
+LDFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_LDFLAG}"
+
+CLANG_CFLAGS="${CONFIG_TOOLCHAIN_CLANG_CFLAG}"
+CLANG_LDFLAGS="${CONFIG_TOOLCHAIN_CLANG_LDFLAG}"
+CROSS_COMPILE="${CONFIG_TOOLCHAIN_APPLICATION}"
+
+if [ "${CONFIG_TOOLCHAIN_APPLICATION_CC}" = "clang" ]; then
+  APP_CC="clang"
+  CFLAGS="${CLANG_CFLAGS} ${CFLAGS}"
+  LDFLAGS="${CLANG_LDFLAGS} ${LDFLAGS}"
+  CROSS_COMPILE="llvm-"
+fi
+
+make -C ${module_topdir}/tee/client_api/build \
+  APP_CC=${APP_CC} APP_CROSS_COMPILE="${CROSS_COMPILE}" \
+  CA_CFLAGS="${CFLAGS}" CA_LDFLAGS="${LDFLAGS}" ODIR=${opt_client_outdir_intermediate}
+
+INSTALL_F ${opt_client_outdir_intermediate}/libteec.so ${opt_build_sysroot}/usr/lib/
+
+mkdir -p ${opt_build_sysroot}/usr/include/teec
+for i in ${module_topdir}/include/*; do
+    INSTALL_F ${i} ${opt_build_sysroot}/usr/include/teec
+done
+
+for i in ${module_topdir}/tee/common/*;do
+    INSTALL_F ${i} ${opt_build_sysroot}/usr/include/teec
+done
+
+for i in ${module_topdir}/tee/client_api/*\.h ;do
+    INSTALL_F ${i} ${opt_build_sysroot}/usr/include/teec
+done
+
+for i in ${module_topdir}/tee/internal_api/* ;do
+    INSTALL_F ${i} ${opt_build_sysroot}/usr/include/teec
+done
+
+# install to release path
+mkdir -p ${opt_lib_outdir_release}/lib/${CONFIG_TOOLCHAIN_APPLICATION}
+INSTALL_F ${opt_client_outdir_intermediate}/libteec.so ${opt_lib_outdir_release}/lib/${CONFIG_TOOLCHAIN_APPLICATION}/
+INSTALL_F ${opt_client_outdir_intermediate}/libteec.a ${opt_lib_outdir_release}/lib/${CONFIG_TOOLCHAIN_APPLICATION}/
+
+# TODO: remove them later
+mkdir -p ${opt_lib_outdir_release}/include/common
+mkdir -p ${opt_lib_outdir_release}/include/client_api
+mkdir -p ${opt_lib_outdir_release}/include/internal_api
+
+for i in ${module_topdir}/include/*; do
+    INSTALL_F ${i} ${opt_lib_outdir_release}/include
+done
+
+for i in ${module_topdir}/tee/common/*;do
+    INSTALL_F ${i} ${opt_lib_outdir_release}/include/common
+done
+
+for i in ${module_topdir}/tee/client_api/*\.h ;do
+    INSTALL_F ${i} ${opt_lib_outdir_release}/include/client_api
+done
+
+for i in ${module_topdir}/tee/internal_api/* ;do
+    INSTALL_F ${i} ${opt_lib_outdir_release}/include/internal_api
+done

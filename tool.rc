@@ -1,0 +1,37 @@
+### Find out exectuables to be built ###
+pushd ${topdir}/build/tools/src/executables
+
+list_executables=$(find . -mindepth 1 -maxdepth 1 -type d)
+
+if [ $clean -eq 1 ]; then
+for e in $list_executables; do
+  echo "Build executable: $(expr $e : '^\.\/\(.*\)')"
+  make -C $e clean
+  rm -rf ${CONFIG_SYNA_SDK_OUT_HOST_OBJ_PATH}/$e
+  rm -rf ${CONFIG_SYNA_SDK_OUT_HOST_REL_PATH}/$e
+  exit 0
+done
+else
+for e in $list_executables; do
+  echo "Build executable: $(expr $e : '^\.\/\(.*\)')"
+  make -C $e all OBJDIR=${CONFIG_SYNA_SDK_OUT_HOST_OBJ_PATH}/$e
+  /bin/cp -ad ${CONFIG_SYNA_SDK_OUT_HOST_OBJ_PATH}/$e/$e ${CONFIG_SYNA_SDK_OUT_HOST_REL_PATH}/.
+done
+fi
+popd
+
+source build/install.rc
+
+# Copy tools
+workdir_security_tools=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SECURITY_TOOL_PATH}
+mkdir -p ${workdir_security_tools}/bin
+mkdir -p ${workdir_security_tools}/lib/sec_tools/bin
+
+INSTALL_F ${topdir}/build/tools/bin/gen_secure_image ${workdir_security_tools}/bin/gen_secure_image
+INSTALL_F ${topdir}/build/tools/bin/gen_x_secure_image ${workdir_security_tools}/bin/gen_x_secure_image
+INSTALL_F ${topdir}/build/tools/bin/in_extras.py ${workdir_security_tools}/bin/in_extras.py
+INSTALL_F ${topdir}/build/tools/bin/crc_calc.py ${workdir_security_tools}/bin/crc_calc.py
+INSTALL_F ${topdir}/build/tools/bin/gen_bg_crc64 ${workdir_security_tools}/bin/gen_bg_crc64
+INSTALL_F ${topdir}/build/tools/lib/sec_tools/bin/sign_image_v4 ${workdir_security_tools}/lib/sec_tools/bin/sign_image_v4
+INSTALL_F ${topdir}/build/tools/lib/sec_tools/bin/genx_img ${workdir_security_tools}/lib/sec_tools/bin/genx_img
+INSTALL_F ${topdir}/build/tools/lib/sec_tools/bin/gen_rsa_payload ${workdir_security_tools}/lib/sec_tools/bin/gen_rsa_payload

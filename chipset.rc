@@ -1,0 +1,25 @@
+# used in release script
+# must be included after header.rc
+
+syna_chip_name_set=()
+syna_chip_rev_set=()
+syna_chip_mid_set=()
+
+if [ "is$CONFIG_BERLIN_LIST_SOC" != "is" ]; then
+    typeset -l chip
+
+    i=0
+    for chip in $CONFIG_BERLIN_LIST_SOC
+    do
+        syna_chip_name_set[$i]=$chip
+        i=`expr $i + 1`
+    done
+else
+    echo "soc list not set in config"
+    exit 1
+fi
+
+if [ ${#syna_chip_name_set[@]} -eq 0 ]; then
+    echo "no chip selected in config"
+    exit 1
+fi

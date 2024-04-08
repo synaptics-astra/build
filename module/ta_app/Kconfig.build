@@ -1,0 +1,9 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+menu "TA_APP Configuration"
+
+source "build/module/ta_app/Kconfig.common"
+
+endmenu

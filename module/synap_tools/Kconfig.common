@@ -1,0 +1,4 @@
+config SYNAP_TOOLS
+    bool "SYNAP Tools"
+    select OPENCV
+    default n

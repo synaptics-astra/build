@@ -1,0 +1,31 @@
+config SYNA_SDK_PATH
+	string
+	default "$(TOPDIR)"
+
+config SYNA_SDK_PRODUCT_PATH
+	string "Product Configuration Path"
+	default "$(TOPDIR)/configs/product"
+
+config SYNA_SDK_OUT_TARGET_PATH
+	string
+	default "$(TOPDIR)/out/${OUT_PRODUCT_DIR}/target"
+
+config SYNA_SDK_OUT_HOST_OBJ_PATH
+	string
+	default "$(TOPDIR)/out/${OUT_PRODUCT_DIR}/host/obj/EXECUTABLES"
+
+config SYNA_SDK_OUT_HOST_REL_PATH
+	string
+	default "$(TOPDIR)/out/${OUT_PRODUCT_DIR}/host/bin"
+
+config SYNA_SDK_BUILD_PATH
+	string
+	default "$(TOPDIR)/out/${OUT_PRODUCT_DIR}/build"
+
+config SYNA_SDK_KEY_PATH
+	string "Product Key Path"
+	default "$(TOPDIR)/security/keys"
+
+config SYNA_SDK_TA_BUILD_PATH
+	string
+	default "$(TOPDIR)/ta_app/build"

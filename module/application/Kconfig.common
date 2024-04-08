@@ -1,0 +1,73 @@
+config POWERMANAGED
+	depends on LINUX_OS
+	bool "enable power managerment"
+	default n
+
+config APP_GPIO
+	depends on AMPSDK
+	bool "GPIO control appilcation"
+	default n
+	help
+		Control SoC and SM GPIO
+
+config APP_SMBOX
+	depends on AMPSDK
+	bool "System Manger control appilcation"
+	default n
+	help
+		Control SM
+
+config TEST_STANDBY
+        depends on AMPSDK
+        bool "Standby mode tester"
+        default n
+        help
+                Pure SDK standby mode test
+
+config TEST_SPI
+	bool "SPI tester"
+	default n
+
+config WATCHDOGD
+	depends on AMPSDK
+	bool "Watchdog daemon utility"
+	default n
+
+config VOICECAPTURE
+	bool "Voice capture with ALSA"
+	default n
+
+config LIBSYNAV4L2
+	depends on AMPSDK
+	bool "syna v4l2 lib"
+	default n
+
+config V4L2TEST
+	depends on LIBSYNAV4L2
+	bool "syna v4l2 layer sample test"
+	default n
+
+config V4L2_CODEC
+    bool "v4l2 vcodec driver test"
+    default n
+
+config ISP_PQTOOL
+	depends on AMP_COMPONENT_ISP_ENABLE
+	bool "ISP PQ tool Server"
+	default n
+
+config OTA_API
+	bool "Over to Air"
+	default n
+
+config TEST_OTA
+	bool "Over to Air Tester"
+	default n
+
+config VIDEOSDK
+	bool "VideoSDK stack/applications"
+	default n
+
+config GSTREAMER_PLUGINS_SYNA
+	bool "GStreamer Synaptics Plugins"
+	default n

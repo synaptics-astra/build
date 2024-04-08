@@ -1,0 +1,10 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+menu "Bootastic Configuration"
+
+config BOOTASTIC
+        bool "Bootastic for DVF101/DVF99"
+        default n
+endmenu

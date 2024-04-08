@@ -1,0 +1,57 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+menu "Preboot Configuration"
+depends on PREBOOT
+
+config PREBOOT_MARKET_ID
+	int "Market ID"
+	default 7
+
+config PREBOOT_REL_PATH
+	string "Preboot release path"
+	default "preboot"
+	help
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_PREBOOT_REL_PATH}
+
+config PREBOOT_DDR_TYPE
+	string "memory type"
+	default "ddr4"
+	help
+		Current valid value are ddr4, ddr3
+
+config PREBOOT_MEMORY_SPEED
+	int "memory speed"
+	default 2400
+
+config PREBOOT_MEMORY_SIZE
+	string "memory size"
+	default "2GB"
+
+config PREBOOT_MEMORY_VARIANT
+	string "memory variant"
+	default "default/default"
+
+config PREBOOT_DDR_PHY_FW
+	bool "ddr phy fw"
+	default n
+
+config PREBOOT_TEE_ENABLE
+	bool "enable TEE in bootflow"
+	default y
+
+config PREBOOT_PROFILE
+	string "profile for preboot"
+	default "normal"
+	help
+		normal or nocs or nocs/type_i or nocs_test
+
+config PREBOOT_SECURITY_IMAGE_PATH
+	string
+	default "boot/security/images"
+	help
+		Used as ${CONFIG_SYNA_SDK_PATH}/${CONFIG_PREBOOT_SECURITY_IMAGE_PATH}
+
+endmenu

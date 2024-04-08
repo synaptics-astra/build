@@ -1,0 +1,9 @@
+CONFIG_TOOLCHAIN_APPLICATION_CFLAG="-mfloat-abi=softfp -mfpu=neon -fPIE -fPIC"
+CONFIG_TOOLCHAIN_APPLICATION_CPPFLAG="-std=c++17"
+CONFIG_TOOLCHAIN_APPLICATION_LDFLAG="-lc -lm -llog -lcutils -ldl -Bdynamic -Wl,-dynamic-linker,/system/bin/linker"
+
+#It is arm-linux-androideabi in sysroot; Target should be armv7-linux-androideabi
+export ANDROID_SYSROOT_TARGET=$(echo ${CONFIG_TOOLCHAIN_APPLICATION} | sed -e "s/-$//")
+CONFIG_TARGET=${ANDROID_SYSROOT_TARGET/arm-/armv7-}${CONFIG_RUNTIME_ANDROID_API_LEVEL}
+CONFIG_TOOLCHAIN_CLANG_CFLAG="--target=${CONFIG_TARGET} -march=armv7-a --sysroot=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_SYSYROOT}"
+CONFIG_TOOLCHAIN_CLANG_LDFLAG="-fuse-ld=lld"

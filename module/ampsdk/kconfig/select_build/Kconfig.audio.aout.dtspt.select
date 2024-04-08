@@ -1,0 +1,5 @@
+choice
+    prompt "Format"
+    default AMP_IP_AUDIO_DTS_PT_DTS
+source "module/ampsdk/kconfig/audio/Kconfig.audio.aout.dtspt.format"
+endchoice

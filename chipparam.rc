@@ -1,0 +1,107 @@
+# used in release script
+
+chip=$1
+
+unset CONFIG_BERLIN_LIST_SOC_VERSION
+unset syna_chip_rev_set
+unset CONFIG_BERLIN_LIST_MARKET_ID
+unset syna_chip_mid_set
+unset CONFIG_BERLIN_LIST_FLASHTYPE
+unset syna_flash_type
+unset CONFIG_BERLIN_LIST_NAND_RANDOMIZER
+unset syna_nand_randomizer_set
+unset CONFIG_BERLIN_LIST_SEC_BOOT_LVL
+unset syna_sec_boot_lvl
+unset CONFIG_BERLIN_LIST_NOCS_TYPE
+unset syna_nocs_type
+unset CONFIG_BERLIN_LIST_GENX_TYPE
+unset syna_genx_type
+unset CONFIG_BERLIN_LIST_RUNTIME_OS
+unset syna_runtime_os
+unset CONFIG_BERLIN_LIST_TZK_MEM_LAYOUT
+unset syna_memlayout
+unset CONFIG_BERLIN_LIST_FASTBOOT
+unset syna_fastboot_set
+unset CONFIG_BERLIN_LIST_TEEI
+unset syna_teei
+
+chip_release_config="${topdir}/out/.config.${chip}"
+
+source ${chip_release_config}
+
+j=0
+for ver in $CONFIG_BERLIN_LIST_SOC_VERSION
+do
+    syna_chip_rev_set[$j]=$ver
+    j=`expr $j + 1`
+done
+
+j=0
+for mid in $CONFIG_BERLIN_LIST_MARKET_ID
+do
+    syna_chip_mid_set[$j]=$mid
+    j=`expr $j + 1`
+done
+
+j=0
+for flash in $CONFIG_BERLIN_LIST_FLASHTYPE
+do
+    syna_flash_type_set[$j]=$flash
+    j=`expr $j + 1`
+done
+
+j=0
+for isenable in $CONFIG_BERLIN_LIST_NAND_RANDOMIZER
+do
+    syna_nand_randomizer_set[$j]=$isenable
+    j=`expr $j + 1`
+done
+
+j=0
+for seclvl in $CONFIG_BERLIN_LIST_SEC_BOOT_LVL
+do
+    syna_sec_boot_lvl[$j]=$seclvl
+    j=`expr $j + 1`
+done
+
+j=0
+for ntype in $CONFIG_BERLIN_LIST_NOCS_TYPE
+do
+    syna_nocs_type[$j]=$ntype
+    j=`expr $j + 1`
+done
+
+j=0
+for ntype in $CONFIG_BERLIN_LIST_GENX_TYPE
+do
+    syna_genx_type[$j]=$ntype
+    j=`expr $j + 1`
+done
+
+j=0
+for rtos in $CONFIG_BERLIN_LIST_RUNTIME_OS
+do
+    syna_runtime_os[$j]=$rtos
+    j=`expr $j + 1`
+done
+
+j=0
+for memlayout in $CONFIG_BERLIN_LIST_TZK_MEM_LAYOUT
+do
+    syna_memlayout[$j]=$memlayout
+    j=`expr $j + 1`
+done
+
+j=0
+for isenable in $CONFIG_BERLIN_LIST_FASTBOOT
+do
+    syna_fastboot_set[$j]=$isenable
+    j=`expr $j + 1`
+done
+
+j=0
+for teei in $CONFIG_BERLIN_LIST_TEEI
+do
+    syna_teei[$j]=$teei
+    j=`expr $j + 1`
+done

@@ -1,0 +1,16 @@
+config SYSROOT
+    bool
+    default y
+
+config RUNTIME_ANDROID_API_LEVEL
+	depends on RUNTIME_ANDROID
+	int "Android API level"
+	default 28
+
+config RUNTIME_FILESYSTEMS
+	string "runtime filesystem format"
+	default ""
+	help
+		For android: blank
+		For EMMC linux: ramdisk(xz),system(ext4)
+		For NAND linux: ramdisk(xz),rootfs(squashfs),app(yaffs2)

@@ -1,0 +1,28 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+menuconfig AMP_COMPONENT_ADEC_ENABLE
+	bool "Audio Decoder"
+	default y
+
+if AMP_COMPONENT_ADEC_ENABLE
+
+comment "General"
+
+config AMP_AUDIO_ARM_ADEC_SECURE_ENABLE
+	depends on AMP_TEE_ENABLE
+	bool
+	prompt "ARM Secure Enable (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+
+config AMP_IP_AUDIO_MS12_ADEC_ENABLE
+	depends on  AMP_IP_AUDIO_MS12_SUPPORTED
+	bool
+	prompt "MS12 ADEC"
+	default y
+
+source "module/ampsdk/kconfig/audio/Kconfig.audio.adec.format"
+
+endif

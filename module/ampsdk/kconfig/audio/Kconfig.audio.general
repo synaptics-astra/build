@@ -1,0 +1,56 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+menu "General"
+
+config AMP_AUDIO_HW_GEN
+	int "audio hw processor"
+	default 0
+	help
+		zsp: 1, hifi4: 2, no dsp: 0, all: 10(for release script)
+
+config AMP_AUDIO_RELEASE
+	bool
+	default y if (AMP_AUDIO_HW_GEN = 10)
+
+config AMP_AUDIO_USE_ZSP
+	bool "ZSP"
+	default y
+	depends on (AMP_AUDIO_HW_GEN = 1)
+
+config AMP_AUDIO_USE_DSP_HIFI
+	bool "HIFI"
+	default y
+	depends on (AMP_AUDIO_HW_GEN = 2 || AMP_AUDIO_RELEASE)
+
+config AMP_AUDIO_USE_ARM
+	bool "ARM"
+	default y
+
+config AMP_AUDIO_USE_ARM_ONLY
+	bool
+	default y if (!AMP_AUDIO_USE_DSP_HIFI  && !AMP_AUDIO_USE_ZSP && AMP_AUDIO_USE_ARM)
+
+config GEN_AMP_AUDIO_ENABLE_ZSP
+	depends on AMP_AUDIO_USE_ZSP
+	bool
+	default y
+
+config AMP_AUDIO_ZSP_SECURE_ENABLE
+	depends on GEN_AMP_AUDIO_ENABLE_ZSP && AMP_TEE_ENABLE
+	bool
+	prompt "ZSP Secure Enable (DEV)" if AMP_DEVELOPMENT_OPTION
+	default y
+
+config AMP_COMPONENT_AREN_ENABLE
+	bool
+	prompt "AREN Enable (DEV)" if AMP_DEVELOPMENT_OPTION
+	default y
+
+config AMP_AUDIO_DISABLE_NEON
+	bool "Disable NEON"
+	default n
+
+endmenu

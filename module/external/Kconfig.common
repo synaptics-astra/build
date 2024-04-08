@@ -1,0 +1,94 @@
+config FFMPEG
+	bool "enable ffmpeg"
+	default y
+
+config CURL
+	bool "enable libcurl"
+	default y
+
+config ALSA
+	bool "enable ALSA"
+	default n
+
+config GDB
+	bool "enable gdb"
+	default n
+
+config EXPAT
+	bool "enable expat"
+	default n
+
+config DBUS
+	bool "enable dbus"
+	select EXPAT
+	default n
+
+config PULSEAUDIO
+	bool "enable pulse audio"
+	select ALSA
+	select GLIB2
+	select EUDEV
+	select LIBTOOL
+	select LIBSNDFILE
+	default n
+
+config GLIB2
+	bool "enable glib-2.0"
+	select LIBFFI
+	select ZLIB
+	default n
+
+config LIBFFI
+	bool "enable libffi"
+	default n
+
+config ZLIB
+	bool "enable zlib"
+	default n
+
+config EUDEV
+	bool "enable eudev"
+	select GLIB2
+	default n
+
+config READLINE
+	bool "enable readline"
+	select NCURSES
+	default n
+
+config NCURSES
+	bool "enable ncurses"
+	default n
+
+config LIBTOOL
+	bool "enable libtool"
+	default n
+
+config LIBSNDFILE
+	bool "enable sndfile"
+	select ALSA
+	default n
+
+config SBC
+	bool "enable Subband Coding(SBC)"
+	default n
+
+config TINYXML2
+	bool "enable TINYXML2"
+	default n
+
+config BOOST
+	bool "enable BOOST"
+	default n
+
+config JSONCPP
+	bool "enable JSONCPP"
+	default n
+
+config CPPNETLIB
+	bool "enable CPPNETLIB"
+	default n
+
+config OPENCV
+	bool "enable opencv"
+	default n

@@ -1,0 +1,61 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+menu "Image Generation Configuration"
+config IMAGE
+	bool
+	default y
+
+if IMAGE_EMMC
+config EMMC_PAGE_SIZE
+	int "EMMC page size"
+	default 512
+
+config EMMC_BLOCK_SIZE
+	int "EMMC block size"
+	default 524288
+
+config EMMC_TOTAL_SIZE
+	int "EMMC total size"
+	default 7433879552
+
+endif
+
+if IMAGE_NAND
+config NAND_CADENCE
+	bool
+	default y
+
+config NAND_RANDOMIZER
+	bool "enable NAND Randomization"
+	default n
+	help
+		nand randomizer feature enable for preboot and bootloader
+
+config NAND_PAGE_SIZE
+	int "NAND page size"
+	default 4096
+
+config NAND_BLOCK_SIZE
+	int "NAND block size"
+	default 262144
+
+config NAND_BOOT_PART_SIZE
+	int "NAND boot part size"
+	default 262144
+
+config NAND_TOTAL_SIZE
+	int "NAND total size"
+	default 268435456
+
+config NAND_ECC_STRENGTH
+	int "NAND ECC strength"
+	default 48
+
+config NAND_FACTORY
+	bool "NAND factory image"
+	default n
+endif
+
+endmenu

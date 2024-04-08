@@ -1,0 +1,52 @@
+if [[ ! -z "$BUILD_CC" && ! `hash arm-pokymllib32-linux-gnueabi-gcc 2>/dev/null` ]]; then
+    # NOTE: we can't build the whole vssdk with this settings because the sysroot would
+    # is a different directory the '${STAGING_DIR_TARGET}'
+    CONFIG_TOOLCHAIN_APPLICATION_CFLAG=`echo $CC |sed 's/[^ ]* //'`
+    CONFIG_TOOLCHAIN_APPLICATION_CXXFLAG=`echo $CXX |sed 's/[^ ]* //'`
+    CONFIG_TOOLCHAIN_APPLICATION_LDFLAG=`echo $LD |sed 's/[^ ]* //'`
+
+    if [ -z ${mod_dir} ];then
+        return
+    fi
+
+    if [ ! -f ${mod_dir}/${runtime_dir}/build.rc ];then
+        touch ${mod_dir}/${runtime_dir}/build.rc
+        touch ${mod_dir}/${runtime_dir}/pack.rc
+    fi
+
+    return
+fi
+
+CONFIG_TOOLCHAIN_APPLICATION_CFLAG="-march=armv7-a -mthumb -mfpu=neon-vfpv4 -mfloat-abi=hard"
+CONFIG_TOOLCHAIN_APPLICATION_CFLAG+=" --sysroot=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_SYSYROOT}"
+
+CONFIG_TOOLCHAIN_APPLICATION_CXXFLAG="-std=c++17"
+#CONFIG_TOOLCHAIN_APPLICATION_LDFLAG="--sysroot=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_SYSYROOT} "
+CONFIG_TOOLCHAIN_APPLICATION_LDFLAG=""
+
+if [ ! -d ${topdir}/toolchain/oe/linux-x64/gcc-11.3.0-poky/sysroots/x86_64-pokysdk-linux ];then
+    ${topdir}/toolchain/oe/linux-x64/gcc-11.3.0-poky/x86_64-gcc-11.4.0-poky-toolchain-4.0.12.sh -y -d ${topdir}/toolchain/oe/linux-x64/gcc-11.3.0-poky || exit 1
+fi
+
+if [ -z ${mod_dir} ];then
+    return
+fi
+
+if [ ! -f ${mod_dir}/${runtime_dir}/build.rc ];then
+    mkdir -p ${mod_dir}/${runtime_dir}
+    cat <<'EOF' > ${mod_dir}/${runtime_dir}/build.rc
+build_sysroot=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${runtime_sysroot}
+
+mkdir -p ${build_sysroot}/usr
+
+INSTALL_D ${topdir}/toolchain/oe/linux-x64/gcc-11.3.0-poky/sysroots/armv8a-poky-linux/lib ${build_sysroot}
+INSTALL_D ${topdir}/toolchain/oe/linux-x64/gcc-11.3.0-poky/sysroots/armv8a-poky-linux/usr/include ${build_sysroot}/usr
+INSTALL_D ${topdir}/toolchain/oe/linux-x64/gcc-11.3.0-poky/sysroots/armv8a-poky-linux/usr/lib ${build_sysroot}/usr
+if [ ! -e "${build_sysroot}/usr/lib/libjsoncpp.a" ]; then
+    rm -f ${build_sysroot}/usr/lib/libjsoncpp.a
+    ln -sr ${build_sysroot}/usr/lib/libjsoncpp_static.a ${build_sysroot}/usr/lib/libjsoncpp.a
+fi
+EOF
+
+    touch ${mod_dir}/${runtime_dir}/pack.rc
+fi

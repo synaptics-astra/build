@@ -1,0 +1,84 @@
+config DRIVERS
+    bool "Enable Drivers"
+    default y
+
+config DRIVERS_RTL8363NB
+    bool "Enable RTL8363NB Ethernet Switch/Phy"
+    default n
+
+config DRIVERS_DSPG_KEYPAD
+    bool "Enable Keypad driver"
+    default n
+
+config DRIVERS_DSPG_HOOKSWITCH
+    bool "Enable Hookswitch driver"
+    default n
+
+config DRIVERS_TLC5917
+    bool "Enable TLC5917 LED driver"
+    default n
+
+config DRIVERS_AXI_METER
+    bool "Enable AXI Perfomance Meter driver"
+    default n
+
+config DRIVERS_FXL6408
+    bool "Enable FXL6408 GPIO Expander"
+    default n
+
+config DRIVERS_HWMON
+    bool "Enable HW Monitor"
+    default n
+
+config DRIVERS_BLUETOOTH_LPM
+    bool "Enable Bluetooth LPM driver"
+    default n
+
+config DRIVERS_BLUETOOTH_RFKILL
+    bool "Enable Bluetooth RFKILL driver"
+    default n
+
+config DRIVERS_SM
+    bool "Enable System Manager driver"
+    default n
+
+config DRIVERS_REGULATORS
+    bool "Enable Regulator drivers"
+    default n
+
+config DRIVERS_I2C_DYNDMX_PINCTRL
+    bool "Enable pinctrl-based I2C dynamic demultiplexer"
+    default n
+
+config DRIVERS_DWC3_SYNA
+    bool "Enable DWC3 Driver For Synaptics Platforms"
+    default n
+
+config DRIVERS_SUNPLUS
+    bool "Enable Sunplus Ethernet Phy driver"
+    default n
+
+config DRIVERS_CADENCE_HPNFC
+    bool "Enable Cadence HPNFC NAND controller driver"
+    default n
+
+config DRIVERS_SYNAPTICS_PHY
+    bool "Enable Synaptics PHY drivers"
+    default n
+
+config DRIVERS_PINCTRL
+    bool "Enable Pinctrl driver"
+    default n
+
+config DRIVERS_CLK
+    bool "Enable Clock drivers"
+    default n
+
+config DRIVERS_PCIE_BERLIN
+    bool "Enable Berlin PCIe Driver"
+    default n
+
+config DRIVERS_BERLIN_IR
+    bool "Enable Berlin IR driver"
+    depends on DRIVERS_SM
+    default n

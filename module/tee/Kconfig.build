@@ -1,0 +1,66 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+menu "TEE"
+config TEE
+	bool
+	default y
+
+if TEE
+
+config TZK_MEM_LAYOUT
+	string "trustzone kernel memory layout"
+	default "stb_2g"
+	help
+		dongle/stb_2g/stb
+
+config TZK_MZONE_ENABLE
+	bool "enable memory zone"
+	default y
+
+config TZK_REGFW_ENABLE
+	bool "enable register firewall"
+	default y
+
+config TZK_PRELOAD_TA
+	bool "pack TA with Trustzone kernel"
+	default n
+	help
+		Only supported on BG4CDP
+
+config TEE_KERNEL_REL_PATH
+	string
+	default "tee/tzk"
+	help
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TEE_KERNEL_REL_PATH}
+
+config TEE_CLIENT_REL_PATH
+	string
+	default "tee/client"
+	help
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${TEE_CLIENT_REL_PATH}
+
+choice
+	prompt "Trusted OS Type"
+	default TZK
+
+config TZK
+	bool "Synaptics Trusted OS"
+
+config OPTEE
+	bool "OPTEE OS"
+endchoice
+endif
+
+if OPTEE
+config OPTEE_SAMPLE
+	bool "OPTEE Sample"
+	default y
+
+config OPTEE_TEST
+	bool "OPTEE Test"
+	default y
+endif
+endmenu

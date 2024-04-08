@@ -1,0 +1,7 @@
+config SYNAP
+    bool "SYNAP"
+    default n
+
+config PRODUCTION_BUILD
+	bool "Enable production build"
+	default n

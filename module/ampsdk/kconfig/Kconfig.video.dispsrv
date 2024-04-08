@@ -1,0 +1,126 @@
+menu "DISPSRV (Video Display Service)"
+
+config AMP_COMPONENT_DISPSRV_ENABLE
+    bool "Display Server Enable"
+    default y
+
+if AMP_COMPONENT_DISPSRV_ENABLE
+
+menu "Vpp Configuration"
+
+config AMP_DHUB_2ND_DMA
+    bool "Dhub 2nd DMA"
+    default y
+
+config ENABLE_VPP_TZ
+    bool "Enable TZ"
+    default y
+
+config AMP_LIB_SEPARATE_VPPDRV
+    bool "Lib Separate Vppdrv"
+    default y
+
+config AMP_DCM
+    bool "DCM Enable"
+    default y
+
+config AMP_VPP_HDR
+    bool "HDR Supported"
+    default y
+
+config DOLBY_EN_AOI
+    bool "DOLBY EN AOI"
+    default y
+
+config AMP_VPP_INVERSE_SCAN
+    bool "Inverse Scan"
+    default y
+
+config AMP_VPP_LVDS
+    bool
+    default n
+
+config AMP_VPP_ROTATION
+    bool "Rotation Supported"
+    default y
+
+config VPP_VIP_HDMIRX_CLOCKGATE_DISABLE
+    bool
+    prompt "Clock Gate Disable" if AMP_DEVELOPMENT_OPTION
+    default n
+
+config AMP_VPP_RECOVERY_MODE
+    bool "Recovery Mode"
+    default n
+
+config AMP_LIB_NXG
+    bool
+    prompt "NXG Support enable"
+    default n
+
+config AMP_LIB_VMX
+    bool
+    prompt "VMX Support enable"
+    default n
+
+config AMP_VPP_FRAME_CAPTURE
+    bool
+    prompt "Frame capture at input of VPP.TA"
+    default n
+
+endmenu
+
+menuconfig AMP_HDMI_CONFIG
+    bool
+    default y
+    prompt "HDMI Configuration" if AMP_DEVELOPMENT_OPTION
+
+if AMP_HDMI_CONFIG
+config AMP_HDMI_HDCP
+    bool
+    prompt "HDMI HDCP"
+    default y
+
+config AMP_HDMI_HDCP_2X
+    depends on AMP_HDMI_HDCP
+    bool
+    prompt "HDMI HDCP 2X"
+    default y
+
+config AMP_LIB_HDCP2X
+    depends on AMP_HDMI_HDCP_2X
+    bool
+    prompt "HDCP2X separation enabled"
+    default n
+
+config AMP_HDMI_HDCP2X_RX
+    depends on AMP_LIB_HDCP2X && AMP_COMPONENT_AVIN_ENABLE
+    bool
+    prompt "HDCP2X Rx support enable"
+    default n
+
+config AMP_HDMI_HDCP_REPEATER
+    bool
+    prompt "HDMI HDCP REPEATER"
+    default n
+
+config AMP_HDMI_HW_EDDC
+    bool
+    prompt "HDMI HW EDDC" if AMP_DEVELOPMENT_OPTION
+    default y
+
+config AMP_HDMI_SERVICE
+    bool
+    prompt "HDMI SERVICE" if AMP_DEVELOPMENT_OPTION
+    default y
+
+config AMP_HDMI_AUDIO_RETURN
+    bool
+    prompt "HDMI ARC/eARC enable"
+    default n
+
+endif
+
+endif
+
+endmenu

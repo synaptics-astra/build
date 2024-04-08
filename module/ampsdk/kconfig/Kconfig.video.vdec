@@ -1,0 +1,21 @@
+
+config AMP_COMPONENT_VDEC_ENABLE
+    bool "VDEC (Video Decoder) Enable"
+    default y
+
+if AMP_COMPONENT_VDEC_ENABLE
+
+config AMP_VDEC_TILE_MULITY
+    bool
+    prompt "VDEC TILE Mulity Supported" if AMP_DEVELOPMENT_OPTION
+    default y
+
+config AMP_VID_HEVC
+    bool "Support HEVC"
+    default y
+
+config AMP_VID_AV1
+    bool "Support AV1"
+    default y
+endif
+

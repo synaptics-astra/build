@@ -1,0 +1,120 @@
+
+patch_targets := linux_debug
+nobuild_targets := %config help list-defconfigs clean
+nobuild_targets += $(patch_targets)
+ifeq ($(MAKECMDGOALS),)
+	BUILD_TARGET=y
+else ifneq ($(filter-out $(nobuild_targets),$(MAKECMDGOALS)),)
+	BUILD_TARGET = y
+endif
+
+ifeq ($(BUILD_TARGET), y)
+include build/Makefile
+else
+.PHONY: help
+help:
+	@echo 'Cleaning:'
+	@echo '  clean			- delete all files created by build'
+	@echo
+	@echo 'Build:'
+	@echo '  all/target		- make world'
+	@echo
+	@echo 'Configuration:'
+	@echo '  menuconfig			- interactive curses-based configurator'
+	@echo '  silentoldconfig	- generate autoconfig.h'
+	@echo '  list-defconfigs	- lists available configs'
+	@echo
+	@echo 'Module rules:'
+	@echo '  <module>		- Build and install <module> and all its dependencies'
+	@echo '  <module>-clean		- clean the module'
+	@echo '  <module>-build		- build the module'
+	@echo '  <module>-rebuild	- build module without clean'
+	@echo '  <module>-depends	- build module dependencies'
+	@echo '  <module>-show-depends	- print module dependencies'
+	@echo
+
+define list-defconfig
+	$(info $(lastword $(subst /, ,$(1))) : $(shell sed -n 's/^ *CONFIG_DESCRIPTION= *//p' $(1) ))
+endef
+
+.PHONY: list-defconfigs
+list-defconfigs:
+	$(foreach defconfig, $(wildcard $(CURDIR)/configs/product/*/*_defconfig), \
+	$(call list-defconfig,$(defconfig)))
+	@echo
+
+#select override config
+ifneq ($(filter $(patch_targets), $(MAKECMDGOALS)),)
+.PHONY: $(patch_targets)
+
+sdk_config=$(filter %config, $(MAKECMDGOALS))
+profile=$(subst _defconfig, ,$(sdk_config))
+ifeq ($(filter $(patch_targets), $(MAKECMDGOALS)), linux_debug)
+patch_config=$(addsuffix .dbg, $(profile))
+endif
+$(info "config":$(sdk_config) "patch":$(patch_config))
+
+linux_debug: $(sdk_config)
+	@build/scripts/apply_debug_patch $(sdk_config) ${patch_config}
+
+endif
+
+ifeq ($(RELEASE), y)
+ifeq ($(SOCLIST), y)
+Kconfig := Kconfig.feature.soc
+else
+Kconfig := Kconfig.feature
+endif
+Kconfig_path := release
+else
+Kconfig := Kconfig.build
+Kconfig_path := product
+endif
+
+.PHONY : oldconfig olddefconfig menuconfig alldefconfig allnoconfig
+
+ifeq ($(RELEASE), y)
+AMP_KCONFIG_MODE := release
+else
+AMP_KCONFIG_MODE := build
+endif
+
+O := out
+conf := ../$(O)/.config
+outdir:
+	@mkdir -p $(O)
+
+%_defconfig: outdir
+	@cd build && \
+	srctree=../ KCONFIG_CONFIG=$(conf) \
+	PYTHONPATH=tools/src/kconfiglib/ TOPDIR='$$(TOPDIR)' AMP_KCONFIG_MODE=${AMP_KCONFIG_MODE} \
+	python3 -B tools/src/kconfiglib/defconfig.py \
+	../configs/$(Kconfig_path)/$(@:_defconfig=)/$@ --kconfig build/$(Kconfig)
+
+oldconfig olddefconfig: outdir
+	@cd build && \
+	srctree=../ KCONFIG_CONFIG=$(conf) \
+	PYTHONPATH=tools/src/kconfiglib/ TOPDIR='$$(TOPDIR)' AMP_KCONFIG_MODE=${AMP_KCONFIG_MODE} \
+	python3 -B tools/src/kconfiglib/$@.py build/$(Kconfig)
+
+menuconfig: outdir
+	@cd build && \
+	srctree=../ KCONFIG_CONFIG=$(conf) \
+	PYTHONPATH=tools/src/kconfiglib/ TOPDIR='$$(TOPDIR)' AMP_KCONFIG_MODE=${AMP_KCONFIG_MODE} \
+	python3 -B tools/src/kconfiglib/menuconfig.py build/$(Kconfig)
+
+alldefconfig allnoconfig: outdir
+	@cd build && \
+	srctree=../ \
+	PYTHONPATH=tools/src/kconfiglib/ TOPDIR='$$(TOPDIR)' AMP_KCONFIG_MODE=${AMP_KCONFIG_MODE} \
+	KCONFIG_ALLCONFIG=$(KCONFIG_ALLCONFIG) KCONFIG_CONFIG=$(conf) \
+	python3 -B tools/src/kconfiglib/$@.py build/$(Kconfig)
+
+%config:
+	echo $@ ; exit 1
+
+.PHONY: clean
+clean:
+	@-rm -rf out
+
+endif

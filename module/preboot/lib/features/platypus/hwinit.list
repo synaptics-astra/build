@@ -1,0 +1,15 @@
+# feature	memory_type	memory_size	memory_speed	ddr_phy_fw	variant
+hwinit		ddr4		2GB		2400		n		default/default
+hwinit		ddr4		2GB		2666		n		default/default
+hwinit		ddr4		1GB		3200		n		default/default
+hwinit		ddr4		2GB		3200		n		default/default
+hwinit		ddr4		2GB		3200		n		clamshell
+hwinit		ddr4		2GB		3200		n		hdiclamshell
+hwinit		ddr4		4GB		3200		n		default/default
+hwinit		ddr4		4GB		3200		n		clamshell
+hwinit		ddr4		4GB		3200		n		hdiclamshell
+hwinit		lpddr4x		2GB		3733		n		default/default
+hwinit		lpddr4x		3GB		3733		n		default/default
+hwinit		lpddr4		2GB		3733		n		default/default
+hwinit		ddr4x16		1GB		3200		n		default/default
+hwinit		ddr4x16		2GB		3200		n		default/default

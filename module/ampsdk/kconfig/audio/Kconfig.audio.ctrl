@@ -1,0 +1,84 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+menu "MS12 Solution"
+
+config AMP_IP_AUDIO_MS12_SUPPORTED
+	bool "MS12"
+	default n
+	select AMP_IP_AUDIO_MS12_USE_HIFI if AMP_AUDIO_USE_DSP_HIFI
+	select AMP_IP_AUDIO_MS12_USE_ARM if (AMP_AUDIO_USE_ARM_ONLY || AMP_AUDIO_RELEASE)
+
+config AMP_IP_AUDIO_MS12_USE_HIFI
+	bool
+config AMP_IP_AUDIO_MS12_USE_ARM
+	bool
+
+if AMP_IP_AUDIO_MS12_USE_HIFI
+menuconfig AMP_IP_AUDIO_MS12_HIFI_V1_3
+	bool "MS12 v1.3"
+	default n
+
+if AMP_IP_AUDIO_MS12_HIFI_V1_3
+config AMP_IP_AUDIO_MS12_HIFI_V1_3_B
+	bool "MS12 v1.3 config B"
+	default n
+config AMP_IP_AUDIO_MS12_HIFI_V1_3_D
+	bool "MS12 v1.3 config D"
+	default n
+endif
+
+menuconfig AMP_IP_AUDIO_MS12_HIFI_V2_6
+	bool "MS12 v2.6"
+	default y
+
+if AMP_IP_AUDIO_MS12_HIFI_V2_6
+config AMP_IP_AUDIO_MS12_HIFI_V2_6_X
+	bool "MS12 v2.6 config X"
+	default y
+config AMP_IP_AUDIO_MS12_HIFI_V2_6_Y
+	bool "MS12 v2.6 config Y"
+	default n
+config AMP_IP_AUDIO_MS12_HIFI_V2_6_Z
+	bool "MS12 v2.6 config Z"
+	default n
+endif
+
+endif
+
+if AMP_IP_AUDIO_MS12_USE_ARM
+menuconfig AMP_IP_AUDIO_MS12_ARM_V1_3
+	bool "MS12 v1.3"
+	default n
+
+if AMP_IP_AUDIO_MS12_ARM_V1_3
+config AMP_IP_AUDIO_MS12_ARM_V1_3_B
+	bool "MS12 v1.3 config B"
+	default n
+config AMP_IP_AUDIO_MS12_ARM_V1_3_D
+	bool "MS12 v1.3 config D"
+	default n
+endif
+
+menuconfig AMP_IP_AUDIO_MS12_ARM_V2_4
+	bool "MS12 v2.4"
+	default y
+
+if AMP_IP_AUDIO_MS12_ARM_V2_4
+config AMP_IP_AUDIO_MS12_ARM_V2_4_Y_LITE
+	bool "MS12 v2.4 config Y LITE"
+	default n
+config AMP_IP_AUDIO_MS12_ARM_V2_4_Y
+	bool "MS12 v2.4 config Y"
+	default n
+config AMP_IP_AUDIO_MS12_ARM_V2_4_Z
+	bool "MS12 v2.4 config Z"
+	default y
+endif
+
+endif
+
+endmenu
+

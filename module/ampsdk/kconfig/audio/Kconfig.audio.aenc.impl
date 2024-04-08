@@ -1,0 +1,22 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+config AMP_AUDIO_AACE_USE_ARM
+	bool
+
+config AMP_AUDIO_AACE_USE_ZSP
+	bool
+
+config AMP_IP_AUDIO_DDCE_USE_ARM
+	bool
+
+config AMP_IP_AUDIO_DDCE_USE_ZSP
+	bool
+
+config AMP_IP_AUDIO_DTSE_USE_ARM
+	bool
+
+config AMP_IP_AUDIO_DTSE_USE_ZSP
+	bool

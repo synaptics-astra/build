@@ -1,0 +1,51 @@
+#!/bin/bash
+
+set -o errtrace
+trap 'echo Fatal error: script $0 aborting at ${BASH_SOURCE}:$LINENO, command \"$BASH_COMMAND\" returned $? 1>&2; exit 1' ERR
+
+# Uncomment following line to print a trace of simple commands
+# set -x
+
+#############
+# Functions #
+#############
+
+########
+# Main #
+########
+
+### Print command line ###
+echo $0 $@
+
+# Absolute path of build topdir
+packaging_topdir=$(readlink -f $(dirname $0))
+echo $packaging_topdir
+
+# Other dirs
+basedir_script_nand=${packaging_topdir}/lib/boot_type/nand
+basedir_script_emmc=${packaging_topdir}/lib/boot_type/emmc
+
+### Common setup ###
+source ${packaging_topdir}/lib/scripts/common.bashrc
+
+### Parse command line arguments ###
+source ${packaging_topdir}/lib/scripts/parse_args.bashrc
+
+### Common settings ###
+source ${packaging_topdir}/lib/scripts/common_settings.bashrc
+
+### Packaging ###
+echo $opt_flash_type
+case "$opt_flash_type" in
+  "NAND")
+    source ${basedir_script_nand}/common.bashrc
+    source ${basedir_script_nand}/packaging.bashrc
+    ;;
+  "EMMC")
+    source ${basedir_script_emmc}/common.bashrc
+    source ${basedir_script_emmc}/packaging.bashrc
+    ;;
+  *)
+    /bin/false
+    ;;
+esac

@@ -1,0 +1,39 @@
+config TOOLCHAIN
+	bool
+	default y
+
+config TOOLCHAIN_PATH
+	string "common toolchain path"
+	default "$(TOPDIR)/build/tools/lib/ccache:$(TOPDIR)/toolchain/aarch64/gcc-arm-aarch64-elf-8.3/bin:$(TOPDIR)/toolchain/aarch64/gcc-linaro-aarch64-elf-5.3/bin:$(TOPDIR)/toolchain/aarch32/gcc-linaro-arm-eabi-6.2.1/bin:$(TOPDIR)/toolchain/aarch32/arm-none-eabi-4.9/bin:"
+	help
+		Internal Common Toolchain PATH for uBoot, BSP and TA
+
+config TOOLCHAIN_TA
+	string "TA toolchain prefix"
+	default "arm-eabi-"
+	help
+		Must use C/CPP/LD flags in arm-eabi-.rc
+
+config TOOLCHAIN_BSP
+	string "bsp toolchain prefix"
+	default "aarch64-elf-"
+	help
+		Toolchain to compile bootloader/miniloader/sysinit/u-boot
+
+config TOOLCHAIN_APPLICATION
+	string "application toolchain prefix"
+	default ""
+	help
+		Must use C/CPP/LD flags in ${CONFIG_TOOLCHAIN_APPLICATION}.rc
+
+config TOOLCHAIN_APPLICATION_PATH
+	string "application toolchain path"
+	default ""
+	help
+		Path under VSSDK/toolchain/
+
+config TOOLCHAIN_APPLICATION_CC
+	string "application CC over-write option"
+	default ""
+	help
+		Change to "clang" to enable CLANG compiling for application

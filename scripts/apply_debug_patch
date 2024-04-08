@@ -1,0 +1,120 @@
+#!/bin/bash
+
+function get_path()
+{
+    firstC=`dirname $1|cut -c 1`
+    if  [ $firstC = '/' ] || [ $firstC = '~' ]; then
+        echo $1
+    else
+        echo "`pwd`/$1"
+    fi
+}
+
+function get_dirs()
+{
+    script=`get_path $0`
+    script_dir=`dirname $script`
+    SDK_PATH=$script_dir/../../
+}
+
+function check_param()
+{
+    if [ -z $1 ]; then
+        echo "param is zero size"
+        exit
+    fi
+}
+
+function check_file()
+{
+    if [ ! -f $1 ]; then
+        echo "$1 not found; do nothing"
+        exit
+    fi
+}
+function do_override()
+{
+
+    target_config=${SDK_PATH}/out/.config
+    check_file $target_config
+    profile_path=${SDK_PATH}/configs/product/${profile}
+    check_file ${profile_path}/${patch_config}
+
+    pushd ${profile_path}
+
+    echo "**** Reference Config : ${sdk_config}"
+    echo "**** Patch     Config : ${patch_config}"
+    echo "**** Target    Config : ${target_config}"
+
+    tmp_cfg=${SDK_PATH}/out/.config.patch.old
+    cp ${target_config} ${tmp_cfg}
+
+    IFS=$'\n'
+
+    targets=($(grep -P 'CONFIG_.*' < ${patch_config}))
+
+    IFS=${IFS_default}
+
+    for ((i = 0; i != ${#targets[@]}; i++)); do
+       value=($(echo ${targets[i]} | grep -o 'CONFIG*[^ |=]*'))
+       echo "Modified: ${value} -> ${targets[i]}"
+       sed -i "/$value[=| ]/c\\${targets[i]}" ${target_config}
+    done
+
+    popd
+
+    printf "\n\nDone: ${target_config}\n\n"
+
+}
+
+function do_enable_config()
+{
+    ./scripts/config  --file arch/arm64/configs/$1 --enable $2
+    error_code=$?
+    if [ ${error_code} -ne 0 ]; then
+        echo "scripts/config enable $2 failed"
+    fi
+    echo "${LINUX_SRC_PATH}: ./scripts/config  --file arch/arm64/configs/$1 --enable $2 done"
+}
+
+function do_patch_linux()
+{
+
+    echo "**** Reference Config : ${sdk_config}"
+
+    sdk_profile_config=${profile_path}/${sdk_config}
+    target=($(grep -P 'CONFIG_LINUX_SRC_PATH' < ${sdk_profile_config}))
+    src_path=($(echo ${target} | grep -o 'linux_.*[^"]'))
+
+    target=($(grep -P 'CONFIG_LINUX_DEFCONFIG' < ${sdk_profile_config}))
+    def_config=($(echo ${target} | grep -o 'vs.*_defconfig'))
+
+    LINUX_SRC_PATH=${SDK_PATH}/${src_path}
+
+    pushd ${LINUX_SRC_PATH}
+    do_enable_config ${def_config} DEBUG_FS
+    popd
+}
+
+main()
+{
+    #src file
+    sdk_config=${1}
+    patch_config=${2}
+    check_param ${sdk_config}
+    check_param ${patch_config}
+
+    profile=${sdk_config//_defconfig/}
+
+    get_dirs
+
+    profile_path=${SDK_PATH}/configs/product/${profile}
+    if [ "is${patch_config}" == "is${profile}.dbg" ]; then
+      do_patch_linux
+    else
+      do_override
+    fi
+    echo "apply patch done"
+}
+
+main "${@}"

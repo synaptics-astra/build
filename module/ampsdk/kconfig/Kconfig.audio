@@ -1,0 +1,16 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+menu "Audio"
+
+source "module/ampsdk/kconfig/audio/Kconfig.audio.general"
+source "module/ampsdk/kconfig/audio/Kconfig.audio.ctrl"
+source "module/ampsdk/kconfig/audio/Kconfig.audio.adec"
+source "module/ampsdk/kconfig/audio/Kconfig.audio.aenc"
+source "module/ampsdk/kconfig/audio/Kconfig.audio.app"
+source "module/ampsdk/kconfig/audio/Kconfig.audio.aout"
+source "module/ampsdk/kconfig/audio/Kconfig.audio.service"
+
+endmenu

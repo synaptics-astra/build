@@ -1,0 +1,56 @@
+config TA_STATIC_LIB_PATH
+	string
+	default "ta/lib"
+	help
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TA_STATIC_LIB_PATH}
+
+config TA_STATIC_INC_PATH
+	string
+	default "ta/inc"
+	help
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TA_STATIC_INC_PATH}
+
+config TA_BUILD_PATH
+	string
+	default "ta/intermediate"
+	help
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TA_BUILD_PATH}
+
+config TA_CPPCHECK
+	bool "Enable CPPCheck for TA"
+	default n
+
+config TA_CALC
+	bool "Enable TA calc"
+	default n
+
+config TA_GFX_IMG
+	bool "Enable GFX IMG Android GPU driver secure feature"
+	default n
+
+config TA_GFX_IMG_LINUX
+	bool "Enable GFX IMG Linux Window System GPU driver secure feature"
+	default n
+
+config TA_CAF
+        bool "Enable CAF TA"
+        default n
+
+config DRM_COMMON_TA
+	bool "Enable drm_common_ta static lib"
+	default y
+
+config GENCRYPTO
+	depends on DRM_COMMON_TA
+	bool "Enable Gencrypto TA"
+	default y
+
+config TA_PVR
+	depends on DRM_COMMON_TA
+	bool "Enable PVR TA"
+	default n
+
+config TA_FACTORY
+	depends on DRM_COMMON_TA
+	bool "Enable factory TA"
+	default y

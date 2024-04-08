@@ -1,0 +1,210 @@
+TARGET_LIST=${CONFIG_BERLIN_TARGET_LIST}
+
+get_list()
+{
+  TOOLCHAIN_ARR="${TARGET_LIST}"
+  ret_str=""
+  ITEM=$1
+
+  per_build=($(tr ' ' $'\n' <<< $TOOLCHAIN_ARR))
+
+  for ((i = 0; i != ${#per_build[@]}; i++));
+  do
+    per_build_param=${per_build[i]}
+
+    IFS=',' read runtime sysroot toolchain toolchain_path <<< "$per_build_param"
+
+    ITEM_TEMP=$ITEM
+    TEMP_VAR="$ITEM_TEMP"
+    ITEM_TEMP="${!TEMP_VAR}"
+
+    ret_str="$ret_str ${ITEM_TEMP}"
+  done
+
+  echo $ret_str
+}
+
+get_toolchain_list()
+{
+  get_list toolchain
+}
+
+get_runtime_list()
+{
+  get_list runtime
+}
+
+get_sysroot_list()
+{
+  get_list sysroot
+}
+
+get_toolchain_path_list()
+{
+  get_list toolchain_path
+}
+
+get_sysroot_out_path()
+{
+  sysroot=$1
+
+  case "$sysroot" in
+  android)
+    sysroot_out=$CONFIG_RUNTIME_ANDROID_ROOTFS
+    ;;
+  linux-baseline)
+    sysroot_out=$CONFIG_RUNTIME_LINUX_BASELINE_ROOTFS
+    ;;
+  linux-rootfs64)
+    sysroot_out=$CONFIG_RUNTIME_LINUX_BASELINE_ROOTFS64
+    ;;
+  rdk-lib32)
+    sysroot_out=$CONFIG_RUNTIME_RDK_ROOTFS
+    ;;
+  poky-lib32)
+    sysroot_out=$CONFIG_RUNTIME_OE_ROOTFS
+    ;;
+  poky)
+    sysroot_out=$CONFIG_RUNTIME_OE64_ROOTFS
+    ;;
+  *)
+    echo "invalid sysroot $sysroot"
+    ;;
+  esac
+
+  echo $sysroot_out
+}
+
+get_index()
+{
+  str=""
+  ARR=("$@")
+
+  for ((i = 0; i != ${#ARR[@]}; i++)); do
+    if [ $i = $index ]; then
+      str=${ARR[i]}
+    fi
+  done
+
+  echo ${str}
+}
+
+get_toolchain_by_index()
+{
+  index=$1
+  g_index=$index
+  list=$( get_toolchain_list )
+  get_index $list
+}
+
+get_runtime_by_index()
+{
+  index=$1
+  g_index=$index
+  list=$( get_runtime_list )
+  get_index $list
+}
+
+get_sysroot_by_index()
+{
+  index=$1
+  g_index=$index
+  list=$( get_sysroot_list )
+  get_index $list
+}
+
+get_toolchain_path_by_index()
+{
+  index=$1
+  g_index=$index
+  list=$( get_toolchain_path_list )
+  get_index $list
+}
+
+get_target_count()
+{
+  TOOLCHAIN_ARR="${TARGET_LIST}"
+  per_build=($(tr ' ' $'\n' <<< $TOOLCHAIN_ARR))
+  echo ${#per_build[@]}
+}
+
+get_target_list_by_index()
+{
+  TOOLCHAIN_ARR="${TARGET_LIST}"
+  index=$1
+  ret_str=""
+
+  per_build=($(tr ' ' $'\n' <<< $TOOLCHAIN_ARR))
+
+  for ((i = 0; i != ${#per_build[@]}; i++));
+  do
+    if [ $i = $index ]; then
+      per_build_param=${per_build[i]}
+
+      IFS=',' read runtime sysroot toolchain toolchain_path <<< "$per_build_param"
+
+      ret_str="$runtime,$sysroot,$toolchain,$toolchain_path"
+      echo "$ret_str"
+      return;
+    fi
+  done
+}
+
+do_override()
+{
+  chip=$1
+
+  config_temp=out/.config.${OUT_PRODUCT_DIR}
+  config_out=out/.config
+  config_defconfig="${OUT_PRODUCT_DIR}_defconfig"
+
+  config_chip="configs/release/${OUT_PRODUCT_DIR}/${OUT_PRODUCT_DIR}_${chip}_defconfig"
+  config_target="out/.config.${chip}"
+
+  #echo "**** Reference Config : $config_defconfig"
+  #echo "**** Chip      Config : $config_chip"
+  #echo "**** Target    Config : $config_target"
+
+  cp ${config_out} ${config_temp}
+  IFS_default=${IFS}
+  IFS=$'\n'
+
+  targets=($(grep -P 'CONFIG_.*' < ${config_chip}))
+  extra_options=()
+
+  IFS=${IFS_default}
+  for ((i = 0; i != ${#targets[@]}; i++)); do
+    value=($(echo ${targets[i]} | grep -o 'CONFIG*[^ |=]*'))
+    # echo "Modified: ${value} -> ${targets[i]}"
+    grep "${value}" ${config_out} && \
+      sed -i "/${value}[=| ]/c\\${targets[i]}" ${config_out} || \
+      extra_options+=("${targets[i]}")
+  done
+
+  make RELEASE=y oldconfig
+
+  cat <<'EOF' >> ${config_out}
+#
+# Extra chip settings
+#
+EOF
+  for var in "${extra_options[@]}"; do
+    sed -i "\$a ${var}" ${config_out}
+  done
+  cp ${config_out} ${config_target}
+  mv ${config_temp} ${config_out}
+}
+
+apply_override()
+{
+  if [ "is$CONFIG_BERLIN_LIST_SOC" != "is" ]; then
+    typeset -l chip
+    for chip in $CONFIG_BERLIN_LIST_SOC
+    do
+      do_override ${chip}
+    done
+  fi
+
+  #save the orginal config
+  cp out/.config  out/.config.save
+}

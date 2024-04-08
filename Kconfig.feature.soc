@@ -1,0 +1,65 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+mainmenu "VSSDK SOC Release Configuration"
+
+menu "Target Options"
+
+config BERLIN_LIST_SOC_VERSION
+	string "SoC version supported"
+	default "Z1 A0"
+
+config BERLIN_LIST_RUNTIME_OS
+	string "Runtime OS supported"
+	default "ANDROID LINUX"
+
+config BERLIN_LIST_MARKET_ID
+	string "Market ID supported"
+	default "0 1 3 7"
+
+config BERLIN_LIST_CODETYPE
+	string "Security CodeType supported"
+	default " 5 15"
+
+config BERLIN_LIST_FLASHTYPE
+	string "FLASH supported"
+	default "EMMC NAND"
+
+config BERLIN_LIST_NAND_RANDOMIZER
+	bool
+	default y
+
+config BERLIN_LIST_BL_TA
+	string "Bootloader TA supported"
+	default "FASTBOOT KEYMASTER"
+
+config BERLIN_LIST_TZK_MEM_LAYOUT
+	string "TZK memory layout supported"
+	default "stb_1.5g stb_2g stb_2g_cma"
+
+config BERLIN_LIST_FW_ENC
+	string "FW supported"
+	default "ALL"
+
+config BERLIN_LIST_SEC_BOOT_LVL
+	string "Secured boot level"
+	default "normal nocs genx"
+
+config BERLIN_LIST_NOCS_TYPE
+	string "NOCS type"
+	default "type_m"
+
+config BERLIN_LIST_GENX_TYPE
+	string "GENX type"
+	default "generic"
+
+config BERLIN_LIST_FASTBOOT
+	string "FASTBOOT supported"
+	default "y n"
+
+config BERLIN_LIST_TEEI
+	string "TEEI version"
+	default "GPD11_TZK520"
+
+endmenu

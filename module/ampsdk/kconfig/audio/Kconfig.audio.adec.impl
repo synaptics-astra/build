@@ -1,0 +1,140 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+#AAC
+config AMP_AUDIO_AAC_USE_ARM
+	bool
+config AMP_AUDIO_AAC_USE_ZSP
+	bool
+config AMP_AUDIO_AAC_USE_HIFI
+	bool
+
+#ADPCM
+config AMP_AUDIO_ADPCM_USE_ARM
+	bool
+config AMP_AUDIO_ADPCM_USE_ZSP
+	bool
+
+#AMR
+config AMP_AUDIO_AMR_USE_ARM
+	bool
+config AMP_AUDIO_AMR_USE_ZSP
+	bool
+
+#DDP
+config AMP_IP_AUDIO_DDP_USE_ARM
+	bool
+config AMP_IP_AUDIO_DDP_USE_ZSP
+	bool
+
+#DolbyBypass
+config AMP_IP_AUDIO_DOLBYPASS_USE_ARM
+	bool
+config AMP_IP_AUDIO_DOLBYPASS_USE_ZSP
+	bool
+
+#DTS
+config AMP_IP_AUDIO_DTS_CORE_USE_ARM
+	bool
+config AMP_IP_AUDIO_DTS_CORE_USE_ZSP
+	bool
+
+config AMP_IP_AUDIO_DTS_DUMMY_USE_ARM
+	bool
+config AMP_IP_AUDIO_DTS_DUMMY_USE_ZSP
+	bool
+
+config AMP_IP_AUDIO_DTS_HD_USE_ARM
+	bool
+config AMP_IP_AUDIO_DTS_HD_USE_ZSP
+	bool
+
+config AMP_IP_AUDIO_DTS_MA_USE_ARM
+	bool
+config AMP_IP_AUDIO_DTS_MA_USE_ZSP
+	bool
+
+#FLAC
+config AMP_AUDIO_FLAC_USE_ARM
+	bool
+config AMP_AUDIO_FLAC_USE_ZSP
+	bool
+config AMP_AUDIO_FLAC_USE_HIFI
+	bool
+
+#G711
+config AMP_AUDIO_G711_USE_ARM
+	bool
+config AMP_AUDIO_G711_USE_ZSP
+	bool
+
+#LATM
+config AMP_AUDIO_LATM_USE_ARM
+	bool
+config AMP_AUDIO_LATM_USE_ZSP
+	bool
+
+#LPCM
+config AMP_AUDIO_LPCM_USE_ARM
+	bool
+config AMP_AUDIO_LPCM_USE_ZSP
+	bool
+
+#MPEG
+config AMP_IP_AUDIO_MPEG_USE_ARM
+	bool
+config AMP_IP_AUDIO_MPEG_USE_ZSP
+	bool
+config AMP_IP_AUDIO_MPEG_USE_HIFI
+	bool
+
+#MP3
+config AMP_AUDIO_MP3_USE_ARM
+	bool
+config AMP_AUDIO_MP3_USE_ZSP
+	bool
+config AMP_AUDIO_MP3_USE_HIFI
+	bool
+
+#MS11
+config AMP_IP_AUDIO_MS11_USE_ARM
+	bool
+config AMP_IP_AUDIO_MS11_USE_ZSP
+	bool
+
+#RawPCM
+config AMP_AUDIO_RAWPCM_USE_ARM
+	bool
+config AMP_AUDIO_RAWPCM_USE_ZSP
+	bool
+
+#UDC/UDC Lite
+config AMP_IP_AUDIO_UDC_USE_ARM
+	bool
+config AMP_IP_AUDIO_UDC_USE_ZSP
+	bool
+config AMP_IP_AUDIO_UDC_LITE_USE_ARM
+	bool
+
+#Vorbis
+config AMP_AUDIO_VORBIS_USE_ARM
+	bool
+config AMP_AUDIO_VORBIS_USE_ZSP
+	bool
+config AMP_AUDIO_VORBIS_USE_HIFI
+	bool
+
+#WMA
+config AMP_AUDIO_WMA_USE_ARM
+	bool
+config AMP_AUDIO_WMA_USE_ZSP
+	bool
+config AMP_AUDIO_WMA_USE_HIFI
+	bool
+
+## DSP HiFi implementation Only
+#
+config AMP_AUDIO_OPUS_USE_HIFI
+	bool

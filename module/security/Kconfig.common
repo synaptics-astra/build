@@ -1,0 +1,17 @@
+config SECURITY
+	bool
+	default y
+
+config SECURITY_KEY_PATH
+	string
+	default "release/SECURITY/keys"
+	help
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SECURITY_KEY_PATH}/${syna_chip_name}/${syna_chip_rev}
+
+config SECURITY_VERSION_PATH
+	string
+	default "release/SECURITY/version"
+	help
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SECURITY_VERSION_PATH}
+
+

@@ -1,0 +1,84 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+menuconfig AMP_COMPONENT_AOUT_ENABLE
+	bool "Audio Output"
+	default y
+
+if AMP_COMPONENT_AOUT_ENABLE
+
+comment "General"
+
+config AMP_AUDIO_MUTE_PT_FOR_STREAM
+	bool "Pass-Through Mute Support"
+	default y
+
+config AMP_AUDIO_SPDIF_DDP_PACK_ENABLE
+	bool
+	prompt "SPDIF DDP Pack Enable (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+
+config AMP_AUDIO_I2S0_HALF_MCLK
+	bool
+	prompt "I2S0 HALF MCLK (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+
+config AMP_AUDIO_ENABLE_AOUT_SNOOP
+	bool
+	prompt "Enable AOUT Snoop (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+
+config AMP_AUDIO_INTERNAL_ADAC_DISABLE
+	bool
+	prompt "Internal ADAC Disable (DEV)" if AMP_DEVELOPMENT_OPTION
+	default y
+
+config AMP_AUDIO_ANALOG_MUTE_GPIO
+	bool
+	prompt "Analog Mute GPIO Support (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+
+config AMP_GPIO_ENABLE
+	depends on AMP_AUDIO_ANALOG_MUTE_GPIO
+	int "Mute GPIO Number"
+	default 9
+
+
+comment "Pass-Through Formats"
+
+config AMP_AUDIO_DOLBY_PT_SUPPORTED
+	bool "Dolby"
+	default y
+
+if AMP_AUDIO_DOLBY_PT_SUPPORTED
+source "module/ampsdk/kconfig/select_${AMP_KCONFIG_MODE}/Kconfig.audio.aout.dolbypt.select"
+endif
+
+config AMP_IP_AUDIO_DTS_PT_SUPPORTED
+	bool "DTS"
+	default y
+
+if AMP_IP_AUDIO_DTS_PT_SUPPORTED
+source "module/ampsdk/kconfig/select_${AMP_KCONFIG_MODE}/Kconfig.audio.aout.dtspt.select"
+endif
+
+config AMP_AUDIO_IEC61937_PT
+	bool "IEC61937"
+	default y
+
+config AMP_AUDIO_MAT_PT_SUPPORTED
+	bool "MAT"
+	default y
+
+config AMP_AUDIO_AAC_PT_AAC
+	bool
+
+config AMP_AUDIO_AAC_PT_SUPPORTED
+	bool
+	prompt "AAC (DEV)" if AMP_DEVELOPMENT_OPTION
+	default n
+	select AMP_AUDIO_AAC_PT_AAC
+
+endif

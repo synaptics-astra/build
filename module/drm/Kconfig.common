@@ -1,0 +1,98 @@
+config DRM_COMMON
+	bool
+
+config KEYMASTER
+	depends on !BERLIN_AS470_A0
+	select DRM_COMMON
+	bool "Keymaster"
+	default y
+
+config GATEKEEPER_CA
+	depends on ANDROID_OS
+	select GATEKEEPER_TA
+	select DRM_COMMON
+	bool "Gatekeeper"
+	default y
+
+config GATEKEEPER_TA
+	depends on ANDROID_OS
+	bool
+	default y
+
+config GTVCA
+	bool "Enable gtvca"
+	default n
+
+config GTVCALITE
+	bool "Enable gtvcalite"
+	default n
+
+config GTVCALITE_TEST
+	bool "Enable gtvcalite_test"
+	default n
+
+config PLAYREADY_VER_32
+	bool "Playready 3.2"
+	select PR_SYNA_CA
+	select PR_SYNA_TA
+	select DRM_COMMON
+
+config PLAYREADY_VER_40
+	bool "Playready 4.0"
+	select PR_SYNA_CA
+	select PR_SYNA_TA
+	select DRM_COMMON
+	select DRM_PR_TEST
+
+config PR_SYNA_CA
+	bool
+	depends on PLAYREADY_VER_32 || PLAYREADY_VER_40
+
+config PR_SYNA_TA
+	bool
+	depends on PLAYREADY_VER_32 || PLAYREADY_VER_40
+
+if VSSDK_RELEASE
+config BUILD_PRPK_SOURCE
+	depends on PLAYREADY_VER_32 || PLAYREADY_VER_40
+	bool "Build from Source"
+	default n
+endif
+
+config DRM_TEST
+	depends on ANDROID_OS
+	select DRM_COMMON
+	bool "DRM Tests"
+	default n
+
+config OTP_PROGRAM
+	bool "OTP program"
+	default n
+
+config READ_RKEKID
+	bool "read rkekid"
+	default n
+
+config KM_TEST
+	bool "keymaster api test"
+	default n
+
+config LOAD_HDCP
+	bool "load HDCP"
+	default n
+
+config FACTORY_UTIL
+	bool "factory util"
+	default n
+
+config OEM_COMMAND
+        bool "oem command tool"
+        default y if GENX_ENABLE
+
+config DRM_GENCRYPTO_TEST
+	bool "gencrypto api test"
+	default n
+
+config DRM_PR_TEST
+	bool
+	depends on PLAYREADY_VER_40

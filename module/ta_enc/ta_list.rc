@@ -1,0 +1,275 @@
+ta_path_list=()
+ta_list=()
+
+if [ "is${CONFIG_TA_FACTORY}" = "isy" ]; then
+    ta_path_list+=('libfactory.ta')
+    ta_list+=('libfactory.ta')
+fi
+
+ta_path_list+=('libdebug.ta')
+ta_list+=('libdebug.ta')
+
+if [ "is${CONFIG_AMPSDK}" = "isy" ]; then
+    ta_path_list+=('libdhub.ta' 'librsaengine.ta' 'libdrmse.ta')
+    ta_list+=('libdhub.ta' 'librsaengine.ta' 'libdrmse.ta')
+fi
+
+if [ "is${CONFIG_AMP_IOMMU}" = "isy" ]; then
+    ta_path_list+=('libptm.ta')
+    ta_list+=('libptm.ta')
+fi
+
+if [ "is${CONFIG_AMP_COMPONENT_DEINT_ENABLE}" = "isy" ]; then
+    ta_path_list+=('libovp.ta')
+    ta_list+=('libovp.ta')
+fi
+
+if [ "is${CONFIG_AMP_COMPONENT_DATA_EXPORTER_ENABLE}" = "isy" ]; then
+    ta_path_list+=('libdata_exporter.ta')
+    ta_list+=('libdata_exporter.ta')
+fi
+
+if [ "is${CONFIG_AMP_COMPONENT_VDEC_ENABLE}" = "isy" ]; then
+    ta_path_list+=('libvmeta.ta')
+    ta_list+=('libvmeta.ta')
+fi
+
+if [ "is${CONFIG_AMP_COMPONENT_DMX_ENABLE}" = "isy" ]; then
+    ta_path_list+=('libtsp.ta' 'libm2m.ta' 'libdss.ta')
+    ta_list+=('libtsp.ta' 'libm2m.ta' 'libdss.ta')
+fi
+
+if [ "is${CONFIG_AMP_COMPONENT_DVS_ENABLE}" = "isy" ]; then
+    ta_path_list+=('dv')
+    ta_list+=('libdvs.ta')
+fi
+
+if [ "is${CONFIG_GEN_AMP_AUDIO_ENABLE_ZSP}" = "isy" ]; then
+    ta_path_list+=('libzsp.ta')
+    ta_list+=('libzsp.ta')
+fi
+
+if [ "is${CONFIG_AMP_IP_AUDIO_DTS_CORE_SUPPORTED}" = "isy" ]; then
+    if [ "is${CONFIG_AMP_IP_AUDIO_DTS_CORE_USE_ZSP}" = "isy" ]; then
+        ta_path_list+=('libdtscore.ta')
+        ta_list+=('libdtscore.ta')
+    fi
+fi
+
+if [ "is${CONFIG_AMP_IP_AUDIO_DTS_HD_SUPPORTED}" = "isy" ]; then
+    if [ "is${CONFIG_AMP_IP_AUDIO_DTS_HD_USE_ZSP}" = "isy" ]; then
+        ta_path_list+=('libdtshd.ta')
+        ta_list+=('libdtshd.ta')
+    fi
+fi
+
+if [ "is${CONFIG_AMP_IP_AUDIO_SRS_ENABLE_TRUVOLUME}" = "isy" ]; then
+    if [ "is${CONFIG_AMP_IP_AUDIO_SRS_USE_ZSP}" = "isy" ]; then
+        ta_path_list+=('libsrstruvol.ta')
+        ta_list+=('libsrstruvol.ta')
+    fi
+fi
+
+if [ "is${CONFIG_AMP_AUDIO_AAC_USE_ARM}" = "isy" ]; then
+    ta_path_list+=('libaac.ta')
+    ta_list+=('libaac.ta')
+fi
+
+if [ "is${CONFIG_AMP_AUDIO_WMA_USE_ARM}" = "isy" ]; then
+    ta_path_list+=('libwma.ta')
+    ta_list+=('libwma.ta')
+fi
+
+if [ "is${CONFIG_ENABLE_VPP_TZ}" = "isy" ]; then
+    ta_path_list+=('liboutctrl.ta')
+    ta_list+=('liboutctrl.ta')
+    if [ "is${CONFIG_SYNA_SDK_REL_PATH}" = "is" ]; then
+        if [ "is${CONFIG_AMP_DOLBY_VISION}" = "isy" ]; then
+            if [ "is${CONFIG_AMP_HDMI_HDCP}" = "isy" ]; then
+                ta_path_list+=('dv')
+                ta_list+=('libvpp.ta')
+            else
+                ta_path_list+=('dv_nohdcp')
+                ta_list+=('libvpp.ta')
+            fi
+        else
+            if [ "is${CONFIG_AMP_HDMI_HDCP}" = "isy" ]; then
+                ta_path_list+=('libvpp.ta')
+                ta_list+=('libvpp.ta')
+            else
+                ta_path_list+=('nohdcp')
+                ta_list+=('libvpp.ta')
+            fi
+        fi
+    else
+        ta_path_list+=('dv' 'libvpp.ta' 'dv_nohdcp' 'nohdcp')
+        ta_list+=('libvpp.ta' 'libvpp.ta' 'libvpp.ta' 'libvpp.ta')
+    fi
+fi
+
+
+#if [ "is${CONFIG_AMP_LIB_NXG}" = "isy" ]; then
+    ta_path_list+=('libnxg.ta')
+    ta_list+=('libnxg.ta')
+#fi
+
+if [ "is${CONFIG_AMP_LIB_HDCP2X}" = "isy" ]; then
+    ta_path_list+=('libhdcp2x.ta')
+    ta_list+=('libhdcp2x.ta')
+fi
+
+if [ "is${CONFIG_BL_TA_FASTLOGO}" = "isy" ]; then
+    ta_path_list+=('libfastlogo.ta')
+    ta_list+=('libfastlogo.ta')
+fi
+
+if [ "is${CONFIG_GATEKEEPER_TA}" = "isy" ]; then
+    ta_path_list+=('libgatekeeper.ta')
+    ta_list+=('libgatekeeper.ta')
+fi
+
+if [ "is${CONFIG_GENCRYPTO}" = "isy" ]; then
+    ta_path_list+=('libgencrypto.ta')
+    ta_list+=('libgencrypto.ta')
+fi
+
+if [ "is${CONFIG_SYNAP}" = "isy" ]; then
+    ta_path_list+=('libsynap.ta')
+    ta_list+=('libsynap.ta')
+fi
+
+if [ "is${CONFIG_TA_GFX_IMG}" = "isy" ]; then
+    ta_path_list+=('libgfx_img.ta')
+    ta_list+=('libgfx_img.ta')
+fi
+
+if [ "is${CONFIG_TA_GFX_IMG_LINUX}" = "isy" ]; then
+    ta_path_list+=('libgfx_img_linux.ta')
+    ta_list+=('libgfx_img_linux.ta')
+fi
+
+if [ "is${CONFIG_AMP_IP_DRM_PR_25}" = "isy" ]; then
+    ta_path_list+=('pr25')
+    ta_list+=('libpr25.ta')
+fi
+
+if [ "is${CONFIG_PLAYREADY_VER_32}" = "isy" ]; then
+    ta_path_list+=('pr32')
+    ta_list+=('libpr32.ta')
+fi
+
+if [ "is${CONFIG_PLAYREADY_VER_40}" = "isy" ]; then
+    ta_path_list+=('pr40')
+    ta_list+=('libpr40.ta')
+fi
+
+if [ "is${CONFIG_AMP_IP_DRM_NAGRA}" = "isy" ]; then
+    ta_path_list+=('nagra' 'nagra' 'nagra' 'nagra' 'nagra' 'nagra')
+    ta_list+=('libnagrakm.ta' 'libnocsbcm.ta' 'libcert.ta' 'libkeygen.ta' 'libTALTS.ta' 'libCCL.ta')
+    if [ "is${CONFIG_AMP_RELEASE_BUILD}" = "is" ]; then
+        ta_path_list+=('libplayer_api.ta')
+        ta_list+=('libplayer_api.ta')
+    fi
+fi
+
+if [ "is${CONFIG_AMP_ENABLE_GKL}" = "isy" ]; then
+    ta_path_list+=('libgkl.ta')
+    ta_list+=('libgkl.ta')
+fi
+
+if [ "is${CONFIG_AMP_IP_DRM_NSK}" = "isy" ]; then
+    ta_path_list+=('nsk' 'nskhdi')
+    ta_list+=('libnsk.ta' 'libnskhdi.ta')
+fi
+
+if [ "is${CONFIG_AMP_IP_DRM_IRDETO}" = "isy" ]; then
+    ta_path_list+=('irdeto')
+    ta_list+=('libirdeto.ta')
+fi
+
+if [ "is${CONFIG_AMP_DRM_ENG_FIGO}" = "isy" ]; then
+    ta_path_list+=('libdrmtz.ta')
+    ta_list+=('libdrmtz.ta')
+fi
+
+if [ "is${CONFIG_AMP_IP_DRM_VMX_ULTRA}" = "isy" ]; then
+    ta_path_list+=('vmx' 'vmx')
+    ta_list+=('libvmx_bg.ta' 'libvmxultra.ta')
+fi
+
+if [ "is${CONFIG_AMP_IP_DRM_CISCOVSSS}" = "isy" ]; then
+    ta_path_list+=('ciscovsss')
+    ta_list+=('libciscovsss.ta')
+fi
+
+if [ "is${CONFIG_AMP_IP_DRM_WV}" = "isy" ]; then
+    ta_path_list+=('libutctl.ta')
+    ta_list+=('libutctl.ta')
+    if [ "is${CONFIG_AMP_IP_DRM_WV_11}" = "isy" ]; then
+        ta_path_list+=('wv11')
+        ta_list+=('libwidevine.ta')
+    fi
+    if [ "is${CONFIG_AMP_IP_DRM_WV_13}" = "isy" ]; then
+        ta_path_list+=('wv13')
+        ta_list+=('libwidevine.ta')
+    fi
+    if [ "is${CONFIG_AMP_IP_DRM_WV_14}" = "isy" ]; then
+        ta_path_list+=('wv14')
+        ta_list+=('libwidevine.ta')
+    fi
+    if [ "is${CONFIG_AMP_IP_DRM_WV_15}" = "isy" ]; then
+        ta_path_list+=('wv15')
+        ta_list+=('libwidevine.ta')
+    fi
+    if [ "is${CONFIG_AMP_IP_DRM_WV_16}" = "isy" ]; then
+        ta_path_list+=('wv16')
+        ta_list+=('libwidevine.ta')
+    fi
+    if [ "is${CONFIG_AMP_IP_DRM_WV_17}" = "isy" ]; then
+        ta_path_list+=('wv17')
+        ta_list+=('libwidevine.ta')
+    fi
+fi
+
+if [ "is${CONFIG_AMP_IP_DRM_PRIKLADDER}" = "isy" ]; then
+    ta_path_list+=('libpvrprikey.ta')
+    ta_list+=('libpvrprikey.ta')
+fi
+
+if [ "is${CONFIG_GTVCA}" = "isy" ]; then
+    ta_path_list+=('libgtvca.ta')
+    ta_list+=('libgtvca.ta')
+fi
+
+if [ "is${CONFIG_TA_CALC}" = "isy" ]; then
+    ta_path_list+=('libcalc.ta')
+    ta_list+=('libcalc.ta')
+fi
+
+if [ "is${CONFIG_TA_CAF}" = "isy" ]; then
+    ta_path_list+=('libcaf.ta')
+    ta_list+=('libcaf.ta')
+fi
+
+if [ "is${CONFIG_DOLBYUDC_TA}" = "isy" ]; then
+    ta_path_list+=('libdolbyUDC.ta')
+    ta_list+=('libdolbyUDC.ta')
+fi
+
+if [ "is${CONFIG_AMP_IP_AUDIO_ADECCA_SUPPORTED}" = "isy" ]; then
+    ta_path_list+=('libadec.ta')
+    ta_list+=('libadec.ta')
+fi
+
+if [ "is${CONFIG_AMP_AUDIO_USE_DSP_HIFI}" = "isy" ]; then
+    ta_path_list+=('libdsp.ta')
+    ta_list+=('libdsp.ta')
+fi
+
+ta_path_list+=('libsimplecas.ta')
+ta_list+=('libsimplecas.ta')
+
+if [ ${#ta_list[@]} -eq 0 ]; then
+    echo "no ta in ta_enc list, do nothing"
+    exit 0
+fi

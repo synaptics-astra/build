@@ -1,0 +1,7 @@
+config AMP_COMPONENT_AVIN_ENABLE
+    bool "AVIN (Audio/Video Input) Enable"
+    default n
+
+config AMP_AVIN_ENABLE_CYPRESS
+    bool
+    depends on AMP_COMPONENT_AVIN_ENABLE

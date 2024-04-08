@@ -1,0 +1,9 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+# amp and its dependent modules
+source "module/ampsdk/Kconfig.feature"
+
+source "kconfig/Kconfig.chip"

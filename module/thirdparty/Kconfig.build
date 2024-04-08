@@ -1,0 +1,9 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+menu "DolbyUDC build Configuration"
+
+source "module/thirdparty/Kconfig.common"
+
+endmenu

@@ -1,0 +1,53 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+menuconfig UBOOT
+	bool "U-boot & Fastboot"
+	default y
+	depends on PREBOOT
+	select SECURITY
+
+if UBOOT
+
+config UBOOT_SRC_PATH
+	string "Uboot code path"
+	default "u-boot_2019_10"
+	help
+		Used as uboot code path
+
+if !(UBOOT_SPIUBOOT)
+config UBOOT_FASTBOOT
+	bool "Fastboot"
+	depends on ANDROID_OS
+	default y
+endif
+
+config UBOOT_SPIUBOOT
+	bool "SPI U-boot"
+	depends on !UBOOT_SUBOOT
+	default n
+
+config UBOOT_ARCH
+	string "Architechture"
+	depends on UBOOT_FASTBOOT || UBOOT_SPIUBOOT || UBOOT_SUBOOT
+	default "arm"
+
+config UBOOT_DEFCONFIG
+	string "Default Config"
+	depends on UBOOT_FASTBOOT || UBOOT_SPIUBOOT || UBOOT_SUBOOT
+	default "berlin5ct-fastboot_defconfig"
+
+config UBOOT_DTS
+	string "DTS"
+	depends on UBOOT_FASTBOOT || UBOOT_SPIUBOOT || UBOOT_SUBOOT
+	default "berlin5ct-stb-fastboot"
+
+config UBOOT_REL_PATH
+	string
+	depends on UBOOT_FASTBOOT || UBOOT_SPIUBOOT || UBOOT_SUBOOT
+	default "release/uboot"
+	help
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_UBOOT_REL_PATH}
+
+endif

@@ -1,0 +1,124 @@
+menuconfig ENABLE_DRM
+    bool "DRM SCHEME"
+    select AMP_DRM_ENG_BCM
+    default y
+
+if ENABLE_DRM
+
+config AMP_DRM_DEBUG_ENABLE
+    bool "Log Enable"
+    default n
+
+config AMP_DRM_ENG_BCM
+    bool
+    default y
+
+config AMP_DRM_STATIC_CURL
+    bool "Static CURL"
+    default y
+
+config AMP_IP_DRM_CIP
+    bool
+    default n
+
+config AMP_IP_DRM_DTCPIP
+    bool
+    default n
+
+config AMP_IP_DRM_DUMMY
+    bool
+    default y if VSSDK_RELEASE
+
+config AMP_IP_DRM_FIRSTBOOT
+    bool
+    default y
+
+config ENABLE_NEWFIRSTBOOT
+    depends on AMP_IP_DRM_FIRSTBOOT
+    bool
+    default y
+
+config AMP_IP_DRM_GENERIC_CRYPTO
+    bool "Generic CRYPTO"
+    default y
+
+config AMP_IP_DRM_HDCP2X
+    bool
+    default n
+
+config AMP_IP_DRM_NAGRA
+    depends on TOOLCHAIN_APPLICATION!="armv7a-cros-linux-gnueabihf-"
+    bool "NAGRA"
+    default n
+
+config AMP_IP_DRM_NAGRA_EFPK
+    depends on AMP_IP_DRM_NAGRA
+    bool "NAGRA EFPK"
+    default n
+
+config AMP_IP_DRM_CISCOVSSS
+    bool "CISCO VSSS"
+    default n
+
+config AMP_IP_DRM_OPENCRYPTO
+    bool "Open Crypto"
+    default y if VSSDK_RELEASE
+
+config AMP_IP_DRM_PVR
+    bool
+    default n
+
+config AMP_IP_DRM_STUB
+    bool
+    default y if VSSDK_RELEASE
+
+config AMP_IP_DRM_VMX_ULTRA
+    bool "VMX Ultra"
+    default y
+
+config AMP_IP_DRM_KEY
+    bool "KEY"
+    default n
+
+config AMP_IP_DRM_PRIKLADDER
+    bool
+    default n
+
+config AMP_IP_DRM_PR
+    bool "Playready 2.5 Supported"
+    default y if VSSDK_RELEASE
+
+config AMP_IP_DRM_PR_25
+    bool "Ver. 25"
+    default y if AMP_IP_DRM_PR
+
+config AMP_IP_DRM_WV
+    bool "Widevine Supported"
+    default y
+
+if AMP_IP_DRM_WV
+source "module/ampsdk/kconfig/select_${AMP_KCONFIG_MODE}/Kconfig.drm.widevine.select"
+endif
+
+config AMP_IP_DRM_NSK
+    bool "NSK DRM"
+    default n
+
+if AMP_IP_DRM_NSK
+config AMP_IP_DRM_NSK_HARMONIZER
+    bool "NSK Harmonizer"
+    default n
+endif
+
+config AMP_IP_DRM_IRDETO
+    bool "IRDETO DRM"
+    default n
+
+config AMP_GENX_ENABLE
+   bool "GenX Encryption Supported"
+   default y if GENX_ENABLE
+
+config AMP_ENABLE_GKL
+    bool "Enable GKL TA"
+    default n
+endif

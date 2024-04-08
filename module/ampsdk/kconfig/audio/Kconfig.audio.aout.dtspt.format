@@ -1,0 +1,8 @@
+config AMP_IP_AUDIO_DTS_PT_DTS
+	bool "DTS"
+
+config AMP_IP_AUDIO_DTS_PT_DTSHD
+	bool "DTSHD"
+
+config AMP_IP_AUDIO_DTS_PT_DTSMA
+	bool "DTSMA"

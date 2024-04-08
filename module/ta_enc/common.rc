@@ -1,0 +1,444 @@
+SYNA_TA_MagicNum=0x5441494d
+SYNA_TA_VendorID=0x0
+SYNA_TA_VendorName=SYNAPTIC
+SYNA_TA_SegID=0x0
+SYNA_TA_SegIDMask=0xffffffff
+SYNA_TA_Ver=0x0
+SYNA_TA_VerMask=0xffffffff
+SYNA_TA_FooterMagicNum=0x4d494154
+TA_COMBO_HEADER_MagicNum=0x54413330
+TA_COMBO_HEADER_Size=32
+TA_HEADER_MagicNum=0x54413530
+TA_HEADER_Size=32
+
+TA_X_ProdImgFlag=0x00000000
+TA_X_VendorGID=0x00000001
+TA_X_CertID=0x00000001
+
+product_common_path=${CONFIG_SYNA_SDK_PRODUCT_PATH}/common/${syna_chip_name}/${syna_chip_rev}
+clear_ta_path=${CONFIG_SYNA_SDK_PATH}/${CONFIG_TA_REL_PATH}/TA_MODULE_PATH/${syna_chip_name}/${syna_chip_rev}
+out_clear_ta_path=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/ta/TA_MODULE_PATH/${syna_chip_name}/${syna_chip_rev}
+enc_ta_path=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TA_IMAGE_PATH}/${syna_chip_name}/${syna_chip_rev}/${boot_seclvl}
+
+
+l_endian32() {
+  echo `printf "%08x"  $1` | grep -o .. | tac | echo "$(tr -d '\n')" | xxd -r -p
+}
+
+function l_endian16() {
+  echo `printf "%04x"  $1` | grep -o .. | tac | echo "$(tr -d '\n')" | xxd -r -p
+}
+
+gen_tz_enc_ta_eheader() {
+  local f_ta_eheader
+
+  # Process arguments
+  f_ta_eheader=$1; shift
+
+  [ "x${f_ta_eheader}" != "x" ]
+
+  if [ -f ${product_common_path}/security_ver.cfg ]; then
+    v_TAVer=$(grep "SOCTAVersion" ${product_common_path}/security_ver.cfg | awk {'print $3'})
+  else
+    v_TAVer=$SYNA_TA_Ver
+  fi
+
+  l_endian32 $SYNA_TA_MagicNum > $f_ta_eheader
+  l_endian32 64 >> $f_ta_eheader
+  echo `printf "%02x"  $SYNA_TA_VendorID` | xxd -r -p >> $f_ta_eheader
+  echo -n `printf "%s" $SYNA_TA_VendorName` >> $f_ta_eheader
+  vname_size=${#SYNA_TA_VendorName}
+  echo `printf "%0$(((15 - vname_size) * 2))x" 0` | xxd -r -p >> $f_ta_eheader
+  l_endian32 $SYNA_TA_SegID >> $f_ta_eheader
+  l_endian32 $SYNA_TA_SegIDMask >> $f_ta_eheader
+  l_endian32 $v_TAVer >> $f_ta_eheader
+  l_endian32 $SYNA_TA_VerMask >> $f_ta_eheader
+  echo `printf "%040x" 0` | xxd -r -p >> $f_ta_eheader
+  l_endian32 $SYNA_TA_FooterMagicNum >> $f_ta_eheader
+}
+
+gen_ta_cert_image_combo() {
+  local f_ta
+  local f_ta_cert
+  local f_out
+
+  # Process arguments
+  f_ta=$1; shift
+  f_ta_cert=$1; shift
+  f_out=$1; shift
+
+  ## Gen TA_Combo_Header
+  f_ta_combo_hdr="$(dirname ${f_ta})/$(basename $f_ta .img).ta_combo_hdr"
+  l_endian32 $TA_COMBO_HEADER_MagicNum   > $f_ta_combo_hdr
+  l_endian32 $TA_COMBO_HEADER_Size      >> $f_ta_combo_hdr
+  l_endian32 $TA_COMBO_HEADER_Size      >> $f_ta_combo_hdr
+  TacertSize=`stat -c "%s"  $f_ta_cert`
+  l_endian32 $TacertSize                >> $f_ta_combo_hdr
+  TAImageOffset=$((TA_COMBO_HEADER_Size + TacertSize))
+  l_endian32 $TAImageOffset             >> $f_ta_combo_hdr
+  TAImageSize=`stat -c "%s"  $f_ta`
+  l_endian32 $TAImageSize               >> $f_ta_combo_hdr
+  echo `printf "%016x" 0` | xxd -r -p   >> $f_ta_combo_hdr
+
+  cat $f_ta_combo_hdr $f_ta_cert $f_ta > $f_out
+}
+
+pack_tz_enc_ta() {
+  local f_tacert
+  local f_tarootcert
+  local f_ta
+  local f_ta_pkg
+
+  # Process arguments
+  f_tacert=$1; shift
+  f_tarootcert=$1; shift
+  f_ta=$1; shift
+  f_ta_pkg=$1; shift
+
+  [ "x${f_tacert}" != "x" ]
+  [ "x${f_tarootcert}" != "x" ]
+  [ "x${f_ta}" != "x" ]
+  [ "x${f_ta_pkg}" != "x" ]
+
+  # Remove CUSTK and EXT RSA stores in TA
+  local f_strip_ta="${f_ta}.strip"
+  dd if=$f_ta of=$f_strip_ta iflag=skip_bytes skip=5120
+  [ -f $f_strip_ta ]
+
+  local f_tacert="$(dirname ${f_in})/$(basename ${f_in} .ta_raw).cert"
+  f_ta_cert_image_combo="$(dirname ${f_ta})/$(basename ${f_ta} .signed).ta_cert_img_combo"
+
+  #TA cert image combo
+  gen_ta_cert_image_combo $f_strip_ta $f_tacert $f_ta_cert_image_combo
+
+  f_ta_cert_image_combo_signed="$f_ta_cert_image_combo.signed"
+  gen2_secure_image "ta_cert_image_combo" $f_ta_cert_image_combo $f_ta_cert_image_combo_signed
+
+  ## Gen TA Header (32 bytes)
+  local f_pkg_header="$f_ta_pkg.ta_header"
+  l_endian32 $TA_HEADER_MagicNum  > $f_pkg_header
+  l_endian32 $TA_HEADER_Size     >> $f_pkg_header
+  l_endian32 $TA_HEADER_Size     >> $f_pkg_header
+  ImageSize=`stat -c "%s"  $f_tarootcert`
+  l_endian32 $ImageSize          >> $f_pkg_header
+  NextImageOffset=$((TA_HEADER_Size + ImageSize))
+  l_endian32 $NextImageOffset    >> $f_pkg_header
+  ImageSize=`stat -c "%s"  $f_ta_cert_image_combo_signed`
+  l_endian32 $ImageSize          >> $f_pkg_header
+  echo `printf "%016x" 0` | xxd -r -p >> $f_pkg_header
+
+  [ -f $f_pkg_header ]
+  cat $f_pkg_header $f_tarootcert $f_ta_cert_image_combo_signed > $f_ta_pkg
+  rm $f_pkg_header
+  rm $f_strip_ta
+}
+
+enc_ta() {
+  local f_in
+  local f_out
+
+  # Process arguments
+  f_in=$1; shift
+  f_out=$1; shift
+
+  [ "x${f_out}" != "x" ]
+  [ "x${f_in}" != "x" ]
+
+  [ -f $f_in ]
+
+  # Compress f_in to f_compress
+  local f_compress=${f_in}.zz
+  ${CONFIG_SYNA_SDK_PATH}/${CONFIG_TOOLS_BIN_PATH}/compress $f_in $f_compress
+  [ -f $f_compress ]
+
+  # Add common header to f_compress
+  local f_compress_whdr=${f_compress}.whdr
+  local in_len=`stat -c "%s" $f_in`
+  ${CONFIG_SYNA_SDK_OUT_HOST_REL_PATH}/genimg -n tzta -i TZTA -v 0x0 -d $f_compress -t attr0 0x01000000 -t attr1 $in_len -o $f_compress_whdr
+  [ -f $f_compress_whdr ]
+  rm $f_compress
+
+  # Generate TA embedded header from cofig file
+  local f_ehdr=${f_in}.ehdr
+  gen_tz_enc_ta_eheader $f_ehdr
+  [ -f $f_ehdr ]
+
+  # Encrypt and sign TA
+  local f_clear_ta=${f_in}.clr
+  local f_signed_ta=${f_in}.signed
+  cat $f_ehdr $f_compress_whdr > $f_clear_ta
+  gen2_secure_image "ta" $f_clear_ta $f_signed_ta
+  [ -f $f_signed_ta ]
+  rm $f_ehdr
+  rm $f_compress_whdr
+  rm $f_clear_ta
+
+  # Pack TA cert and signed TA
+  local f_tacert="$(dirname ${f_in})/$(basename ${f_in} .ta_raw).cert"
+  local f_tarootcert="$(dirname ${f_in})/TA_Root_Cert.rcert"
+
+  [ -f $f_tacert ]
+  [ -f $f_tarootcert ]
+
+  pack_tz_enc_ta $f_tacert $f_tarootcert $f_signed_ta $f_out
+}
+
+gen2_secure_image() {
+  v_image_type=$1; shift
+  f_input=$1; shift
+  f_output=$1; shift
+
+  ### Check input file ###
+  [ -f $f_input ]
+
+  ### Exectuable for generating secure image ###
+  if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
+    exec_cmd=${security_tools_path}gen_secure_image
+    [ -x $exec_cmd ]
+  else
+    exec_cmd=gen_secure_image
+  fi
+
+  ### Prepare arguments ###
+  unset exec_args
+
+  local MARKET_ID=`printf 0x%x ${syna_chip_mid}`
+  ## Codetype
+  case "$v_image_type" in
+    "ta")
+      exec_args="${exec_args} --code-type=2"
+      ;;
+    "ta_cert_image_combo")
+      exec_args="${exec_args} --code-type=2"
+      exec_args="${exec_args} --add-custk-store=0"
+      exec_args="${exec_args} --add-ersak-store=0"
+      ;;
+    *) /bin/false ;;
+  esac
+
+  # Other parameters
+  exec_args="${exec_args} --chip-name=${syna_chip_name}"
+  exec_args="${exec_args} --chip-rev=${syna_chip_rev}"
+  exec_args="${exec_args} --market-id=${MARKET_ID}"
+  exec_args="${exec_args} --workdir-security-tools=${security_tools_path}"
+  exec_args="${exec_args} --workdir-security-keys=${security_keys_path}"
+
+  exec_args="${exec_args} --custk-type=1"
+  exec_args="${exec_args} --rsak-type=1"
+
+  # Input and output
+  exec_args="${exec_args} --input-file=${f_input} --output-file=${f_output}"
+
+  ### Generate secure image ###
+  eval ${exec_cmd} "${exec_args}"
+}
+
+gen_ta_extras(){
+  local f_out
+  local f_ta_name
+  local ta_type
+
+  f_out=$1; shift
+  f_ta_name=$1; shift
+  ta_type=$1; shift
+
+  l_endian32 $TA_X_ProdImgFlag >$f_out
+  l_endian32 $TA_X_VendorGID >>$f_out
+  l_endian32 $TA_X_CertID >>$f_out
+
+  echo -n `printf "%s" ${f_ta_name}` >>$f_out
+  gname_len=${#f_ta_name}
+  echo `printf "%0$(((16 - gname_len) * 2))x" 0` | xxd -r -p >>$f_out
+
+  ## Mask the LSB 2-bytes
+  l_endian32 ${TA_ROOT_UUID[3]}  > $f_out.uuid3
+  l_endian16 $TA_UUID           > $f_out.ta_uuid
+  dd if=$f_out.ta_uuid of=$f_out.uuid3 bs=1 conv=notrunc seek=2
+  UUID3=`xxd -p $f_out.uuid3`
+  rm $f_out.uuid3 $f_out.ta_uuid
+
+  l_endian32 ${TA_ROOT_UUID[0]} >>$f_out
+  l_endian32 ${TA_ROOT_UUID[1]} >>$f_out
+  l_endian32 ${TA_ROOT_UUID[2]} >>$f_out
+  echo -ne $UUID3 | xxd -r -p   >>$f_out
+
+  if [ "$ta_type" = "0" ]; then
+     l_endian32 0x00000000 >>$f_out
+  elif [ "$ta_type" = "1" ]; then
+     l_endian32 0x00000001 >>$f_out
+  else
+     echo "No such TA type!"
+     l_endian32 0x00000000 >>$f_out
+  fi
+}
+
+enc_x_ta(){
+
+  local f_in
+  local f_out
+  local type
+
+  # Process arguments
+  f_in=$1; shift
+  f_out=$1; shift
+  type=$1; shift
+
+  [ "x${f_out}" != "x" ]
+  [ "x${f_in}" != "x" ]
+
+  [ -f $f_in ]
+
+  local f_in_ta_extras="$(dirname ${f_in})/$(basename ${f_in} .ta_raw).extra"
+  local f_ta_enc="$(dirname ${f_in})/$(basename ${f_in} .ta_raw).enc"
+  gen_ta_extras $f_in_ta_extras $(basename ${f_in} .ta_raw) $type
+
+  genx_secure_image "TA" $f_in_ta_extras 0x0 $f_in $f_ta_enc
+
+  # Pack GenX TA ROOT cert, TA cert and signed TA
+  local f_tacert="$(dirname ${f_in})/$(basename ${f_in} .ta_raw).cert"
+  local f_tarootcert="$(dirname ${f_in})/TA_Root_Cert.rcert"
+
+  [ -f $f_tacert ]
+  [ -f $f_tarootcert ]
+
+  cat $f_tarootcert $f_tacert $f_ta_enc > $f_out
+}
+
+genx_secure_image() {
+  v_image_type=$1; shift
+  in_extras=$1; shift
+  in_length=$1; shift
+  f_input=$1; shift
+  f_output=$1; shift
+
+  ### Check input file ###
+  [ -f $f_input ]
+
+  ### Exectuable for generating secure image ###
+  if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
+    exec_cmd=${security_tools_path}gen_x_secure_image
+    [ -x $exec_cmd ]
+  else
+    exec_cmd=gen_x_secure_image
+  fi
+
+  ### Prepare arguments ###
+  unset exec_args
+
+  # Other parameters
+  exec_args="${exec_args} --chip-name=${syna_chip_name}"
+  exec_args="${exec_args} --chip-rev=${syna_chip_rev}"
+  exec_args="${exec_args} --img_type=$v_image_type"
+  exec_args="${exec_args} --key_type=ta"
+
+  #exec_args="${exec_args} --seg_id=0x00000000"
+  #exec_args="${exec_args} --seg_id_mask=0xFFFFFFFF"
+  #exec_args="${exec_args} --version=0x00000001"
+  #exec_args="${exec_args} --version_mask=0xFFFFFFFF"
+  exec_args="${exec_args} --length=$in_length"
+  exec_args="${exec_args} --extras=$in_extras"
+  exec_args="${exec_args} --workdir-security-tools=${security_tools_path}"
+  exec_args="${exec_args} --workdir-security-keys=${security_keys_path}"
+
+  # Input and output
+  exec_args="${exec_args} --in_payload=${f_input} --out_store=${f_output}"
+
+  ### Generate secure image ###
+  eval ${exec_cmd} "${exec_args}"
+}
+
+mkdir -p ${enc_ta_path}
+
+# Sign and encrypt all TA binaries
+for i in ${!ta_list[*]}; do
+  ta=${ta_list[$i]}
+  ip_module=${ta_path_list[$i]}
+  mkdir -p ${enc_ta_path}/${ip_module}
+  clear_ta_path_final=`echo ${clear_ta_path} | sed -e "s/TA_MODULE_PATH/${ta_path_list[$i]}/g"`
+  out_clear_ta_path_final=`echo ${out_clear_ta_path} | sed -e "s/TA_MODULE_PATH/${ta_path_list[$i]}/g"`
+  if [ -f ${CONFIG_SYNA_SDK_PATH}/${CONFIG_TA_REL_PATH}/release ]; then
+    if [ "is${syna_chip_name}" = "isdolphin" ]; then
+      if [ "is${CONFIG_GENX_ENABLE}" = "isy" ]; then
+        clear_ta_path_final=${clear_ta_path_final}/genx
+      else
+        clear_ta_path_final=${clear_ta_path_final}/gen2
+      fi
+    fi
+    if [ ! -f ${clear_ta_path_final}/${ta} ]; then
+      echo "WARNING: missing TA ${clear_ta_path_final}/${ta}"
+    else
+      echo "VSSDK build, install ${ta}"
+      INSTALL_F ${clear_ta_path_final}/${ta} ${enc_ta_path}/${ip_module}/${ta}
+    fi
+  elif [ "is${CONFIG_PRE_CLEAR_IMAGE}" = "isy" ]; then
+    if [ -f ${clear_ta_path_final}/${ta} ]; then
+      echo "VSSDK clear ta, install ${ta}"
+      INSTALL_F ${clear_ta_path_final}/${ta} ${enc_ta_path}/${ip_module}/${ta}
+    fi
+  else
+    f_name=$(basename $ta .ta)
+    f_raw_name=${ta}_raw
+    # install TA cert
+    if [ "is${CONFIG_GENX_ENABLE}" = "isy" ] || [ "is${syna_sec_lvl}" = "isgenx" ]; then
+       if [ ! -f ${product_common_path}/tacert_genx/${f_name}.cert ]; then
+          echo "WARNING: missing CERT ${product_common_path}/tacert/${f_name}.cert"
+       else
+          if [ ! -f ${product_common_path}/ta_uuid/${f_name}.uuid.cfg ]; then
+            echo "WARNING: ${syna_chip_name} missing ${product_common_path}/ta_uuid/${f_name}.uuid.cfg!!!"
+            continue
+          fi
+          # install GenX TA root cert, cert, UUID config
+          cp -advL ${product_common_path}/tacert_genx/${f_name}.cert ${enc_ta_path}/${ip_module}/
+          cp -advL ${product_common_path}/tarootcert_genx/TA_Root_Cert.rcert ${enc_ta_path}/${ip_module}/
+          cp -advL ${product_common_path}/ta_uuid/${f_name}.uuid.cfg ${enc_ta_path}/${ip_module}/
+          cp -advL ${product_common_path}/ta_uuid/common.uuid.cfg ${enc_ta_path}/${ip_module}/
+
+          clear_ta=""
+          if [ -f ${out_clear_ta_path_final}/${ta} ]; then
+            clear_ta=${out_clear_ta_path_final}/${ta}
+          elif [ -f ${clear_ta_path_final}/${ta} ]; then
+            clear_ta=${clear_ta_path_final}/${ta}
+          else
+            echo "WARNING: missing TA ${ta} from ${out_clear_ta_path_final} and ${clear_ta_path_final}"
+          fi
+
+          if [ ! -z $clear_ta ]; then
+            cp -adv ${clear_ta} ${enc_ta_path}/${ip_module}/${f_raw_name} || exit 0
+
+            source ${enc_ta_path}/${ip_module}/common.uuid.cfg
+            source ${enc_ta_path}/${ip_module}/${f_name}.uuid.cfg
+
+            if [ "is${ip_module}" = "isdv" ]; then
+               enc_x_ta ${enc_ta_path}/${ip_module}/${f_raw_name} ${enc_ta_path}/${ip_module}/${ta} 1
+            else
+               enc_x_ta ${enc_ta_path}/${ip_module}/${f_raw_name} ${enc_ta_path}/${ip_module}/${ta} 0
+            fi
+          fi
+       fi
+    else
+       if [ ! -f ${product_common_path}/tacert/${f_name}.cert ]; then
+          echo "WARNING: missing CERT ${product_common_path}/tacert/${f_name}.cert"
+       else
+          # install Gen2 TA root cert, cert
+          cp -advL ${product_common_path}/tacert/${f_name}.cert ${enc_ta_path}/${ip_module}/
+          cp -advL ${product_common_path}/tarootcert/TA_Root_Cert.rcert ${enc_ta_path}/${ip_module}/
+
+          clear_ta=""
+          if [ -f ${out_clear_ta_path_final}/${ta} ]; then
+            clear_ta=${out_clear_ta_path_final}/${ta}
+          elif [ -f ${clear_ta_path_final}/${ta} ]; then
+            cp -adv ${clear_ta_path_final}/${ta} ${enc_ta_path}/${ip_module}/${f_raw_name} || exit 0
+            clear_ta=${clear_ta_path_final}/${ta}
+          else
+            echo "WARNING: missing TA ${ta} from ${out_clear_ta_path_final} and ${clear_ta_path_final}"
+          fi
+
+          if [ ! -z $clear_ta ]; then
+            cp -adv ${clear_ta} ${enc_ta_path}/${ip_module}/${f_raw_name} || exit 0
+            enc_ta ${enc_ta_path}/${ip_module}/${f_raw_name} ${enc_ta_path}/${ip_module}/${ta}
+          fi
+       fi
+    fi
+  fi
+done
+

@@ -1,0 +1,118 @@
+menu "Amp System Settings"
+
+config AMP_DEVELOPMENT_OPEN
+    int "Development option"
+    default 0
+    help
+        enable amp development option prompt.
+        normally needed in bring up stage.
+        internal use only.
+        set value=21 open this option
+
+config AMP_DEVELOPMENT_OPTION
+    bool
+    default y if AMP_DEVELOPMENT_OPEN = 21
+    help
+        enable amp development option prompt.
+
+config AMP_TA_LOADABLE
+    bool
+    default y
+
+config AMP_TZ_3_ENABLE
+    bool
+    default y
+
+config AMP_PROFILE
+    string "AMP profile name"
+    default "atv_bg5ct_a0"
+
+config AMP_OUTPUT_PATH
+    string
+    default "ampsdk"
+    help
+        Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_AMP_OUTPUT_PATH}
+
+config AMP_VERSION_STRING
+    string
+    default "2.1"
+
+config AMP_TEE_ENABLE
+    bool "TEE Enable"
+    select TEE
+    select AMP_TA_LOADABLE
+    select AMP_TZ_3_ENABLE
+    default y
+
+config AMP_COMPONENT_DUM_ENABLE
+    bool
+    prompt "DUM Enable" if AMP_DEVELOPMENT_OPTION
+    default y
+
+config AMP_ENABLE_CLKPWR_GATING
+    bool
+    prompt "CLKPWR Gating Enable" if AMP_DEVELOPMENT_OPTION
+    default n
+
+config AMP_CPM_ENABLE
+    bool "CPM Enable"
+    default y
+
+config AMP_QOS_ENABLE
+    bool "QOS Enable"
+    default y
+
+config AMP_LOW_MEMORY_ENABLE
+    bool "low memory on"
+    default n
+
+config AMP_DEV_TOOLS
+    bool "DEV Tool"
+    select FFMPEG
+    default y
+
+config DYNAMIC_FFMPEG
+    bool "Dynamic FFMPEG"
+    default y
+
+config ENABLE_ISR_AFFINITY
+    bool
+    prompt "ISR Affinity Enable" if AMP_DEVELOPMENT_OPTION
+    default y
+
+config AMP_RELEASE_BUILD
+    bool "Release build"
+    default y
+    help
+        Remove debug information
+
+config AMP_SHM_STD_ION
+    bool "Standard ION"
+    default n
+    help
+        ion usage following linux mainline since 4.14
+
+config AMP_IOMMU
+    bool
+    prompt "IOMMU feature"
+    default n
+    help
+        iommu can only enabled with chip supported.
+
+config AMP_BACKUP_PROFILE
+    bool "Profile backup"
+    default n
+
+config AMP_SYS_LOW_COST
+    bool "low-cost platform"
+    default n
+
+config AMP_MIPI_ENABLE
+    bool "Is Handheld Product"
+    default n
+
+config AMP_MIPI_PANEL
+    string "MIPI Config Params File name"
+    default ""
+
+endmenu

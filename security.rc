@@ -1,0 +1,4 @@
+if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
+  security_tools_path="${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SECURITY_TOOL_PATH}/bin/"
+  security_keys_path=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SECURITY_KEY_PATH}/${syna_chip_name}/${syna_chip_rev}
+fi

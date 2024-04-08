@@ -1,0 +1,17 @@
+choice
+        prompt "Target SoC"
+        default BERLIN_PLATYPUS_A0
+
+config BERLIN_DOLPHIN_Z1
+        bool "BERLIN DOLPHIN Z1"
+
+config BERLIN_PLATYPUS_A0
+        bool "BERLIN PLATYPUS A0"
+
+config BERLIN_DOLPHIN_A0
+        bool "BERLIN DOLPHIN A0"
+
+config BERLIN_MYNA2_A0
+        bool "BERLIN MYNA2 A0"
+
+endchoice

@@ -1,0 +1,34 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+config AMP_AUDIO_MIXER_USE_ARM
+	bool
+
+config AMP_AUDIO_MIXER_USE_ZSP
+	bool
+
+config AMP_IP_AUDIO_NEURAL_USE_ARM
+	bool
+
+config AMP_IP_AUDIO_NEURAL_USE_ZSP
+	bool
+
+config AMP_AUDIO_SRC_USE_ARM
+	bool
+
+config AMP_AUDIO_SRC_USE_ZSP
+	bool
+
+config AMP_IP_AUDIO_SRS_USE_ARM
+	bool
+
+config AMP_IP_AUDIO_SRS_USE_ZSP
+	bool
+
+config AMP_AUDIO_TS_USE_ARM
+	bool
+
+config AMP_AUDIO_TS_USE_ZSP
+	bool

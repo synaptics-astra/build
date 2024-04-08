@@ -1,0 +1,16 @@
+config TA_ENC
+	bool
+	default y
+
+config TA_REL_PATH
+	string
+	default "ta_enc"
+	help
+		Path inside ta_enc module
+		Used as ${CONFIG_SYNA_SDK_PATH}/${CONFIG_TA_REL_PATH}
+
+config TA_IMAGE_PATH
+	string
+	default "ta/enc"
+	help
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TA_IMAGE_PATH}

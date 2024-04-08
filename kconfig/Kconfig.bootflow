@@ -1,0 +1,11 @@
+choice  
+        prompt "bootflow"
+        default PREBOOT_BOOTFLOW_NR
+
+config PREBOOT_BOOTFLOW_NR
+        bool "normal/recovery"
+
+config PREBOOT_BOOTFLOW_AB
+        bool "AB update"
+endchoice
+

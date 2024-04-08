@@ -1,0 +1,10 @@
+config TEE_DEV
+	bool
+	default y
+
+config TEE_DEV_REL_PATH
+	string
+	default "tee_dev"
+	help
+		Used as ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_TEE_DEV_REL_PATH}
+		There will be lib and include folder under it.

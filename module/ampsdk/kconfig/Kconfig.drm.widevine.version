@@ -1,0 +1,17 @@
+config AMP_IP_DRM_WV_11
+    bool "Ver. 11"
+
+config AMP_IP_DRM_WV_13
+    bool "Ver. 13"
+
+config AMP_IP_DRM_WV_14
+    bool "Ver. 14"
+
+config AMP_IP_DRM_WV_15
+    bool "Ver. 15"
+
+config AMP_IP_DRM_WV_16
+    bool "Ver. 16"
+
+config AMP_IP_DRM_WV_17
+    bool "Ver. 17"

@@ -1,0 +1,69 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+source "module/ampsdk/kconfig/audio/Kconfig.audio.app.impl"
+
+comment "Supported Types"
+
+config AMP_AUDIO_MIXER_SUPPORTED
+	bool "Mixer"
+	default n
+	select AMP_AUDIO_MIXER_USE_ARM
+
+config AMP_AUDIO_SRC_SUPPORTED
+	bool "SRC"
+	default y
+	select AMP_AUDIO_SRC_USE_ARM
+
+config AMP_IP_AUDIO_NEURAL_SUPPORTED
+	bool "Neural"
+	default n
+	select AMP_IP_AUDIO_NEURAL_USE_ZSP
+
+menuconfig AMP_IP_AUDIO_SRS_SUPPORTED
+	bool "SRS"
+	default n
+	select AMP_IP_AUDIO_SRS_USE_ZSP
+
+if AMP_IP_AUDIO_SRS_SUPPORTED
+
+config AMP_IP_AUDIO_SRS_ENABLE_CS
+	bool "CS"
+	default n
+
+config AMP_IP_AUDIO_SRS_ENABLE_GEQ
+	bool "GEQ"
+	default n
+
+config AMP_IP_AUDIO_SRS_ENABLE_HDLIM
+	bool "HDLIM"
+	default n
+
+config AMP_IP_AUDIO_SRS_ENABLE_HPF
+	bool "HPF"
+	default n
+
+config AMP_IP_AUDIO_SRS_ENABLE_TRUDIAL
+	bool "TRUDIAL"
+	default n
+
+config AMP_IP_AUDIO_SRS_ENABLE_TRUEQ
+	bool "TRUEQ"
+	default n
+
+config AMP_IP_AUDIO_SRS_ENABLE_TRUSURROUND
+	bool "TRUSURROUND"
+	default n
+
+config AMP_IP_AUDIO_SRS_ENABLE_TRUVOLUME
+	bool "TRUVOLUME"
+	default y
+
+endif
+
+config AMP_AUDIO_TS_SUPPORTED
+	bool "Time Stretch"
+	default n
+	select AMP_AUDIO_TS_USE_ARM
