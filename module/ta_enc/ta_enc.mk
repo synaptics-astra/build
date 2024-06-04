@@ -62,4 +62,11 @@ ifneq ($(synap_ta_en),)
 endif
 endif
 
+ifeq ($(CONFIG_MIPI_DSI_TA), y)
+mipi_dsi_ta_en=$(wildcard ta_app/mipi_dsi_ta/Makefile)
+ifneq ($(mipi_dsi_ta_en),)
+    TA_ENC_DEPENDENCIES += mipi_dsi_ta
+endif
+endif
+
 $(eval $(generic-module))

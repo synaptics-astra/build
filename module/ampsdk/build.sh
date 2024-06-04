@@ -10,6 +10,12 @@ source build/module/toolchain/${CONFIG_TOOLCHAIN_TA}.rc
 source build/module/ampsdk/common.rc
 
 install_amp() {
+  #check if libs generated
+  if [[ ! -d ${outdir_amp}/lib ]]; then
+    echo "no amp lib generated, skip install amp outputs"
+    exit
+  fi
+
   # Copy files
   cp -ad ${basedir_amp}/amp/inc/. ${outdir_amp}/include/.
   cp -ad ${outdir_amp}/idl_include/amp_client_rpc.h ${outdir_amp}/include/

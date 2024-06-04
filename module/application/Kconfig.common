@@ -64,8 +64,8 @@ config TEST_OTA
 	bool "Over to Air Tester"
 	default n
 
-config VIDEOSDK
-	bool "VideoSDK stack/applications"
+config DEMOS
+	bool "Demo stack/applications"
 	default n
 
 config GSTREAMER_PLUGINS_SYNA

@@ -4,6 +4,33 @@
 # Functions #
 #############
 
+emmc_split_subimg_to_slices() {
+  local $subimg_name
+
+  subimg_name=$1; shift
+
+  if [ -f ${subimg_name}.subimg.gz ]; then
+    filesize=$(du -b ${subimg_name}.subimg.gz | cut -f1)
+
+    if [ $filesize -gt 314572800 ]; then
+      gzip -dkf ${subimg_name}.subimg.gz
+      ${basedir_tools}/img2simg ${subimg_name}.subimg ${subimg_name}_s.subimg 4096
+      ${basedir_tools}/simg2simg ${subimg_name}_s.subimg ${subimg_name}_s.subimg 314572800
+      rm -rf ${subimg_name}_s.subimg
+
+      sparse_list=`ls ${subimg_name}_s.subimg*`
+      pattern_s=`grep ${subimg_name}.subimg.gz emmc_image_list | head -n 1`
+      pattern_r=$pattern_s
+      for s_index in $sparse_list; do
+        pattern_t=`echo $pattern_s | sed "s/${subimg_name}.subimg.gz/$s_index/"`
+        sed -i "/$pattern_r/a $pattern_t" emmc_image_list
+        pattern_r=$pattern_t
+      done
+      sed -i "/$pattern_s/d"  emmc_image_list
+    fi
+  fi
+}
+
 emmc_release_subimg() {
   local subimg_file
   local subimg_name
@@ -210,3 +237,9 @@ if [ "is${CONFIG_EXT_PREBOOT_BOOTFLOW_AB}" = "isy" ];then
         cp ${product_dir}/misc.subimg.gz ${outdir_product_release_emmc}
     fi
 fi
+
+cd ${outdir_product_release_emmc}
+for item in ${subimg_list}; do
+  emmc_split_subimg_to_slices "${item}"
+done
+cd -

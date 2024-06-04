@@ -34,4 +34,3 @@ INSTALL_F ${topdir}/build/tools/bin/crc_calc.py ${workdir_security_tools}/bin/cr
 INSTALL_F ${topdir}/build/tools/bin/gen_bg_crc64 ${workdir_security_tools}/bin/gen_bg_crc64
 INSTALL_F ${topdir}/build/tools/lib/sec_tools/bin/sign_image_v4 ${workdir_security_tools}/lib/sec_tools/bin/sign_image_v4
 INSTALL_F ${topdir}/build/tools/lib/sec_tools/bin/genx_img ${workdir_security_tools}/lib/sec_tools/bin/genx_img
-INSTALL_F ${topdir}/build/tools/lib/sec_tools/bin/gen_rsa_payload ${workdir_security_tools}/lib/sec_tools/bin/gen_rsa_payload

@@ -152,6 +152,13 @@ ${opt_linux_src}/scripts/config --file ${opt_outdir_intermediate}/.config \
 -e CONFIG_KALLSYMS
 fi
 
+if [ "is${CONFIG_OPTEE}" = "isy" ]; then
+${opt_linux_src}/scripts/config --file ${opt_outdir_intermediate}/.config \
+-e CONFIG_TEE \
+-e CONFIG_OPTEE \
+--set-val CONFIG_OPTEE_SHM_NUM_PRIV_PAGES 2
+fi
+
 if [ "$kernel_debug_info" = true ]; then
 ${opt_linux_src}/scripts/config --file ${opt_outdir_intermediate}/.config \
 -e CONFIG_DEBUG_INFO \

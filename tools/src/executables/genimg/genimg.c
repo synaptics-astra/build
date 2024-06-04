@@ -132,11 +132,7 @@ int main(int argc, char *argv[])
 				arg_index += 2;
 				break;
 			case 'i':
-				if(isalpha(optarg[0])){
-					chunk_record[id_num].id = (unsigned int)((optarg[3]<<24)|(optarg[2]<<16)|(optarg[1]<<8)|optarg[0]);
-				}else{
-					chunk_record[id_num].id = strtol(optarg, NULL, 0);
-				}
+				chunk_record[id_num].id = (unsigned int)((optarg[3]<<24)|(optarg[2]<<16)|(optarg[1]<<8)|optarg[0]);
 				id_num++;
 				arg_index += 2;
 				break;

@@ -62,5 +62,10 @@ config OPTEE_SAMPLE
 config OPTEE_TEST
 	bool "OPTEE Test"
 	default y
+
+config MIPI_DSI_TA
+	bool "MIPI TA"
+	default n
 endif
+
 endmenu

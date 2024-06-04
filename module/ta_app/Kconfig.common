@@ -54,3 +54,7 @@ config TA_FACTORY
 	depends on DRM_COMMON_TA
 	bool "Enable factory TA"
 	default y
+
+config MIPI_DSI_TA
+	bool "Enable mipi TA"
+	default n

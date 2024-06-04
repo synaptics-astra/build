@@ -246,6 +246,11 @@ if [ "is${CONFIG_TA_CALC}" = "isy" ]; then
     ta_list+=('libcalc.ta')
 fi
 
+if [ "is${CONFIG_MIPI_DSI_TA}" = "isy" ]; then
+    ta_path_list+=('libmipi_dsi.ta')
+    ta_list+=('libmipi_dsi.ta')
+fi
+
 if [ "is${CONFIG_TA_CAF}" = "isy" ]; then
     ta_path_list+=('libcaf.ta')
     ta_list+=('libcaf.ta')

@@ -28,12 +28,6 @@ if [ "x${CONFIG_GENX_ENABLE}" != "x" ] || [ "is${syna_sec_lvl}" = "isgenx" ]; th
   mkdir -p ${workdir_security_keys}/generic
   cp -adfr ${key_src_dir}/* \
            ${workdir_security_keys}/generic
-  if [ "is${CONFIG_OPTEE}" = "isy" ];then
-    optee_3rd_key_src_dir=${CONFIG_SYNA_SDK_KEY_PATH}/chip/${syna_chip_name}/${syna_chip_rev}/generic/optee_3rd
-    mkdir -p ${workdir_security_keys}/generic/optee_3rd
-    cp -adfr ${optee_3rd_key_src_dir}/* \
-             ${workdir_security_keys}/generic/optee_3rd
-  fi
 else
   hex32_market_id=$(printf "%08x" ${syna_chip_mid})
 

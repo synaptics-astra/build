@@ -73,3 +73,15 @@ if [ "is${CONFIG_OPTEE_TEST}" = "isy" ]; then
   make -C ${build_dir} SYSROOT=${opt_build_sysroot} TA_DEV_KIT_DIR=${ta_dev_kit_dir}  CROSS_COMPILE_TA=aarch64-linux-gnu- CROSS_COMPILE_HOST=${CROSS_COMPILE} OPTEE_CLIENT_EXPORT=${teec_export} O=${out_dir} CFG_PKCS11_TA=y
   make -C ${build_dir}  install DESTDIR=${out_dir_rootfs} O=${out_dir}
 fi
+
+if [ "is${CONFIG_MIPI_DSI_TA}" = "isy" ]; then
+	build_dir=${CONFIG_SYNA_SDK_PATH}/ta_app/mipi_dsi_ta
+	out_dir="${opt_client_outdir_intermediate}/mipi_dsi_ta"
+	rm -rf ${out_dir}
+	mkdir -pv ${out_dir}
+	export CA_CFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_CFLAG} --sysroot=${opt_build_sysroot}"
+	export CA_LDFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_LDFLAG}"
+	make -C ${build_dir} SYSROOT=${opt_build_sysroot} TA_DEV_KIT_DIR=${ta_dev_kit_dir}  CROSS_COMPILE_TA=aarch64-linux-gnu- CROSS_COMPILE_HOST=${CROSS_COMPILE} OPTEE_CLIENT_EXPORT=${teec_export} O=${out_dir} clean
+	make -C ${build_dir} -f Makefile.op HOST_CROSS_COMPILE=${CROSS_COMPILE}  CROSS_COMPILE=aarch64-linux-gnu- TEEC_EXPORT=${teec_export} --no-builtin-variables TA_DEV_KIT_DIR=${ta_dev_kit_dir} O=${out_dir}
+	cp -av ${out_dir}/*.ta ${out_ta_dir}
+fi
