@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This is the script to generate SD card image base on eMMCimg
-# Relies on Linux tool "gzip", "gdisk" and "sgdisk"
+# Relies on Linux tool "mkfs.ext4", "gzip", "gdisk" and "sgdisk"
 # Follow the steps below
 #   copy "gen_sd.sh" to eMMCimg
 #   cd eMMCimg
@@ -240,7 +240,10 @@ w
 Y
 EOF
 
-SEEK=`sgdisk -i 1 $OUTPUT | grep "First sector" | awk '{print $3}'`
+dd if=/dev/zero of=sd1.subimg bs=1M count=16
+mkfs.ext4 sd1.subimg
+dd bs=512 if="sd1.subimg" of=$OUTPUT seek=`sgdisk -i 1 $OUTPUT | grep "First sector" | awk '{print $3}'` conv=notrunc
+rm sd1.subimg
 
 dd bs=512 if="$sd2" of=$OUTPUT seek=`sgdisk -i 2 $OUTPUT | grep "First sector" | awk '{print $3}'` conv=notrunc
 dd bs=512 if="$sd3" of=$OUTPUT seek=`sgdisk -i 3 $OUTPUT | grep "First sector" | awk '{print $3}'` conv=notrunc
