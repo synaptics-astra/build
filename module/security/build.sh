@@ -1,11 +1,11 @@
 #!/bin/bash
 
 echo "security build script"
-source build/header.rc
+. build/header.rc
 if [ "is${CONFIG_VSSDK_RELEASE}" != "isy" ]; then
-  source build/chip.rc
+  . build/chip.rc
 fi
-source build/install.rc
+. build/install.rc
 
 # Working directories
 workdir_security_keys=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SECURITY_KEY_PATH}/${syna_chip_name}/${syna_chip_rev}
