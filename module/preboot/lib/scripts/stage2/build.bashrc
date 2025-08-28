@@ -6,7 +6,7 @@ run_script() {
   script_to_run="${preboot_module_dir}/lib/scripts/stage2/${script_name}"
 
   [ -f ${script_to_run} ]
-  source ${script_to_run}
+  . ${script_to_run}
 }
 
 preboot_build_basedir=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/preboot

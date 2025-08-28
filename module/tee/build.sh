@@ -1,13 +1,11 @@
-#!/bin/bash
-
 echo "tee build script called"
-source build/header.rc
-source build/chip.rc
-source build/security.rc
-source build/install.rc
+. build/header.rc
+. build/chip.rc
+. build/security.rc
+. build/install.rc
 
 if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
-  source build/module/toolchain/${CONFIG_TOOLCHAIN_APPLICATION}.rc
+  . build/module/toolchain/${CONFIG_TOOLCHAIN_APPLICATION}.rc
   opt_build_sysroot="${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_SYSYROOT}"
   out_dir_rootfs="${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_ROOTFS}"
   opt_bindir_host="${CONFIG_SYNA_SDK_OUT_HOST_REL_PATH}/"
@@ -47,7 +45,7 @@ if [ x${CONFIG_RUNTIME_OE}${CONFIG_RUNTIME_OE64}${CONFIG_RUNTIME_RDK}${CONFIG_RD
     exit 0
   fi
 
-  source ${module_build_topdir}/script/${TEE_CLIENT}.rc
+  . ${module_build_topdir}/script/${TEE_CLIENT}.rc
 
   # install to rootfs
   mkdir -p ${out_dir_rootfs}/usr/lib
@@ -106,16 +104,22 @@ if [ -f  ${module_topdir}/release.sh ]; then # engineer build
   fi
 
   # Copy TZ Kernel
-  source ${module_build_topdir}/script/install_binary.rc install_eng
+  (
+    set -- install_eng
+    . "${module_build_topdir}/script/install_binary.rc"
+  )
 
   # Generate TZ Boot Parameters
-  source ${module_build_topdir}/script/bootparam.rc
+  . ${module_build_topdir}/script/bootparam.rc
 
   ### Check results ###
   [ -d ${product_dir}/ ]
   [ -d ${opt_tzk_outdir_release}/ ]
 
-  source ${module_build_topdir}/script/tee_pack.rc pack_stage1
+  (
+    set -- pack_stage1
+    . ${module_build_topdir}/script/tee_pack.rc
+  )
 else # VSSDK release build
   if [ -f ${module_topdir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}/tz1_en.bin ] || \
      [ -f ${module_topdir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/tz1_en.bin ]; then
@@ -125,8 +129,10 @@ else # VSSDK release build
       tz_rel_ver=2
     fi
   fi
-
-  source ${module_build_topdir}/script/install_binary.rc install_rel
+  (
+    set -- install_rel
+    . ${module_build_topdir}/script/install_binary.rc
+  )
 fi
 
 ### step 3: oem + tzk_en.bin ###
@@ -136,19 +142,22 @@ oem_setting_dir=${module_topdir}/products/${syna_chip_name}/${boot_seclvl}/${tz_
 if [ -f ${oem_setting_dir}/oem_setting.cfg ]; then
   [ -d ${opt_outdir_intermediate}/ ]
 
-  source ${module_build_topdir}/script/oem_setting.rc
+  . ${module_build_topdir}/script/oem_setting.rc
   echo ${oem_setting_dir}/oem_setting.cfg
   echo ${opt_outdir_intermediate}/oem_setting.bin
   gen_oem_setting ${oem_setting_dir}/oem_setting.cfg ${opt_board_memory_size} ${opt_outdir_intermediate}/oem_setting.bin
 else
-  source ${module_build_topdir}/script/oem_setting.rc
+  . ${module_build_topdir}/script/oem_setting.rc
   echo '{"NotSupport":{"Address":"0x0","Size": "0x0"}}' > ${oem_setting_dir}/oem_setting.cfg
   gen_oem_setting ${oem_setting_dir}/oem_setting.cfg ${opt_board_memory_size} ${opt_outdir_intermediate}/oem_setting.bin
   rm -fv ${oem_setting_dir}/oem_setting.cfg
 
 fi
-  source ${module_build_topdir}/script/tee_pack.rc pack_stage2
 
+(
+  set -- pack_stage2
+  . ${module_build_topdir}/script/tee_pack.rc
+)
 
 #TODO(Song) Avoid using PATH like /home/galois/bin
 if [ -f ${TEE_DAEMON} ]; then

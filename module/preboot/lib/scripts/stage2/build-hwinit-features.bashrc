@@ -9,12 +9,12 @@ fi
 opt_bootflow="VERIFIEDBOOT"
 opt_bootflow_version=""
 
-declare hwinit_features
 hwinit_features=$(get_feature_list $syna_chip_name/hwinit.list)
 
-while read -r line
-do
+echo "$hwinit_features"
+
+echo "$hwinit_features" | while read -r line; do
   build_and_install_hwinit_feature ${line}
-done <<< "${hwinit_features}"
+done
 
 # vim: set ai filetype=sh tabstop=2 softtabstop=2 shiftwidth=2 expandtab:

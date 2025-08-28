@@ -66,7 +66,7 @@ sd18=home.subimg
 #
 OUTPUT="SD.img"
 
-dd if=/dev/zero of=$OUTPUT bs=1M count=7089
+dd if=/dev/zero of=$OUTPUT bs=1M count=11089
 
 echo "Partitioning the SD image..."
 gdisk ${OUTPUT} << EOF
@@ -178,7 +178,7 @@ firmware_b
 n
 12
 
-+3072M
++5200M
 0700
 c
 12
@@ -187,7 +187,7 @@ rootfs_a
 n
 13
 
-+3072M
++5200M
 0700
 c
 13
@@ -232,7 +232,7 @@ misc
 n
 18
 
-+700M
++444M
 0700
 c
 18
@@ -264,7 +264,7 @@ dd bs=512 if="$sd14" of=$OUTPUT seek=`sgdisk -i 14 $OUTPUT | grep "First sector"
 dd bs=512 if="$sd15" of=$OUTPUT seek=`sgdisk -i 15 $OUTPUT | grep "First sector" | awk '{print $3}'` conv=notrunc
 
 e2fsck -f home.subimg
-resize2fs home.subimg 700M
+resize2fs home.subimg 444M
 dd bs=512 if="$sd18" of=$OUTPUT seek=`sgdisk -i 18 $OUTPUT | grep "First sector" | awk '{print $3}'` conv=notrunc
 
 rm *.subimg

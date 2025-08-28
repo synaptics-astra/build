@@ -1,17 +1,17 @@
 #!/bin/bash
-source build/header.rc
-source build/chip.rc
+. build/header.rc
+. build/chip.rc
 
 #
 # function - generateConfig
 # param #1 - quoted "variable list"
 # param #2 - output file
 #
-function generateConfig() {
+generateConfig() {
     local config_str=""
     for item in $1
     do
-        config_str="${config_str}${item}=${!item}\n"
+        config_str="${config_str}${item}=$(eval echo \$$item)\n"
     done
     printf "${config_str}" > $2
 }
@@ -19,7 +19,7 @@ function generateConfig() {
 #
 # function - build_sm
 #
-function build_sm() {
+build_sm() {
     if [ "is${CONFIG_SM_CM3_FW}" != "isy" ]; then
         echo "only SM_CM3 is supported"
         exit 1
@@ -61,7 +61,7 @@ function build_sm() {
         SM_PLATFORM_DIR"
     local tc=$(which arm-linux-gnueabihf-gcc)
     if [ "null$tc" != "null" ]; then
-        SM_CROSS_COMPILE=${tc::-3}
+        SM_CROSS_COMPILE=$(echo "$tc" | sed 's/...$//')
     else
         SM_CROSS_COMPILE=arm-linux-gnueabihf-
     fi

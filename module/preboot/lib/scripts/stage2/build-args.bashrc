@@ -8,6 +8,6 @@ opt_config_fastboot="${syna_fastboot}"
 
 opt_nand_randomizer="${syna_nand_randomizer}"
 
-if [ "is${syna_sec_lvl}" == "isgenx" ]; then
+if [ "is${syna_sec_lvl}" = "isgenx" ]; then
     opt_genx_enable=y
 fi

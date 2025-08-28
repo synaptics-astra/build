@@ -1,5 +1,4 @@
 TZK_MagicNum=0x68656164
-TZK_OemID=(0x0 0x0 0x0 0x0 0x0 0x0 0x0 0x0)
 TZK_FooterMagicNum=0x666f6f74
 TZK_SegID=0x0
 
@@ -22,10 +21,17 @@ gen_tz_enc_tzk_eheader() {
 
   l_endian32 $TZK_MagicNum > $f_tzk_eheader
   l_endian32 64 >> $f_tzk_eheader
-  for i in {0..7}
-  do
-    l_endian32 ${TZK_OemID[$i]} >> $f_tzk_eheader
-  done
+
+  # Insert OEM ID
+  l_endian32 0x0 >> $f_tzk_eheader
+  l_endian32 0x0 >> $f_tzk_eheader
+  l_endian32 0x0 >> $f_tzk_eheader
+  l_endian32 0x0 >> $f_tzk_eheader
+  l_endian32 0x0 >> $f_tzk_eheader
+  l_endian32 0x0 >> $f_tzk_eheader
+  l_endian32 0x0 >> $f_tzk_eheader
+  l_endian32 0x0 >> $f_tzk_eheader
+
   l_endian32 $TZK_SegID >> $f_tzk_eheader
   echo `printf "%032x" 0` | xxd -r -p >> $f_tzk_eheader
   l_endian32 $TZK_FooterMagicNum >> $f_tzk_eheader

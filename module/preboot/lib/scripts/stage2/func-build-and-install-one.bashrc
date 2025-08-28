@@ -1,4 +1,4 @@
-# Bash script: stage 2: build hwinit features
+# POSIX shell script: stage 2: build hwinit features
 
 #############
 # Functions #
@@ -15,21 +15,21 @@ build_and_install_bootflow_feature() {
   opt_chip_rev=$syna_chip_rev
   opt_market_id=$syna_chip_mid
   opt_flash_type=$syna_flash_type
-  opt_platform=none;
-  opt_board_memory_size=none;
-  opt_board_memory_speed=none;
-  opt_board_memory_variant=none;
+  opt_platform=none
+  opt_board_memory_size=none
+  opt_board_memory_speed=none
+  opt_board_memory_variant=none
   opt_workdir_security_keys="${security_keys_path}"
   opt_workfile_security_version_config="${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SECURITY_VERSION_PATH}/codetype_1/config"
 
   preboot_feature_variant="${opt_chip_name}/${opt_chip_rev}"
-  if [ "is${syna_sec_lvl}" == "isgenx" ]; then
+  if [ "is${syna_sec_lvl}" = "isgenx" ]; then
     preboot_feature_variant="${preboot_feature_variant}/${genx_types}"
   else
     preboot_feature_variant="${preboot_feature_variant}/${opt_market_id}"
   fi
   preboot_feature_variant="${preboot_feature_variant}/${feature_name}/${opt_bootflow_version}/${opt_flash_type}"
-  ## FIXME: if nand, enable/disable randomization
+  # FIXME: if nand, enable/disable randomization
   if [ "is${opt_flash_type}" = "isNAND" ]; then
     preboot_feature_variant="${preboot_feature_variant}/randomizer_${opt_nand_randomizer}"
   fi
@@ -47,44 +47,52 @@ build_and_install_bootflow_feature() {
   preboot_outdir_build_intermediate="${preboot_build_basedir}/intermediate/${preboot_feature_variant}/obj"
 
   opt_production_build=n
-  source "${preboot_module_dir}/lib/scripts/stage2/build-one.bashrc" &
-  wait $!
+  (
+    set -- 2 "$opt_is_bcm_tee" "$skip_build"
+    . "${preboot_module_dir}/lib/scripts/stage2/build-one.bashrc"
+  )
+  wait
 
-  ### Install prebuilt binaries ###
-  mkdir -p  ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
-  if [ -f ${preboot_outdir_build_release}/tsm.bin ]; then
-    INSTALL_F ${preboot_outdir_build_release}/tsm.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
+  # Install prebuilt binaries
+  mkdir -p "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
+  if [ -f "${preboot_outdir_build_release}/tsm.bin" ]; then
+    INSTALL_F "${preboot_outdir_build_release}/tsm.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
   fi
-  if [ -f ${preboot_outdir_build_release}/erom.factory ]; then
-    INSTALL_F ${preboot_outdir_build_release}/erom.factory ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
+  if [ -f "${preboot_outdir_build_release}/erom.factory" ]; then
+    INSTALL_F "${preboot_outdir_build_release}/erom.factory" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
   fi
-  if [ -f ${preboot_outdir_build_release}/tsm.factory ]; then
-    INSTALL_F ${preboot_outdir_build_release}/tsm.factory ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
+  if [ -f "${preboot_outdir_build_release}/tsm.factory" ]; then
+    INSTALL_F "${preboot_outdir_build_release}/tsm.factory" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
   fi
-  INSTALL_F ${preboot_outdir_build_release}/miniloader_en.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
+  INSTALL_F "${preboot_outdir_build_release}/miniloader_en.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
   if [ "is${syna_sec_lvl}" = "isgenx" ]; then
     preboot_basedir_security_genx=${opt_basedir_security_images}/chip/${opt_chip_name}/${opt_chip_rev}/${genx_types}
-    INSTALL_D ${preboot_basedir_security_genx}/key_stores/ ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/key_stores
-    if [ "${opt_flash_type}" = "USBBOOT" ]; then
+    INSTALL_D "${preboot_basedir_security_genx}/key_stores/" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/key_stores"
+
+    if [ "${opt_flash_type}" = "USBBOOT" ] && [ "is${opt_is_bcm_tee}" != "istee" ]; then
       preboot_basedir_security_genx_source=${preboot_basedir_security_genx}/usb
     else
       preboot_basedir_security_genx_source=${preboot_basedir_security_genx}
     fi
-    INSTALL_F_L ${preboot_basedir_security_genx_source}/bcm_kernel.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
-    INSTALL_F_L ${preboot_basedir_security_genx_source}/boot_monitor.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
-    INSTALL_F_L ${preboot_basedir_security_genx_source}/erom.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
-    INSTALL_F ${preboot_basedir_security_genx}/uboot/bcm_kernel.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/uboot/
-    INSTALL_F ${preboot_basedir_security_genx}/uboot/boot_monitor.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/uboot/
-    INSTALL_F ${preboot_basedir_security_genx}/uboot/erom.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/uboot/
+
+    INSTALL_F_L "${preboot_basedir_security_genx_source}/bcm_kernel.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
+    INSTALL_F_L "${preboot_basedir_security_genx_source}/boot_monitor.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
+    INSTALL_F_L "${preboot_basedir_security_genx_source}/erom.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
+    INSTALL_F "${preboot_basedir_security_genx}/uboot/bcm_kernel.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/uboot/"
+    INSTALL_F "${preboot_basedir_security_genx}/uboot/boot_monitor.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/uboot/"
+    INSTALL_F "${preboot_basedir_security_genx}/uboot/erom.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/uboot/"
   else
-    INSTALL_F ${preboot_outdir_build_release}/erom.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
+    INSTALL_F "${preboot_outdir_build_release}/erom.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
   fi
 
-  ### Build production build without uart prints and copy the binary as miniloader_en_mp.bin
+  # Build production build without uart prints and copy the binary as miniloader_en_mp.bin
   opt_production_build=y
-  source "${preboot_module_dir}/lib/scripts/stage2/build-one.bashrc" &
-  wait $!
-  cp ${preboot_outdir_build_release}/miniloader_en.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/miniloader_en_mp.bin
+  (
+    set -- 2 "$opt_is_bcm_tee" "$skip_build"
+    . "${preboot_module_dir}/lib/scripts/stage2/build-one.bashrc"
+  )
+  wait
+  cp "${preboot_outdir_build_release}/miniloader_en.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/miniloader_en_mp.bin"
 }
 
 build_and_install_hwinit_feature() {
@@ -99,8 +107,8 @@ build_and_install_hwinit_feature() {
   opt_chip_rev=$syna_chip_rev
   opt_market_id=$syna_chip_mid
   opt_flash_type=$syna_flash_type
-  opt_platform=none;
-  opt_bootflow_version=none;
+  opt_platform=none
+  opt_bootflow_version=none
 
   opt_workdir_security_keys="${security_keys_path}"
   opt_workfile_security_version_config="${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SECURITY_VERSION_PATH}/codetype_1/config"
@@ -119,29 +127,34 @@ build_and_install_hwinit_feature() {
   preboot_outdir_build_intermediate="${preboot_build_basedir}/intermediate/${preboot_feature_variant}/obj"
 
   opt_production_build=n
-  source "${preboot_module_dir}/lib/scripts/stage2/build-one.bashrc" &
-  wait $!
+  (
+    set -- 2 "$opt_is_bcm_tee" "$skip_build"
+    . "${preboot_module_dir}/lib/scripts/stage2/build-one.bashrc"
+  )
+  wait
 
-  ### Install prebuilt binaries ###
-  mkdir -p  ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
-  INSTALL_F ${preboot_outdir_build_release}/sysinit_en.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
+  # Install prebuilt binaries
+  mkdir -p "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
+  INSTALL_F "${preboot_outdir_build_release}/sysinit_en.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
   if [ "is${syna_sec_lvl}" = "isgenx" ]; then
-    INSTALL_F ${preboot_outdir_build_release}/scs_data_param.sign ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
+    INSTALL_F "${preboot_outdir_build_release}/scs_data_param.sign" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
   fi
   if [ "is${opt_config_ddrphyfw}" = "isy" ]; then
-    INSTALL_F ${preboot_outdir_build_release}/ddrphy.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
+    INSTALL_F "${preboot_outdir_build_release}/ddrphy.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
     if [ "is${opt_chip_name}" = "isdolphin" ] && [ "is${syna_sec_lvl}" = "isgenx" ]; then
-      INSTALL_F ${preboot_outdir_build_release}/gen3_ddr_phy_fw_0.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
-      INSTALL_F ${preboot_outdir_build_release}/gen3_ddr_phy_fw_1.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/
+      INSTALL_F "${preboot_outdir_build_release}/gen3_ddr_phy_fw_0.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
+      INSTALL_F "${preboot_outdir_build_release}/gen3_ddr_phy_fw_1.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/"
     fi
   fi
 
-  ### Build production build without uart prints and copy the binary as sysinit_en_mp.bin
+  # Build production build without uart prints and copy the binary as sysinit_en_mp.bin
   opt_production_build=y
-  source "${preboot_module_dir}/lib/scripts/stage2/build-one.bashrc" &
-  wait $!
-  cp ${preboot_outdir_build_release}/sysinit_en.bin ${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/sysinit_en_mp.bin
-
+  (
+    set -- 2 "$opt_is_bcm_tee" "$skip_build"
+    . "${preboot_module_dir}/lib/scripts/stage2/build-one.bashrc"
+  )
+  wait
+  cp "${preboot_outdir_build_release}/sysinit_en.bin" "${preboot_release_topdir}/prebuilts/${preboot_feature_variant}/sysinit_en_mp.bin"
 }
 
 # vim: set ai filetype=sh tabstop=2 softtabstop=2 shiftwidth=2 expandtab:

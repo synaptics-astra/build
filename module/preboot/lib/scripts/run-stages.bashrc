@@ -1,7 +1,5 @@
 # Bash script: run selected stages
 
-declare stage_script_exist
-
 #############
 # Functions #
 #############
@@ -16,7 +14,10 @@ try_stage_script() {
   script_to_run=${preboot_module_dir}/lib/scripts/stage${stage}/build.bashrc
 
   if [ -f ${script_to_run} ]; then
-    source ${script_to_run} &
+    (
+      set -- "$only_pack"
+      . ${script_to_run}
+    )
     wait $!
 
     stage_script_exist="y"

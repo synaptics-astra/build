@@ -1,13 +1,13 @@
 #!/bin/bash
 
-source build/header.rc
-source build/chip.rc
-source build/security.rc
+. build/header.rc
+. build/chip.rc
+. build/security.rc
 
 echo "u-boot build script called"
 
 build_uboot() {
-  pushd ${topdir}/boot/${CONFIG_UBOOT_SRC_PATH}
+  cd ${topdir}/boot/${CONFIG_UBOOT_SRC_PATH} || exit 1  
   local cmd2run
 
   cmd2run="env"
@@ -20,7 +20,7 @@ build_uboot() {
   eval "CONFIG_RDK_SYS=${CONFIG_RDK_SYS} $cmd2run make mrproper"
   eval "CONFIG_RDK_SYS=${CONFIG_RDK_SYS} $cmd2run make ${CONFIG_UBOOT_DEFCONFIG} -j${CONFIG_CPU_NUMBER}"
   eval "CONFIG_RDK_SYS=${CONFIG_RDK_SYS} $cmd2run make EXT_DTB=arch/${CONFIG_UBOOT_ARCH}/dts/${CONFIG_UBOOT_DTS}.dtb -j24"
-  popd
+  cd - || exit 1
 }
 #############
 # Functions #

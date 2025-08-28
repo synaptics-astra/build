@@ -25,7 +25,7 @@ l_endian32() {
   echo `printf "%08x"  $1` | grep -o .. | tac | echo "$(tr -d '\n')" | xxd -r -p
 }
 
-function l_endian16() {
+l_endian16() {
   echo `printf "%04x"  $1` | grep -o .. | tac | echo "$(tr -d '\n')" | xxd -r -p
 }
 
@@ -251,15 +251,15 @@ gen_ta_extras(){
   echo `printf "%0$(((16 - gname_len) * 2))x" 0` | xxd -r -p >>$f_out
 
   ## Mask the LSB 2-bytes
-  l_endian32 ${TA_ROOT_UUID[3]}  > $f_out.uuid3
+    l_endian32 $(echo "$TA_ROOT_UUID" | cut -d ' ' -f 4)  > $f_out.uuid3
   l_endian16 $TA_UUID           > $f_out.ta_uuid
   dd if=$f_out.ta_uuid of=$f_out.uuid3 bs=1 conv=notrunc seek=2
   UUID3=`xxd -p $f_out.uuid3`
   rm $f_out.uuid3 $f_out.ta_uuid
 
-  l_endian32 ${TA_ROOT_UUID[0]} >>$f_out
-  l_endian32 ${TA_ROOT_UUID[1]} >>$f_out
-  l_endian32 ${TA_ROOT_UUID[2]} >>$f_out
+  l_endian32 $(echo "$TA_ROOT_UUID" | cut -d ' ' -f 1) >>$f_out
+  l_endian32 $(echo "$TA_ROOT_UUID" | cut -d ' ' -f 2) >>$f_out
+  l_endian32 $(echo "$TA_ROOT_UUID" | cut -d ' ' -f 3) >>$f_out
   echo -ne $UUID3 | xxd -r -p   >>$f_out
 
   if [ "$ta_type" = "0" ]; then
@@ -350,12 +350,12 @@ genx_secure_image() {
 mkdir -p ${enc_ta_path}
 
 # Sign and encrypt all TA binaries
-for i in ${!ta_list[*]}; do
-  ta=${ta_list[$i]}
-  ip_module=${ta_path_list[$i]}
+i=0
+for ta in ${ta_list}; do
+  ip_module=$(echo ${ta_path_list} | cut -d' ' -f$((i+1)))
   mkdir -p ${enc_ta_path}/${ip_module}
-  clear_ta_path_final=`echo ${clear_ta_path} | sed -e "s/TA_MODULE_PATH/${ta_path_list[$i]}/g"`
-  out_clear_ta_path_final=`echo ${out_clear_ta_path} | sed -e "s/TA_MODULE_PATH/${ta_path_list[$i]}/g"`
+  clear_ta_path_final=$(echo ${clear_ta_path} | sed -e "s/TA_MODULE_PATH/${ip_module}/g")
+  out_clear_ta_path_final=$(echo ${out_clear_ta_path} | sed -e "s/TA_MODULE_PATH/${ip_module}/g")
   if [ -f ${CONFIG_SYNA_SDK_PATH}/${CONFIG_TA_REL_PATH}/release ]; then
     if [ "is${syna_chip_name}" = "isdolphin" ]; then
       if [ "is${CONFIG_GENX_ENABLE}" = "isy" ]; then
@@ -405,8 +405,8 @@ for i in ${!ta_list[*]}; do
           if [ ! -z $clear_ta ]; then
             cp -adv ${clear_ta} ${enc_ta_path}/${ip_module}/${f_raw_name} || exit 0
 
-            source ${enc_ta_path}/${ip_module}/common.uuid.cfg
-            source ${enc_ta_path}/${ip_module}/${f_name}.uuid.cfg
+            . ${enc_ta_path}/${ip_module}/common.uuid.cfg
+            . ${enc_ta_path}/${ip_module}/${f_name}.uuid.cfg
 
             if [ "is${ip_module}" = "isdv" ]; then
                enc_x_ta ${enc_ta_path}/${ip_module}/${f_raw_name} ${enc_ta_path}/${ip_module}/${ta} 1
@@ -440,5 +440,5 @@ for i in ${!ta_list[*]}; do
        fi
     fi
   fi
+  i=$((i+1))
 done
-

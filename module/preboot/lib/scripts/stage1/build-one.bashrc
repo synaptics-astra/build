@@ -95,17 +95,17 @@ if [ "is${opt_jtag_enable}" != "is" ]; then
 fi
 
 ### Build PREBOOT ###
-pushd ${preboot_topdir}
+cd ${preboot_topdir} || exit 1
   ./build ${cmd_args} no_product_name
-popd
+cd - || exit 1
 
 ### Pack PREBOOT ###
-pushd ${preboot_topdir}
+cd ${preboot_topdir} || exit 1
   ./pack ${cmd_args} no_product_name
-popd
+cd - || exit 1
 
 # if nocs (only miniloader is built) or both sysinit and miniloader are built for normal
-if [ "is${opt_profile}" = "isnocs" ] || [[ "is${preboot_build_sysinit}" = "isy" && "is${preboot_build_miniloader}" = "isy" ]]; then
+if [ "is${opt_profile}" = "isnocs" ] || { [ "is${preboot_build_sysinit}" = "isy" ] && [ "is${preboot_build_miniloader}" = "isy" ]; }; then
   ### Copy PREBOOT ###
   [ -f ${preboot_outdir_build_release}/preboot_esmt.bin ]
   [ -f ${preboot_outdir_build_release}/preboot_esmt.info ]

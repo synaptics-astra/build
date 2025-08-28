@@ -85,4 +85,13 @@ if [ "is${CONFIG_BL_TA_FASTLOGO}" = "isy" ]; then
 	export CA_LDFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_LDFLAG}"
 	make -C ${build_dir} -f Makefile.op SoC_Ver=${syna_chip_name} HOST_CROSS_COMPILE=${CROSS_COMPILE}  CROSS_COMPILE=aarch64-linux-gnu- TEEC_EXPORT=${teec_export} --no-builtin-variables TA_DEV_KIT_DIR=${ta_dev_kit_dir} O=${out_dir}
 	cp -av ${out_dir}/*.ta ${out_ta_dir}
+
+	build_dir=${CONFIG_SYNA_SDK_PATH}/ampsdk/ta_amp/ptm
+	out_dir="${opt_client_outdir_intermediate}/ptm"
+	rm -rf ${out_dir}
+	mkdir -pv ${out_dir}
+	export CA_CFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_CFLAG} --sysroot=${opt_build_sysroot}"
+	export CA_LDFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_LDFLAG}"
+	make -C ${build_dir} -f Makefile.op SoC_Ver=${syna_chip_name} HOST_CROSS_COMPILE=${CROSS_COMPILE}  CROSS_COMPILE=aarch64-linux-gnu- TEEC_EXPORT=${teec_export} --no-builtin-variables TA_DEV_KIT_DIR=${ta_dev_kit_dir} O=${out_dir}
+	cp -av ${out_dir}/*.ta ${out_ta_dir}
 fi
