@@ -66,6 +66,10 @@ else
   opt_config_fastboot=n
 fi
 
+if [ "is${CONFIG_PREBOOT_ANDROID_BOOTCTRL}" = "isy" ]; then
+  opt_android_bootctrl=y
+fi
+
 if [ "is${CONFIG_PREBOOT_DDR_PHY_FW}" = "isy" ]; then
   opt_config_ddrphyfw=y
 else

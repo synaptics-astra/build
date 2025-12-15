@@ -157,7 +157,11 @@ if [ "is${CONFIG_OPTEE}" = "isy" ]; then
 ${opt_linux_src}/scripts/config --file ${opt_outdir_intermediate}/.config \
 -e CONFIG_TEE \
 -e CONFIG_OPTEE \
---set-val CONFIG_OPTEE_SHM_NUM_PRIV_PAGES 2
+--set-val CONFIG_OPTEE_SHM_NUM_PRIV_PAGES 2 \
+-d CONFIG_BERLIN_TZD \
+-d CONFIG_HIFI_DSP \
+-d CONFIG_BERLIN_TSP \
+-d CONFIG_BERLIN_OVP
 fi
 
 if [ "$kernel_debug_info" = true ]; then

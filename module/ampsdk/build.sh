@@ -17,7 +17,8 @@ install_amp() {
   cp -ad ${outdir_amp}/flick/runtime/headers/flick ${outdir_amp}/include/
 
   # Copy results to runtime filesystem
-  if [ "is$CONFIG_RUNTIME_LINUX_BASELINE_BUILDROOT" = "isy" ]; then
+  if [ "is$CONFIG_RUNTIME_LINUX_BASELINE_BUILDROOT" = "isy" ] || \
+     [ "is$CONFIG_RUNTIME_LINUX_BASELINE_BUILDROOT64" = "isy" ]; then
     local outdir_dst_app=${opt_workdir_runtime_sysroot}/opt/syna
   else
     local outdir_dst_app=${opt_workdir_runtime_sysroot}/home/galois
@@ -103,7 +104,13 @@ basedir_amp=${topdir}/ampsdk
 opt_workdir_build_sysroot=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_SYSYROOT}
 opt_workdir_runtime_sysroot=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_ROOTFS}
 opt_amp_profile=${CONFIG_AMP_PROFILE}
-outdir_ta_amp=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/ta/TA_MODULE_PATH/${syna_chip_name}/${syna_chip_rev}
+
+if [ "is${CONFIG_TZK}" = "isy"  ]; then
+    outdir_ta_amp=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/ta/TA_MODULE_PATH/${syna_chip_name}/${syna_chip_rev}
+else
+    outdir_ta_amp=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/system/lib/optee_armtz
+fi
+
 outdir_fw_amp=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/fw/FW_MODULE_PATH/${syna_chip_name}/${syna_chip_rev}
 outdir_amp=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_AMP_OUTPUT_PATH}
 

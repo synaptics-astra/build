@@ -1,6 +1,6 @@
 ### Generate TZ Boot Parameters
 
-pushd ${module_topdir}
+cd ${module_topdir} || exit 1
 
 ### by default, boot with tee is enabled
 
@@ -40,13 +40,13 @@ if [ ${tz_rel_ver} == genx ]; then
   source ${module_build_topdir}/script/parse_addr.rc
   if [ "is${CONFIG_OPTEE}" != "isy" ]; then
     ${security_tools_path}in_extras.py "TZK_BOOT_PARAMETER" ${opt_outdir_intermediate}/boot_param_extras.bin 0x00000000 ${tzbp_addr}
-    genx_secure_image "TZK_BOOT_PARAMETER" ${opt_outdir_intermediate}/boot_param_extras.bin 0x0 ${opt_outdir_intermediate}/bootparam.bin ${opt_outdir_intermediate}/bootparam_en.bin
-    genx_secure_image "TZK_BOOT_PARAMETER" ${opt_outdir_intermediate}/boot_param_extras.bin 0x0 ${opt_outdir_intermediate}/bootparam_recovery.bin ${opt_outdir_intermediate}/bootparam_recovery_en.bin
+    genx_secure_image "TZK_BOOT_PARAMETER" "${security_keys_type}" ${opt_outdir_intermediate}/boot_param_extras.bin 0x0 ${opt_outdir_intermediate}/bootparam.bin ${opt_outdir_intermediate}/bootparam_en.bin
+    genx_secure_image "TZK_BOOT_PARAMETER" "${security_keys_type}" ${opt_outdir_intermediate}/boot_param_extras.bin 0x0 ${opt_outdir_intermediate}/bootparam_recovery.bin ${opt_outdir_intermediate}/bootparam_recovery_en.bin
   else
     ${security_tools_path}in_extras.py "TZK_BOOT_PARAMETER" ${opt_outdir_intermediate}/boot_param_extras.bin 0x00000000 ${tzbp_addr}
-    genx_secure_image "TZK_BOOT_PARAMETER_OPEN" ${opt_outdir_intermediate}/boot_param_extras.bin 0x0 ${opt_outdir_intermediate}/bootparam.bin ${opt_outdir_intermediate}/bootparam_en.bin
-    genx_secure_image "TZK_BOOT_PARAMETER_OPEN" ${opt_outdir_intermediate}/boot_param_extras.bin 0x0 ${opt_outdir_intermediate}/bootparam_recovery.bin ${opt_outdir_intermediate}/bootparam_recovery_en.bin
+    genx_secure_image "TZK_BOOT_PARAMETER_OPEN" "${security_keys_type}" ${opt_outdir_intermediate}/boot_param_extras.bin 0x0 ${opt_outdir_intermediate}/bootparam.bin ${opt_outdir_intermediate}/bootparam_en.bin
+    genx_secure_image "TZK_BOOT_PARAMETER_OPEN" "${security_keys_type}" ${opt_outdir_intermediate}/boot_param_extras.bin 0x0 ${opt_outdir_intermediate}/bootparam_recovery.bin ${opt_outdir_intermediate}/bootparam_recovery_en.bin
   fi
 fi
 
-popd
+cd - || exit 1

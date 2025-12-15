@@ -8,6 +8,12 @@ config TOOLCHAIN_PATH
 	help
 		Internal Common Toolchain PATH for uBoot, BSP and TA
 
+config TOOLCHAIN_TEE
+	string "TEE toolchain prefix"
+	default "aarch64-linux-gnu-"
+	help
+		Toolchain to compile tee os
+
 config TOOLCHAIN_TA
 	string "TA toolchain prefix"
 	default "arm-eabi-"

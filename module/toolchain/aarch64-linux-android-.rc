@@ -1,6 +1,6 @@
 CONFIG_TOOLCHAIN_APPLICATION_CFLAG="-fPIE -fPIC"
 CONFIG_TOOLCHAIN_APPLICATION_CPPFLAG="-std=c++17"
-CONFIG_TOOLCHAIN_APPLICATION_LDFLAG="-lc -lm -llog -lcutils -ldl -Bdynamic -Wl,-dynamic-linker,/system/bin/linker64"
+CONFIG_TOOLCHAIN_APPLICATION_LDFLAG="-lc -lm -llog -lcutils -ldl -Bdynamic -Wl,-dynamic-linker,/system/bin/linker64 -Wl,-z,max-page-size=16384"
 
 export ANDROID_SYSROOT_TARGET=$(echo ${CONFIG_TOOLCHAIN_APPLICATION} | sed -e "s/-$//g")
 CONFIG_TARGET=${ANDROID_SYSROOT_TARGET}${CONFIG_RUNTIME_ANDROID_API_LEVEL}

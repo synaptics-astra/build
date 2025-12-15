@@ -265,6 +265,10 @@ if [ "is${CONFIG_AMP_IP_DRM_WV}" = "isy" ]; then
         ta_path_list="${ta_path_list} wv18"
         ta_list="${ta_list} libwidevine.ta"
     fi
+    if [ "is${CONFIG_AMP_IP_DRM_WV_19}" = "isy" ]; then
+        ta_path_list="${ta_path_list} wv19"
+        ta_list="${ta_list} libwidevine.ta"
+    fi
 
 fi
 

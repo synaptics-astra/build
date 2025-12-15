@@ -39,6 +39,7 @@ pack_boot_imgs() {
   cmd_args="$cmd_args --cmdline \"$kernel_cmdline\""
   cmd_args="$cmd_args --base 0x05000000 "
   cmd_args="$cmd_args --ramdisk $f_ramdisk"
+  cmd_args="$cmd_args --ramdisk_offset 0x0B000000 "
   cmd_args="$cmd_args --output $f_output"
 
   echo $exec2run "$cmd_args"
@@ -94,53 +95,6 @@ gen2_secure_image() {
 
   # Input and output
   exec_args="${exec_args} --input-file=${f_input} --output-file=${f_output}"
-
-  ### Generate secure image ###
-  eval ${exec_cmd} "${exec_args}"
-}
-
-genx_secure_image() {
-  v_image_type=$1; shift
-  in_extras=$1; shift
-  in_length=$1; shift
-  f_input=$1; shift
-  f_output=$1; shift
-
-  ### Check input file ###
-  [ -f $f_input ]
-
-  ### Exectuable for generating secure image ###
-  if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
-    exec_cmd=${security_tools_path}gen_x_secure_image
-    [ -x $exec_cmd ]
-  else
-    exec_cmd=gen_x_secure_image
-  fi
-
-  ### Prepare arguments ###
-  unset exec_args
-
-  # Other parameters
-  exec_args="${exec_args} --chip-name=${syna_chip_name}"
-  exec_args="${exec_args} --chip-rev=${syna_chip_rev}"
-  exec_args="${exec_args} --img_type=$v_image_type"
-  exec_args="${exec_args} --key_type=ree"
-
-  #exec_args="${exec_args} --seg_id=0x00000000"
-  #exec_args="${exec_args} --seg_id_mask=0xFFFFFFFF"
-  #exec_args="${exec_args} --version=0x00000001"
-  #exec_args="${exec_args} --version_mask=0xFFFFFFFF"
-  exec_args="${exec_args} --length=$in_length"
-  exec_args="${exec_args} --extras=$in_extras"
-  exec_args="${exec_args} --workdir-security-tools=${security_tools_path}"
-  exec_args="${exec_args} --workdir-security-keys=${security_keys_path}"
-  if [ "is${CONFIG_GENX_MCU}" = "isy" ]; then
-    exec_args="${exec_args} --tool-version=genx_v3"
-  else
-    exec_args="${exec_args} --tool-version=genx"
-  fi
-  # Input and output
-  exec_args="${exec_args} --in_payload=${f_input} --out_store=${f_output}"
 
   ### Generate secure image ###
   eval ${exec_cmd} "${exec_args}"

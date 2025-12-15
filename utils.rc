@@ -55,7 +55,7 @@ get_sysroot_out_path()
   linux-baseline)
     sysroot_out=$CONFIG_RUNTIME_LINUX_BASELINE_ROOTFS
     ;;
-  linux-rootfs64)
+  linux-baseline64)
     sysroot_out=$CONFIG_RUNTIME_LINUX_BASELINE_ROOTFS64
     ;;
   rdk-lib32)

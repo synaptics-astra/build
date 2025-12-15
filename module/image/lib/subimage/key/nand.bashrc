@@ -4,54 +4,6 @@
 #############
 # Functions #
 #############
-genx_secure_image() {
-  v_image_type=$1; shift
-  in_extras=$1; shift
-  in_length=$1; shift
-  f_input=$1; shift
-  f_output=$1; shift
-
-  ### Check input file ###
-  [ -f $f_input ]
-
-  ### Exectuable for generating secure image ###
-  if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
-    exec_cmd=${security_tools_path}gen_x_secure_image
-    [ -x $exec_cmd ]
-  else
-    exec_cmd=gen_x_secure_image
-  fi
-
-  ### Prepare arguments ###
-  unset exec_args
-
-  # Other parameters
-  exec_args="${exec_args} --chip-name=${syna_chip_name}"
-  exec_args="${exec_args} --chip-rev=${syna_chip_rev}"
-  exec_args="${exec_args} --img_type=$v_image_type"
-  exec_args="${exec_args} --key_type=ree"
-
-  #exec_args="${exec_args} --seg_id=0x00000000"
-  #exec_args="${exec_args} --seg_id_mask=0xFFFFFFFF"
-  #exec_args="${exec_args} --version=0x00000001"
-  #exec_args="${exec_args} --version_mask=0xFFFFFFFF"
-  exec_args="${exec_args} --length=$in_length"
-  exec_args="${exec_args} --extras=$in_extras"
-  exec_args="${exec_args} --workdir-security-tools=${security_tools_path}"
-  exec_args="${exec_args} --workdir-security-keys=${security_keys_path}"
-  if [ "is${CONFIG_GENX_MCU}" = "isy" ]; then
-    exec_args="${exec_args} --tool-version=genx_v3"
-  else
-    exec_args="${exec_args} --tool-version=genx"
-  fi
-
-  # Input and output
-  exec_args="${exec_args} --in_payload=${f_input} --out_store=${f_output}"
-
-  ### Generate secure image ###
-  eval ${exec_cmd} "${exec_args}"
-}
-
 gen2_secure_image() {
   v_image_type=$1; shift
   f_input=$1; shift
@@ -157,8 +109,8 @@ if [ "is${CONFIG_ANDROID_OS}" = "isy" ]; then
   if [ "is${CONFIG_GENX_ENABLE}" = "isy" ]; then
     dd if=/dev/zero of=${outfile_key_subimg} bs=1 count=16384
     ${security_tools_path}in_extras.py "AVB_KEYS" ${outdir_subimg_intermediate}/in_avb_keys.bin 0x00000001
-    genx_secure_image "AVB_KEYS" ${outdir_subimg_intermediate}/in_avb_keys.bin 0x0 ${f_androidoemkey} ${outdir_subimg_intermediate}/androidoemkey_en
-    genx_secure_image "AVB_KEYS" ${outdir_subimg_intermediate}/in_avb_keys.bin 0x0 ${f_androidusrkey} ${outdir_subimg_intermediate}/androidusrkey_en
+    genx_secure_image "AVB_KEYS" "ree" ${outdir_subimg_intermediate}/in_avb_keys.bin 0x0 ${f_androidoemkey} ${outdir_subimg_intermediate}/androidoemkey_en
+    genx_secure_image "AVB_KEYS" "ree" ${outdir_subimg_intermediate}/in_avb_keys.bin 0x0 ${f_androidusrkey} ${outdir_subimg_intermediate}/androidusrkey_en
     get_image_aligned ${outdir_subimg_intermediate}/androidoemkey_en 16384
     get_image_aligned ${outdir_subimg_intermediate}/androidusrkey_en 16384
 

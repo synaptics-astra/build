@@ -9,7 +9,9 @@ build_and_install_bootflow_feature() {
   skip_build=$1; shift
   feature_name=$1; shift
   opt_bootflow_version=$1; shift
-
+  if [ $# -gt 0 ]; then
+	  opt_android_bootctrl=$1; shift
+  fi
   opt_chip_name=$syna_chip_name
   opt_chip_rev=$syna_chip_rev
   opt_market_id=$syna_chip_mid
@@ -35,7 +37,13 @@ build_and_install_bootflow_feature() {
   if [ "is${opt_flash_type}" = "isNAND" ]; then
     preboot_feature_variant="${preboot_feature_variant}/randomizer_${opt_nand_randomizer}"
   fi
-  preboot_feature_variant="${preboot_feature_variant}/fastboot_${opt_config_fastboot}"
+
+  if [ "is${opt_android_bootctrl}" = "isy" ]; then
+    preboot_feature_variant="${preboot_feature_variant}/fastboot_${opt_config_fastboot}_android_bootctrl"
+  else
+    preboot_feature_variant="${preboot_feature_variant}/fastboot_${opt_config_fastboot}"
+  fi
+
   preboot_build_sysinit=n
   preboot_build_miniloader=y
 

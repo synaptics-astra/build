@@ -58,4 +58,7 @@ config PREBOOT_SECURITY_IMAGE_PATH
 	help
 		Used as ${CONFIG_SYNA_SDK_PATH}/${CONFIG_PREBOOT_SECURITY_IMAGE_PATH}
 
+config PREBOOT_ANDROID_BOOTCTRL
+	bool "use android bootctrl format"
+    default n
 endmenu

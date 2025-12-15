@@ -7,10 +7,6 @@ else
   TZ1_BIN="tz1_en.bin"
   TZ2_BIN="tz2_en.bin"
 fi
-if [ "is${CONFIG_PRODUCTION_BUILD}" = "isy" ]; then
-  TZ1_BIN="${TZ1_BIN}.mp"
-  TZ2_BIN="${TZ2_BIN}.mp"
-fi
 
 if [ "is${stage}" = "ispack_stage1" ]; then
   if [ "${tz_rel_ver}" = "1" ]; then

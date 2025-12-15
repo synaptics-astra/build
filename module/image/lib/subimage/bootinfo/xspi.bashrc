@@ -70,9 +70,12 @@ gen_boot_entry() {
   local flash_offset=$4
   local out=$5
 
+  # change the size to KB
+  local pt_size_inkb=$((${pt_size} / 1024))
+
   gen_4le_bytes $(printf "%08x" ${pt_offset}) ${intermediate_dir}/tmp1
   gen_4le_bytes $(printf "%08x" ${pt_id}) ${intermediate_dir}/tmp2
-  gen_4le_bytes $(printf "%08x" ${pt_size}) ${intermediate_dir}/tmp3
+  gen_4le_bytes $(printf "%08x" ${pt_size_inkb}) ${intermediate_dir}/tmp3
   gen_4le_bytes $(printf "%08x" ${flash_offset}) ${intermediate_dir}/tmp4
 
   cat ${intermediate_dir}/tmp1 ${intermediate_dir}/tmp2 \

@@ -38,6 +38,12 @@ else
 	TEE_CLIENT_BUILD_DIR="${module_topdir}/tee/client_api/build"
 	TEE_DAEMON="${module_topdir}/tee/bin/tee_daemon"
 fi
+if [ "is${CONFIG_ATF}" = "isy" ]; then
+  source ${module_build_topdir}/script/atf.rc
+fi
+if [ "is${CONFIG_OPTEE_OS}" = "isy" ]; then
+  source ${module_build_topdir}/script/optee_os.rc
+fi
 ### step 1: client lib ###
 if [ x${CONFIG_RUNTIME_OE}${CONFIG_RUNTIME_OE64}${CONFIG_RUNTIME_RDK}${CONFIG_RDK_SYS} = x ]; then
   if [ $clean -eq 1 ]; then
@@ -133,6 +139,13 @@ else # VSSDK release build
     set -- install_rel
     . ${module_build_topdir}/script/install_binary.rc
   )
+
+  ### overwrite prebuilt bootparameter image
+  if [ -z "${CONFIG_RUNTIME_OE}${CONFIG_RUNTIME_OE64}${CONFIG_RUNTIME_RDK}${CONFIG_RDK_SYS}" ]; then
+      if [ "${CONFIG_OPEN_TEE}" = "y" ]; then
+        . "${module_build_topdir}/script/bootparam.rc"
+      fi
+  fi
 fi
 
 ### step 3: oem + tzk_en.bin ###
@@ -162,7 +175,8 @@ fi
 
 #TODO(Song) Avoid using PATH like /home/galois/bin
 if [ -f ${TEE_DAEMON} ]; then
-  if [ "is$CONFIG_RUNTIME_LINUX_BASELINE_BUILDROOT" = "isy" ]; then
+  if [ "is$CONFIG_RUNTIME_LINUX_BASELINE_BUILDROOT" = "isy" ] || \
+     [ "is$CONFIG_RUNTIME_LINUX_BASELINE_BUILDROOT64" = "isy" ]; then
     mkdir -p ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/system/opt/syna/bin
     cp -adv  ${TEE_DAEMON} ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/system/opt/syna/bin
   else

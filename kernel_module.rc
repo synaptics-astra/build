@@ -53,9 +53,11 @@ fi
 # set the variables to select the crosscompiler and target architecture
 make_extra_vars="ARCH=${CONFIG_LINUX_ARCH} CROSS_COMPILE=${CONFIG_LINUX_CROSS_COMPILE} CC=${CONFIG_LINUX_CROSS_COMPILE_CC}"
 
-# set the O= directory with intermediated files from the kernel build, M= the directory where our intermediate files will 
+# set the O= directory with intermediated files from the kernel build, M= the module source code directory 
 # be stored, src= the directory with our Kbuild file
-make_vars="O=${opt_outdir_intermediate} M=${opt_outdir_module_intermediate}/linux src=${mod_dir}"
+# After this CL in kernel, src is changed to obj
+# 9a0ebe5011f49e932bb0a2cea2034fd65e6e567e kbuild: use $(obj)/ instead of $(src)/ for common pattern rules
+make_vars="O=${opt_outdir_intermediate} M=${mod_dir} src=${mod_dir}"
 
 # build the module with output in the opt_outdir_module_intermediate directory
 title "Building kernel module"

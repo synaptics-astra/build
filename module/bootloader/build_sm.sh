@@ -27,6 +27,7 @@ build_sm() {
     local varlist=" \
         BERLIN_CHIP \
         CHIP_VER \
+        CONFIG_ANDROID_OS \
         COMM_DIR \
         CONFIG_FUNCTION_BUTTON_HIGH_LEV_VALID \
         CONFIG_PRODUCTION_BUILD \

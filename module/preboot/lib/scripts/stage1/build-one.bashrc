@@ -31,6 +31,10 @@ if [ "x${opt_nand_randomizer}" != "x" ]; then
   cmd_args="${cmd_args} --nand-randomizer=${opt_nand_randomizer}"
 fi
 
+if [ "x${opt_android_bootctrl}" != "x" ]; then
+  cmd_args="${cmd_args} --android-bootctrl=${opt_android_bootctrl}"
+fi
+
 if [ "x${opt_flash_type}" != "x" ]; then
   cmd_args="${cmd_args} --flash-type=${opt_flash_type}"
 else

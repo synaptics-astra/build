@@ -86,4 +86,8 @@ config AMP_AUDIO_SNDSRV_PATH_HDMI_RELEASE_GOOGLE
 	prompt "HDMI Path Release GOOGLE (DEV)" if AMP_DEVELOPMENT_OPTION
 	default n
 
+config AMP_AUDIO_SNDSRV_PATH_ALSA
+	bool
+	prompt "ALSA output"
+	default n
 endif

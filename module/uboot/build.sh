@@ -7,6 +7,7 @@
 echo "u-boot build script called"
 
 build_uboot() {
+  set -x
   cd ${topdir}/boot/${CONFIG_UBOOT_SRC_PATH} || exit 1
 
   TARGET_CONFIG=merged_defconfig
@@ -40,8 +41,13 @@ build_uboot() {
   fi
 
   eval "CONFIG_RDK_SYS=${CONFIG_RDK_SYS} $cmd2run make mrproper"
-  eval "CONFIG_RDK_SYS=${CONFIG_RDK_SYS} $cmd2run make ${TARGET_CONFIG} -j${CONFIG_CPU_NUMBER}"
-  eval "CONFIG_RDK_SYS=${CONFIG_RDK_SYS} $cmd2run make EXT_DTB=arch/${CONFIG_UBOOT_ARCH}/dts/${CONFIG_UBOOT_DTS}.dtb -j24"
+  if [ "is${CONFIG_RDK_SYS}" = "isy" ]; then
+    eval "CONFIG_RDK_SYS=${CONFIG_RDK_SYS} $cmd2run make ${CONFIG_UBOOT_DEFCONFIG} -j${CONFIG_CPU_NUMBER} V=1 HOSTCC=gcc CC=\"${CC}\""
+    eval "CONFIG_RDK_SYS=${CONFIG_RDK_SYS} $cmd2run make EXT_DTB=arch/${CONFIG_UBOOT_ARCH}/dts/${CONFIG_UBOOT_DTS}.dtb -j24 HOSTCC=gcc CC=\"${CC}\""
+  else
+    eval "CONFIG_RDK_SYS=${CONFIG_RDK_SYS} $cmd2run make ${TARGET_CONFIG} -j${CONFIG_CPU_NUMBER}"
+    eval "CONFIG_RDK_SYS=${CONFIG_RDK_SYS} $cmd2run make EXT_DTB=arch/${CONFIG_UBOOT_ARCH}/dts/${CONFIG_UBOOT_DTS}.dtb -j24"
+  fi
   mv configs/merged_defconfig ${opt_outdir_intermediate}/output_uboot -v
   cd - || exit 1
 }
@@ -101,56 +107,6 @@ gen2_secure_image() {
 
   ### Generate secure image ###
   echo **** ${exec_cmd} "${exec_args}"
-  eval ${exec_cmd} "${exec_args}"
-}
-
-genx_secure_image() {
-  v_image_type=$1; shift
-  in_key_type=$1; shift
-  in_extras=$1; shift
-  in_length=$1; shift
-  f_input=$1; shift
-  f_output=$1; shift
-
-  ### Check input file ###
-  [ -f $f_input ]
-
-  ### Exectuable for generating secure image ###
-  if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
-    exec_cmd=${security_tools_path}gen_x_secure_image
-    [ -x $exec_cmd ]
-  else
-    exec_cmd=gen_x_secure_image
-  fi
-
-  ### Prepare arguments ###
-  unset exec_args
-
-  # Other parameters
-  exec_args="${exec_args} --chip-name=${syna_chip_name}"
-  exec_args="${exec_args} --chip-rev=${syna_chip_rev}"
-  exec_args="${exec_args} --img_type=$v_image_type"
-  exec_args="${exec_args} --key_type=${in_key_type}"
-
-  #exec_args="${exec_args} --seg_id=0x00000000"
-  #exec_args="${exec_args} --seg_id_mask=0xFFFFFFFF"
-  #exec_args="${exec_args} --version=0x00000001"
-  #exec_args="${exec_args} --version_mask=0xFFFFFFFF"
-  exec_args="${exec_args} --length=$in_length"
-  exec_args="${exec_args} --extras=$in_extras"
-  exec_args="${exec_args} --workdir-security-tools=${security_tools_path}"
-  exec_args="${exec_args} --workdir-security-keys=${security_keys_path}"
-  if [ "is${CONFIG_GENX_MCU}" = "isy" ]; then
-    exec_args="${exec_args} --tool-version=genx_v3"
-  else
-    exec_args="${exec_args} --tool-version=genx"
-  fi
-
-  # Input and output
-  exec_args="${exec_args} --in_payload=${f_input} --out_store=${f_output}"
-
-  ### Generate secure image ###
-  # echo @@@@ ${exec_cmd} "${exec_args}"
   eval ${exec_cmd} "${exec_args}"
 }
 

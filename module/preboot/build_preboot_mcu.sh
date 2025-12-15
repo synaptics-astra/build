@@ -52,6 +52,8 @@ genx_secure_image() {
   eval ${exec_cmd} "${exec_args}"
 }
 
+syna_platform_name="${CONFIG_PREBOOT_PLATFORM}"
+
 preboot_outdir_release=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_PREBOOT_REL_PATH}
 preboot_outdir_build_release="${preboot_outdir_release}/intermediate/release"
 
@@ -61,11 +63,11 @@ boot_security_prebuilts_dir="${boot_security_topdir}/images/chip/bcm_ree"
 boot_security_prebuilts_dir="${boot_security_prebuilts_dir}/${syna_chip_name}/${syna_chip_rev}/generic"
 boot_security_keys_dir="${boot_security_prebuilts_dir}/key_stores"
 
-if [ -d "${mcuboot_topdir}/cm52/image/chip/${syna_chip_name}" ]; then
-  f_BL=${mcuboot_topdir}/cm52/image/chip/${syna_chip_name}/apbl_output.bin
-  f_BL_EXTRA=${mcuboot_topdir}/cm52/image/chip/${syna_chip_name}/apbl_extras.bin
-  f_SYSMGR=${mcuboot_topdir}/cm52/image/chip/${syna_chip_name}/fw_output.bin
-  f_SYSMGR_EXTRA=${mcuboot_topdir}/cm52/image/chip/${syna_chip_name}/fw_extras.bin
+if [ -d "${mcuboot_topdir}/cm52/image/chip/${syna_chip_name}/${syna_platform_name}" ]; then
+  f_BL=${mcuboot_topdir}/cm52/image/chip/${syna_chip_name}/${syna_platform_name}/apbl_output.bin
+  f_BL_EXTRA=${mcuboot_topdir}/cm52/image/chip/${syna_chip_name}/${syna_platform_name}/apbl_extras.bin
+  f_SYSMGR=${mcuboot_topdir}/cm52/image/chip/${syna_chip_name}/${syna_platform_name}/fw_output.bin
+  f_SYSMGR_EXTRA=${mcuboot_topdir}/cm52/image/chip/${syna_chip_name}/${syna_platform_name}/fw_extras.bin
 else
   echo "built"
   ### Build MCU BOOT ###
@@ -86,7 +88,7 @@ f_SPK=${boot_security_prebuilts_dir}/spk.bin
 
 echo ${boot_security_keys_dir}
 echo ${boot_security_prebuilts_dir}
-echo "${mcuboot_topdir}/cm52/image/chip/${syna_chip_name}"
+echo "${mcuboot_topdir}/cm52/image/chip/${syna_chip_name}/${syna_platform_name}"
 
 [[ -f $f_K0_SYNA_store && -f $f_K0_OEM_store && -f $f_K0_3rd_store && -f $f_K1_A_store && -f $f_K1_B_store && -f $f_K1_C_store && -f $f_K1_D_store && -f $f_SPK && -f $f_BL && -f $f_SYSMGR && -f $f_BL_EXTRA && -f $f_SYSMGR_EXTRA ]]
 

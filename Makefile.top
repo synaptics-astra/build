@@ -39,8 +39,13 @@ endef
 
 .PHONY: list-defconfigs
 list-defconfigs:
+ifeq ($(UBOOT), y)
+	$(foreach defconfig, $(wildcard $(CURDIR)/configs/uboot/*/*_defconfig), \
+	$(call list-defconfig,$(defconfig)))
+else
 	$(foreach defconfig, $(wildcard $(CURDIR)/configs/product/*/*_defconfig), \
 	$(call list-defconfig,$(defconfig)))
+endif
 	@echo
 
 #select override config
@@ -68,7 +73,11 @@ endif
 Kconfig_path := release
 else
 Kconfig := Kconfig.build
+ifeq ($(UBOOT), y)
+Kconfig_path := uboot
+else
 Kconfig_path := product
+endif
 endif
 
 .PHONY : oldconfig olddefconfig menuconfig alldefconfig allnoconfig

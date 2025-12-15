@@ -26,12 +26,12 @@ fi
 
 if [ "is$CONFIG_RUNTIME_LINUX_BASELINE_BUILDROOT" = "isy" ]; then
     runtime_dir=linux-baseline
-    runtime_para=ramdisc
+    runtime_para=ramdisk
 fi
 
 if [ "is$CONFIG_RUNTIME_LINUX_BASELINE_BUILDROOT64" = "isy" ]; then
-    runtime_dir=linux-rootfs64
-    runtime_para=ramdisc
+    runtime_dir=linux-baseline64
+    runtime_para=ramdisk
 fi
 
 runtime_sysroot=build_sysroot

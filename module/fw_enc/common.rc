@@ -10,54 +10,6 @@ enc_fw_intermediate_path=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_FW_IMAGE_PA
 #############
 # Functions #
 #############
-genx_secure_image() {
-  v_image_type=$1; shift
-  in_extras=$1; shift
-  in_length=$1; shift
-  f_input=$1; shift
-  f_output=$1; shift
-
-  ### Check input file ###
-  [ -f $f_input ]
-
-  ### Exectuable for generating secure image ###
-  if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
-    exec_cmd=${security_tools_path}gen_x_secure_image
-    [ -x $exec_cmd ]
-  else
-    exec_cmd=gen_x_secure_image
-  fi
-
-  ### Prepare arguments ###
-  unset exec_args
-
-  # Other parameters
-  exec_args="${exec_args} --chip-name=${syna_chip_name}"
-  exec_args="${exec_args} --chip-rev=${syna_chip_rev}"
-  exec_args="${exec_args} --img_type=$v_image_type"
-  exec_args="${exec_args} --key_type=tee"
-
-  #exec_args="${exec_args} --seg_id=0x0"
-  #exec_args="${exec_args} --seg_id_mask=0xFFFFFFFF"
-  #exec_args="${exec_args} --version=0x00000001"
-  #exec_args="${exec_args} --version_mask=0xFFFFFFFF"
-  exec_args="${exec_args} --length=$in_length"
-  exec_args="${exec_args} --extras=$in_extras"
-  exec_args="${exec_args} --workdir-security-tools=${security_tools_path}"
-  exec_args="${exec_args} --workdir-security-keys=${security_keys_path}"
-  if [ "is${CONFIG_GENX_MCU}" = "isy" ]; then
-    exec_args="${exec_args} --tool-version=genx_v3"
-  else
-    exec_args="${exec_args} --tool-version=genx"
-  fi
-
-  # Input and output
-  exec_args="${exec_args} --in_payload=${f_input} --out_store=${f_output}"
-
-  ### Generate secure image ###
-  eval ${exec_cmd} "${exec_args}"
-}
-
 gen2_secure_image() {
   f_input=$1; shift
   f_output=$1; shift
@@ -157,7 +109,7 @@ encrypt_genx_fw () {
           echo "DSP number of BGC-CRC entries: $num_crc"
           num_crc_entry=$(printf "%X\n" $num_crc)
           ${IN_EXTRAS_TOOL} "DSP_FW" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 $read_only_size $read_write_size $num_crc_entry
-          genx_secure_image "DSP_FW" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 ${enc_fw_intermediate_path}/${fw}.con ${enc_fw_path_tmp}/${target}
+          genx_secure_image "DSP_FW" "tee" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 ${enc_fw_intermediate_path}/${fw}.con ${enc_fw_path_tmp}/${target}
           cp ${enc_fw_path_tmp}/${target} ${enc_fw_path}/${target}
           ;;
         *tsp*)
@@ -165,7 +117,7 @@ encrypt_genx_fw () {
           sec_DTCM_size=$(sed -n '/private/p' ${enc_fw_intermediate_path}/${file_des} | awk -F ':' '{print $2}')
           dbg_access="0x0"
           ${IN_EXTRAS_TOOL} "TSP_FW" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 $priv_DTCM_size $sec_DTCM_size $dbg_access
-          genx_secure_image "TSP_FW" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 ${enc_fw_intermediate_path}/${fw}.bin ${enc_fw_path}/${target}
+          genx_secure_image "TSP_FW" "tee" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 ${enc_fw_intermediate_path}/${fw}.bin ${enc_fw_path}/${target}
           ;;
         *gpu*)
           crc64_tool_org=${security_tools_path}gen_bg_crc64
@@ -182,7 +134,7 @@ encrypt_genx_fw () {
           echo "GPU number of BGC-CRC entries: $num_crc"
           num_crc_entry=$(printf "%X\n" $num_crc)
           ${IN_EXTRAS_TOOL} "GPU_FW" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 $read_only_size $read_write_size $num_crc_entry
-          genx_secure_image "GPU_FW" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 ${enc_fw_intermediate_path}/${fw}.con ${enc_fw_path}/${target}
+          genx_secure_image "GPU_FW" "tee" ${enc_fw_intermediate_path}/${fw}.in_extras 0x0 ${enc_fw_intermediate_path}/${fw}.con ${enc_fw_path}/${target}
           ;;
         *ifcp*)
           cp ${enc_fw_intermediate_path}/${fw}.bin ${enc_fw_path}/${target}

@@ -1,133 +1,85 @@
 stage=$1
 
-### engineering build, install clear image
-if [ "is${stage}" = "isinstall_eng" ]; then
-  mkdir -p "${opt_outdir_intermediate}"
+install_tz_image() {
+    # Use POSIX compatible variable declaration
+    src_dir=$1
+    dst_dir=$2
+    shift 2
 
-  if [ "${tz_rel_ver}" = 1 ]; then
-    [ -f "${module_topdir}/build/image/prebuilts/gen2/${syna_chip_name}/${syna_chip_rev}/tz.bin" ]
-    INSTALL_F "${module_topdir}/build/image/prebuilts/gen2/${syna_chip_name}/${syna_chip_rev}/tz.bin" "${opt_outdir_intermediate}/tee_tzk.bin"
-  fi
+    # Use POSIX array alternative with space-separated string
+    image_list="tz1_op_en.bin tz1_op_en.bin.mp tz2_op_en.bin tz2_op_en.bin.mp tz1_en.bin tz1_en.bin.mp tz2_en.bin tz2_en.bin.mp bootparam_en.bin bootparam_recovery_en.bin"
 
-  if [ "${tz_rel_ver}" = 2 ] || [ "${tz_rel_ver}" = genx ]; then
-    if [ "${tz_rel_ver}" = genx ]; then
-      enc_ver=genx
-      bin_path="${module_topdir}/build/image/prebuilts/${enc_ver}/${syna_chip_name}/${syna_chip_rev}"
-    else
-      enc_ver=gen2
-      bin_path="${module_topdir}/build/image/prebuilts/${enc_ver}/${syna_chip_name}/${syna_chip_rev}/${syna_chip_mid}"
-    fi
-    if [ "is${CONFIG_BERLIN_AS470_A0}" = "isy" ]; then
-      bin_path="${module_topdir}/build/image/prebuilts/${syna_chip_name}/${syna_chip_mid}"
-    fi
-    echo "${bin_path}"
+    # Use for loop with word splitting
+    for image in $image_list; do
+        if [ -f "${src_dir}/${image}" ]; then
+            INSTALL_F "${src_dir}/${image}" "${dst_dir}"
+        fi
+    done
+}
 
-    if [ "is${CONFIG_OPTEE}" = "isy" ]; then
-      [ -f "${bin_path}/tz1_op_en.bin" ]
-      [ -f "${bin_path}/tz1_op_en.bin.mp" ]
-      [ -f "${bin_path}/tz2_op_en.bin" ]
-      [ -f "${bin_path}/tz2_op_en.bin.mp" ]
-      INSTALL_F "${bin_path}/tz1_op_en.bin" "${opt_outdir_intermediate}"
-      INSTALL_F "${bin_path}/tz1_op_en.bin.mp" "${opt_outdir_intermediate}"
-      INSTALL_F "${bin_path}/tz2_op_en.bin" "${opt_outdir_intermediate}"
-      INSTALL_F "${bin_path}/tz2_op_en.bin.mp" "${opt_outdir_intermediate}"
-    else
-      [ -f "${bin_path}/tz1_en.bin" ]
-      [ -f "${bin_path}/tz1_en.bin.mp" ]
-      [ -f "${bin_path}/tz2_en.bin" ]
-      [ -f "${bin_path}/tz2_en.bin.mp" ]
-      INSTALL_F "${bin_path}/tz1_en.bin" "${opt_outdir_intermediate}"
-      INSTALL_F "${bin_path}/tz1_en.bin.mp" "${opt_outdir_intermediate}"
-      INSTALL_F "${bin_path}/tz2_en.bin" "${opt_outdir_intermediate}"
-      INSTALL_F "${bin_path}/tz2_en.bin.mp" "${opt_outdir_intermediate}"
-    fi
-  fi
-fi
+# Engineering build, install clear image
+case "${stage}" in
+    "install_eng")
+        mkdir -p "${opt_outdir_intermediate}"
 
-### release build, install prebuilt encrypted image
-if [ "is${stage}" = "isinstall_rel" ]; then
-  mkdir -p "${opt_outdir_intermediate}"
+        if [ "${tz_rel_ver}" = "1" ]; then
+            [ -f "${module_topdir}/build/image/prebuilts/gen2/${syna_chip_name}/${syna_chip_rev}/tz.bin" ]
+            INSTALL_F "${module_topdir}/build/image/prebuilts/gen2/${syna_chip_name}/${syna_chip_rev}/tz.bin" "${opt_outdir_intermediate}/tee_tzk.bin"
+        fi
 
-  if [ "${tz_rel_ver}" = 1 ]; then
-    INSTALL_F "${module_topdir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}/tee_en.bin" "${opt_tzk_outdir_release}/tee_en.bin"
-    if [ -f "${module_topdir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}/tee_recovery_en.bin" ]; then
-      INSTALL_F "${module_topdir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}/tee_recovery_en.bin" "${opt_tzk_outdir_release}/tee_recovery_en.bin"
-    fi
-  fi
+        if [ "${tz_rel_ver}" = "2" ] || [ "${tz_rel_ver}" = "genx" ]; then
+            if [ "${tz_rel_ver}" = "genx" ]; then
+                enc_ver=genx
+                bin_path="${module_topdir}/build/image/prebuilts/${enc_ver}/${syna_chip_name}/${syna_chip_rev}"
+            else
+                enc_ver=gen2
+                bin_path="${module_topdir}/build/image/prebuilts/${enc_ver}/${syna_chip_name}/${syna_chip_rev}/${syna_chip_mid}"
+            fi
+            if [ "${CONFIG_BERLIN_AS470_A0}" = "y" ]; then
+                bin_path="${module_topdir}/build/image/prebuilts/${syna_chip_name}/${syna_chip_mid}"
+            fi
+            echo "${bin_path}"
 
-  if [ "${tz_rel_ver}" = 2 ] || [ "${tz_rel_ver}" = genx ]; then
-    if [ "${tz_rel_ver}" = 2 ]; then
-      bin_path="${module_topdir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}"
-    elif [ "${tz_rel_ver}" = genx ]; then
-      bin_path="${module_topdir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}"
-    fi
+            install_tz_image "${bin_path}" "${opt_outdir_intermediate}"
+        fi
+        ;;
 
-    if [ "is${CONFIG_OPTEE}" != "isy" ]; then
-      [ -f "${bin_path}/tz1_en.bin" ]
-      [ -f "${bin_path}/tz1_en.bin.mp" ]
-      [ -f "${bin_path}/tz2_en.bin" ]
-      [ -f "${bin_path}/tz2_en.bin.mp" ]
-      INSTALL_F "${bin_path}/tz1_en.bin" "${opt_outdir_intermediate}"
-      INSTALL_F "${bin_path}/tz1_en.bin.mp" "${opt_outdir_intermediate}"
-      INSTALL_F "${bin_path}/tz2_en.bin" "${opt_outdir_intermediate}"
-      INSTALL_F "${bin_path}/tz2_en.bin.mp" "${opt_outdir_intermediate}"
-    fi
+    "install_rel")
+        mkdir -p "${opt_outdir_intermediate}"
 
-    if [ -f "${bin_path}/tz1_op_en.bin" ]; then
-      INSTALL_F "${bin_path}/tz1_op_en.bin" "${opt_outdir_intermediate}"
-    fi
-    if [ -f "${bin_path}/tz1_op_en.bin.mp" ]; then
-      INSTALL_F "${bin_path}/tz1_op_en.bin.mp" "${opt_outdir_intermediate}"
-    fi
-    if [ -f "${bin_path}/tz2_op_en.bin" ]; then
-      INSTALL_F "${bin_path}/tz2_op_en.bin" "${opt_outdir_intermediate}"
-    fi
-    if [ -f "${bin_path}/tz2_op_en.bin.mp" ]; then
-      INSTALL_F "${bin_path}/tz2_op_en.bin.mp" "${opt_outdir_intermediate}"
-    fi
+        if [ "${tz_rel_ver}" = "1" ]; then
+            INSTALL_F "${module_topdir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}/tee_en.bin" "${opt_tzk_outdir_release}/tee_en.bin"
+            if [ -f "${module_topdir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}/tee_recovery_en.bin" ]; then
+                INSTALL_F "${module_topdir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}/tee_recovery_en.bin" "${opt_tzk_outdir_release}/tee_recovery_en.bin"
+            fi
+        fi
 
-    [ -f "${bin_path}/bootparam_en.bin" ]
-    [ -f "${bin_path}/bootparam_recovery_en.bin" ]
-    INSTALL_F "${bin_path}/bootparam_en.bin" "${opt_outdir_intermediate}"
-    INSTALL_F "${bin_path}/bootparam_recovery_en.bin" "${opt_outdir_intermediate}"
-  fi
-fi
+        if [ "${tz_rel_ver}" = "2" ] || [ "${tz_rel_ver}" = "genx" ]; then
+            if [ "${tz_rel_ver}" = "2" ]; then
+                bin_path="${module_topdir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}"
+            elif [ "${tz_rel_ver}" = "genx" ]; then
+                bin_path="${module_topdir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}"
+            fi
 
-### do release, install encrypted image to prebuilt
-if [ "is${stage}" = "isrel_bin" ]; then
-  if [ "${tz_rel_ver}" = 1 ]; then
-    INSTALL_F "${opt_outdir_intermediate}/../tee_en.bin" "${release_dir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}"
-    if [ -f "${opt_outdir_intermediate}/../tee_recovery_en.bin" ]; then
-      INSTALL_F "${opt_outdir_intermediate}/../tee_recovery_en.bin" "${release_dir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}"
-    fi
-  fi
+            install_tz_image "${bin_path}" "${opt_outdir_intermediate}"
+        fi
+        ;;
 
-  if [ "${tz_rel_ver}" = 2 ]; then
-    bin_path="${release_dir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}"
-  elif [ "${tz_rel_ver}" = genx ]; then
-    bin_path="${release_dir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}"
-  fi
-  if [ "${tz_rel_ver}" = 2 ] || [ "${tz_rel_ver}" = genx ]; then
-    if [ "is${CONFIG_OPTEE}" != "isy" ]; then
-      INSTALL_F "${opt_outdir_intermediate}/tz1_en.bin" "${bin_path}"
-      INSTALL_F "${opt_outdir_intermediate}/tz1_en.bin.mp" "${bin_path}"
-      INSTALL_F "${opt_outdir_intermediate}/tz2_en.bin" "${bin_path}"
-      INSTALL_F "${opt_outdir_intermediate}/tz2_en.bin.mp" "${bin_path}"
-    fi
-    INSTALL_F "${opt_outdir_intermediate}/bootparam_en.bin" "${bin_path}"
-    INSTALL_F "${opt_outdir_intermediate}/bootparam_recovery_en.bin" "${bin_path}"
+    "rel_bin")
+        if [ "${tz_rel_ver}" = "1" ]; then
+            INSTALL_F "${opt_outdir_intermediate}/../tee_en.bin" "${release_dir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}"
+            if [ -f "${opt_outdir_intermediate}/../tee_recovery_en.bin" ]; then
+                INSTALL_F "${opt_outdir_intermediate}/../tee_recovery_en.bin" "${release_dir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}"
+            fi
+        fi
 
-    if [ -f "${opt_outdir_intermediate}/tz1_op_en.bin" ]; then
-      INSTALL_F "${opt_outdir_intermediate}/tz1_op_en.bin" "${bin_path}"
-    fi
-    if [ -f "${opt_outdir_intermediate}/tz1_op_en.bin.mp" ]; then
-      INSTALL_F "${opt_outdir_intermediate}/tz1_op_en.bin.mp" "${bin_path}"
-    fi
-    if [ -f "${opt_outdir_intermediate}/tz2_op_en.bin" ]; then
-      INSTALL_F "${opt_outdir_intermediate}/tz2_op_en.bin" "${bin_path}"
-    fi
-    if [ -f "${opt_outdir_intermediate}/tz2_op_en.bin.mp" ]; then
-      INSTALL_F "${opt_outdir_intermediate}/tz2_op_en.bin.mp" "${bin_path}"
-    fi
-  fi
-fi
+        if [ "${tz_rel_ver}" = "2" ]; then
+            bin_path="${release_dir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}/${syna_chip_mid}"
+        elif [ "${tz_rel_ver}" = "genx" ]; then
+            bin_path="${release_dir}/products/${syna_chip_name}/${boot_seclvl}/${tz_memlayout}/${syna_chip_rev}"
+        fi
+        if [ "${tz_rel_ver}" = "2" ] || [ "${tz_rel_ver}" = "genx" ]; then
+            install_tz_image "${opt_outdir_intermediate}" "${bin_path}"
+        fi
+        ;;
+esac

@@ -23,8 +23,8 @@ if [ "is$1" != "ispack_tee" ]; then
   run_script build-hwinit-features.bashrc ree n
   run_script build-bootflow-features.bashrc ree n
 else
-  run_script build-hwinit-features.bashrc tee y
-  run_script build-bootflow-features.bashrc tee y
+  run_script build-hwinit-features.bashrc tee n
+  run_script build-bootflow-features.bashrc tee n
 fi
 
 # vim: set ai filetype=sh tabstop=2 softtabstop=2 shiftwidth=2 expandtab:

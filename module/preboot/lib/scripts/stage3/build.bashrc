@@ -73,7 +73,11 @@ fi
 if [ "is${CONFIG_FASTBOOT_FLOW}" = "isy" ]; then
   preboot_prebuilts_dir_bootflow="${preboot_prebuilts_dir_bootflow}/fastboot_y"
 else
-  preboot_prebuilts_dir_bootflow="${preboot_prebuilts_dir_bootflow}/fastboot_n"
+  if [ "is${CONFIG_PREBOOT_ANDROID_BOOTCTRL}" = "isy" ]; then
+    preboot_prebuilts_dir_bootflow="${preboot_prebuilts_dir_bootflow}/fastboot_n_android_bootctrl"
+  else
+    preboot_prebuilts_dir_bootflow="${preboot_prebuilts_dir_bootflow}/fastboot_n"
+  fi
 fi
 ## FIXME: if nand, enable/disable randomization
 

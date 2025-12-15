@@ -59,6 +59,22 @@ endchoice
 endif
 
 if OPTEE
+config ATF
+	bool "ATF"
+	default n
+
+config ATF_DEBUG
+	bool "Enable ATF Debug"
+	default n
+
+config OPTEE_OS
+	bool "OPTEE OS"
+	default n
+
+config OPTEE_DEBUG
+	bool "Enable OPTEE Debug"
+	default n
+
 config OPTEE_SAMPLE
 	bool "OPTEE Sample"
 	default y

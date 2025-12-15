@@ -5,7 +5,7 @@
 
 menuconfig AMPSDK
     bool "AMP Enable"
-    default y
+    default n
     help
         AMP support
 
