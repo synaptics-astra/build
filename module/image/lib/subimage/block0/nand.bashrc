@@ -1,8 +1,11 @@
 # Bash script: subimage: block0: nand
 
 # Command and arguments
-cmd2run="${opt_basedir_tools}/mk_nandblock0_image"
-
+if [ "is${syna_chip_name}" = "isklamath" ]; then
+  cmd2run="${opt_basedir_tools}/${syna_chip_name}/mk_nandblock0_image"
+else
+  cmd2run="${opt_basedir_tools}/mk_nandblock0_image"
+fi
 cmd2run="${cmd2run} --page-size=${nand_param_page_size}"
 cmd2run="${cmd2run} --block-size=${nand_param_block_size}"
 cmd2run="${cmd2run} --ecc-strength=${nand_param_ecc_strength}"

@@ -15,6 +15,10 @@ cmd_args="${cmd_args} --platform=${opt_platform}"
 
 cmd_args="${cmd_args} --cross_compile=${opt_cross_compile}"
 
+if [ "x${opt_bl_cpupll}" != "x" ]; then
+  cmd_args="${cmd_args} --bl-cpupll=${opt_bl_cpupll}"
+fi
+
 if [ "x${opt_bootflow}" != "x" ]; then
   cmd_args="${cmd_args} --bootflow=${opt_bootflow}"
 fi

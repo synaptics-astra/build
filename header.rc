@@ -9,6 +9,21 @@ if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
   config_file=$1
 
   source ${config_file}
+
+  # Export PMIC configuration for pack script
+  if [ "x${CONFIG_VCORE_PMIC_MODEL}" != "x" ]; then
+    export CONFIG_VCORE_PMIC_MODEL
+  fi
+  if [ "x${CONFIG_VCPU_PMIC_MODEL}" != "x" ]; then
+    export CONFIG_VCPU_PMIC_MODEL
+  fi
+
+  # Export new choice-based PMIC configuration
+  export CONFIG_PMIC_MODE_I2C
+  export CONFIG_PMIC_MODE_PWM
+  export CONFIG_VCORE_PMIC_PWMCH
+  export CONFIG_VCPU_PMIC_PWMCH
+
   if [ "$2" == "clean" ]; then
     clean=1;
   else

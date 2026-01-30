@@ -84,6 +84,10 @@ config BOOTCTRL
         bool "Synaptics bootctrl tool"
         default n
 
+config POWER
+        bool "Synaptics Power measure tool"
+        default n
+
 config SYNA_COMPOSITOR
 	bool "Synaptics syna-compositor"
 	default n

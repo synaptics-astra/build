@@ -33,7 +33,7 @@ mkdir -p ${opt_workdir_runtime_sysroot}
 
 opt_var_defs=""
 if [ "is${CONFIG_LINUX_CROSS_COMPILE_LLVM_UTILS}" = "isy" ]; then
-    opt_var_defs="${opt_var_defs} LLVM=1"
+    opt_var_defs="${opt_var_defs} LLVM=1 ${CONFIG_LINUX_CROSS_COMPILE_ARGS}"
 fi
 
 pushd ${opt_outdir_intermediate}

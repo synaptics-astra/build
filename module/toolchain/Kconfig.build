@@ -32,6 +32,12 @@ config LINUX_CROSS_COMPILE_LLVM_UTILS
 	help
 		Enable LLVM=1 in Kbuild
 
+config LINUX_CROSS_COMPILE_ARGS
+	string "additional linux kernel cross compile arguments"
+	default ""
+	help
+		Any additional arguments to pass to the cross compiler
+
 config TOOLCHAIN_CLANG_PATH
 	string "CLANG toolchain path"
         depends on LINUX_CROSS_COMPILE_CC="clang" || TOOLCHAIN_APPLICATION_CC="clang"

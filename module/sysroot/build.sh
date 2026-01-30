@@ -30,7 +30,7 @@ if [ "is$CONFIG_RUNTIME_LINUX_BASELINE_BUILDROOT" = "isy" ]; then
 fi
 
 if [ "is$CONFIG_RUNTIME_LINUX_BASELINE_BUILDROOT64" = "isy" ]; then
-    runtime_dir=linux-baseline64
+    runtime_dir=linux-baseline64/${CONFIG_TOOLCHAIN_APPLICATION_PATH}
     runtime_para=ramdisk
 fi
 

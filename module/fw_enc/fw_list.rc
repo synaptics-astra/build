@@ -20,11 +20,6 @@ if [ "is${CONFIG_GENX_ENABLE}" = "isy" ] || [ "is${syna_sec_lvl}" = "isgenx" ]; 
             fw_list="${fw_list} dsp"
             fw_ver_list="${fw_ver_list} no_ip"
         fi
-        if [ "is${CONFIG_AMP_IP_AUDIO_MS12_HIFI_V1_3}" = "isy" ]; then
-            fw_path_list="${fw_path_list} dsp"
-            fw_list="${fw_list} dsp"
-            fw_ver_list="${fw_ver_list} ms12v1_3"
-        fi
         if [ "is${CONFIG_AMP_IP_AUDIO_MS12_HIFI_V2_6}" = "isy" ]; then
             fw_path_list="${fw_path_list} dsp"
             fw_list="${fw_list} dsp"
@@ -49,11 +44,6 @@ if [ "is${CONFIG_AMP_IP_AUDIO_MS12_ARM_V2_4}" = "isy" ]; then
     fw_list_arm="${fw_list_arm} dolby_ms12"
     fw_path_list_arm="${fw_path_list_arm} ms12\/arm-rdkmllib32-linux-gnueabi-"
     fw_list_arm="${fw_list_arm} dolby_ms12"
-fi
-
-if [ "is${CONFIG_AMP_IP_AUDIO_MS12_ARM_V1_3}" = "isy" ]; then
-    fw_path_list_arm="${fw_path_list_arm} ms12_v1\/arm-linux-androideabi-"
-    fw_list_arm="${fw_list_arm} dolby_ms12_v1"
 fi
 
 if [ "is${CONFIG_AMP_IP_AUDIO_UDC_LITE_SUPPORTED}" = "isy" ]; then

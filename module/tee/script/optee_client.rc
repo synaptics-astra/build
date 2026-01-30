@@ -7,6 +7,7 @@ LDFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_LDFLAG}"
 CLANG_CFLAGS="${CONFIG_TOOLCHAIN_CLANG_CFLAG}"
 CLANG_LDFLAGS="${CONFIG_TOOLCHAIN_CLANG_LDFLAG}"
 CROSS_COMPILE="${CONFIG_TOOLCHAIN_APPLICATION}"
+TA_CROSS_COMPILE="${CONFIG_TOOLCHAIN_TA}"
 
 if [ "${CONFIG_TOOLCHAIN_APPLICATION_CC}" = "clang" ]; then
   APP_CC="clang"
@@ -57,7 +58,7 @@ if [ "is${CONFIG_OPTEE_SAMPLE}" = "isy" ]; then
   export CA_CFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_CFLAG} --sysroot=${opt_build_sysroot}"
   export CA_LDFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_LDFLAG}"
   make -C ${build_dir} TA_DEV_KIT_DIR=${ta_dev_kit_dir} OUTPUT_DIR=${out_dir} clean
-  make -C ${build_dir} HOST_CROSS_COMPILE=${CROSS_COMPILE}  TA_CROSS_COMPILE=aarch64-linux-gnu- TEEC_EXPORT=${teec_export} --no-builtin-variables TA_DEV_KIT_DIR=${ta_dev_kit_dir} OUTPUT_DIR=${out_dir}
+  make -C ${build_dir} HOST_CROSS_COMPILE=${CROSS_COMPILE}  TA_CROSS_COMPILE=${TA_CROSS_COMPILE} TEEC_EXPORT=${teec_export} --no-builtin-variables TA_DEV_KIT_DIR=${ta_dev_kit_dir} OUTPUT_DIR=${out_dir}
   cp -av ${out_dir}/ta/* ${out_ta_dir}
   cp -av ${out_dir}/ca/* ${out_ca_dir}
   cp -av ${out_dir}/plugins ${out_plugin_dir}
@@ -71,8 +72,8 @@ if [ "is${CONFIG_OPTEE_TEST}" = "isy" ]; then
 
   export CA_CFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_CFLAG} --sysroot=${opt_build_sysroot}"
   export CA_LDFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_LDFLAG}"
-  make -C ${build_dir} SYSROOT=${opt_build_sysroot} TA_DEV_KIT_DIR=${ta_dev_kit_dir}  CROSS_COMPILE_TA=aarch64-linux-gnu- CROSS_COMPILE_HOST=${CROSS_COMPILE} OPTEE_CLIENT_EXPORT=${teec_export} O=${out_dir} clean
-  make -C ${build_dir} SYSROOT=${opt_build_sysroot} TA_DEV_KIT_DIR=${ta_dev_kit_dir}  CROSS_COMPILE_TA=aarch64-linux-gnu- CROSS_COMPILE_HOST=${CROSS_COMPILE} OPTEE_CLIENT_EXPORT=${teec_export} O=${out_dir} CFG_PKCS11_TA=y
+  make -C ${build_dir} SYSROOT=${opt_build_sysroot} TA_DEV_KIT_DIR=${ta_dev_kit_dir}  CROSS_COMPILE_TA=${TA_CROSS_COMPILE} CROSS_COMPILE_HOST=${CROSS_COMPILE} OPTEE_CLIENT_EXPORT=${teec_export} O=${out_dir} clean
+  make -C ${build_dir} SYSROOT=${opt_build_sysroot} TA_DEV_KIT_DIR=${ta_dev_kit_dir}  CROSS_COMPILE_TA=${TA_CROSS_COMPILE} CROSS_COMPILE_HOST=${CROSS_COMPILE} OPTEE_CLIENT_EXPORT=${teec_export} O=${out_dir} CFG_PKCS11_TA=y
   make -C ${build_dir}  install DESTDIR=${out_dir_rootfs} O=${out_dir}
 fi
 
@@ -83,6 +84,6 @@ if [ "is${CONFIG_BL_TA_FASTLOGO}" = "isy" ]; then
 	mkdir -pv ${out_dir}
 	export CA_CFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_CFLAG} --sysroot=${opt_build_sysroot}"
 	export CA_LDFLAGS="${CONFIG_TOOLCHAIN_APPLICATION_LDFLAG}"
-	make -C ${build_dir} -f Makefile.op SoC_Ver=${syna_chip_name} HOST_CROSS_COMPILE=${CROSS_COMPILE}  CROSS_COMPILE=aarch64-linux-gnu- TEEC_EXPORT=${teec_export} --no-builtin-variables TA_DEV_KIT_DIR=${ta_dev_kit_dir} O=${out_dir}
+	make -C ${build_dir} -f Makefile.op SoC_Ver=${syna_chip_name} HOST_CROSS_COMPILE=${CROSS_COMPILE}  CROSS_COMPILE=${TA_CROSS_COMPILE} TEEC_EXPORT=${teec_export} --no-builtin-variables TA_DEV_KIT_DIR=${ta_dev_kit_dir} O=${out_dir}
 	cp -av ${out_dir}/*.ta ${out_ta_dir}
 fi

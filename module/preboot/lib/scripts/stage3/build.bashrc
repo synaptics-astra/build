@@ -267,6 +267,86 @@ if [ "is${opt_genx_enable}" != "is" ]; then
   fi
   echo -n "miniloader," >> ${preboot_outdir_release}/preboot_esmt.info
   stat -c %s ${preboot_outdir_build_release}/miniloader_en.bin >> ${preboot_outdir_release}/preboot_esmt.info
+
+  # Generate PMIC configuration binary (GenX path)
+  if [ "x${CONFIG_PMIC_MODE_I2C}" = "xy" ]; then
+    # Remove quotes from PMIC model names
+    vcore_model=$(echo ${CONFIG_VCORE_PMIC_MODEL} | sed 's/"//g')
+    vcpu_model=$(echo ${CONFIG_VCPU_PMIC_MODEL} | sed 's/"//g')
+
+    # Only generate PMIC config if at least one PMIC model is specified
+    if [ "x${vcore_model}" != "x" ] || [ "x${vcpu_model}" != "x" ]; then
+      echo "Generating PMIC configuration for I2C mode - VCORE: ${CONFIG_VCORE_PMIC_MODEL}, VCPU: ${CONFIG_VCPU_PMIC_MODEL} (GenX path)"
+
+      # Generate PMIC config binary for I2C mode
+      pmic_args="--output ${preboot_outdir_release}/pmic_config.bin"
+      if [ "x${vcore_model}" != "x" ]; then
+        pmic_args="${pmic_args} --vcore-model ${vcore_model}"
+      fi
+      if [ "x${vcpu_model}" != "x" ]; then
+        pmic_args="${pmic_args} --vcpu-model ${vcpu_model}"
+      fi
+      # Pass empty PWM parameters for I2C mode (gen_pmic_config.sh will set them to 0)
+      pmic_args="${pmic_args} --vcore-pwm-ch \"\" --vcpu-pwm-ch \"\""
+    else
+      echo "Info: I2C mode selected but no PMIC models specified, skipping PMIC configuration generation (GenX path)"
+      pmic_args=""
+    fi
+
+  elif [ "x${CONFIG_PMIC_MODE_PWM}" = "xy" ]; then
+    echo "Generating PMIC configuration for PWM mode - VCORE PWM: ${CONFIG_VCORE_PMIC_PWMCH}, VCPU PWM: ${CONFIG_VCPU_PMIC_PWMCH} (GenX path)"
+
+    # Remove quotes from PWM channels
+    vcore_pwm_ch=$(echo ${CONFIG_VCORE_PMIC_PWMCH} | sed 's/"//g')
+    vcpu_pwm_ch=$(echo ${CONFIG_VCPU_PMIC_PWMCH} | sed 's/"//g')
+
+    # Generate PMIC config binary for PWM mode
+    pmic_args="--output ${preboot_outdir_release}/pmic_config.bin"
+    # No PMIC models for PWM mode
+    pmic_args="${pmic_args} --vcore-pwm-ch \"${vcore_pwm_ch}\" --vcpu-pwm-ch \"${vcpu_pwm_ch}\""
+
+  else
+    echo "Info: No PMIC configuration specified, skipping PMIC configuration generation (GenX path)"
+    pmic_args=""
+  fi
+
+  if [ "x${pmic_args}" != "x" ]; then
+
+    ${topdir}/build/module/preboot/gen_pmic_config.sh ${pmic_args}
+
+    if [ $? -eq 0 ]; then
+      echo "PMIC configuration binary generated successfully"
+      # Align preboot_esmt.bin to 512KB and place PMIC config
+      # Structure: [preboot code] [padding] [PMIC 32B at 0x7f1e0] [padding] [VT 2KB at 0x7f800]
+      current_size=$(stat -c %s ${preboot_outdir_release}/preboot_esmt.bin)
+      align_size=$((512 * 1024))  # 512KB
+      reserved_size=$((3 * 1024))  # Reserve last 3KB for SPI boot (version_table 2KB + header 1KB)
+      pmic_config_size=32  # PMIC config is always 32 bytes
+
+      # Calculate padding to make room for PMIC config at 0x7f1e0 (512KB-3KB-32 bytes = 521184)
+      target_size=$((align_size - reserved_size - pmic_config_size))
+      if [ $current_size -gt $target_size ]; then
+        echo "Error: preboot_esmt.bin size ($current_size) exceeds available space ($target_size) for PMIC config"
+        exit 1
+      fi
+
+      padding_size=$((target_size - current_size))
+      echo "Padding preboot_esmt.bin with ${padding_size} bytes, placing PMIC config at 0x7f1e0 (521184) offset (GenX path)"
+      dd if=/dev/zero bs=1 count=${padding_size} >> ${preboot_outdir_release}/preboot_esmt.bin 2>/dev/null
+
+      # Append PMIC config to the last 32 bytes of 512KB
+      cat ${preboot_outdir_release}/pmic_config.bin >> ${preboot_outdir_release}/preboot_esmt.bin
+
+      # Add PMIC config info
+      echo -n "pmic_config," >> ${preboot_outdir_release}/preboot_esmt.info
+      stat -c %s ${preboot_outdir_release}/pmic_config.bin >> ${preboot_outdir_release}/preboot_esmt.info
+    else
+      echo "Error: Failed to generate PMIC configuration binary"
+      exit 1
+    fi
+  else
+    echo "Info: No PMIC configuration specified, skipping PMIC configuration generation (GenX path)"
+  fi
 else
 # EROM, TSM, Copy SYSINIT and MINILOADER
 f_erom=${preboot_prebuilts_dir_bootflow}/erom.bin
@@ -310,6 +390,83 @@ cat ${preboot_outdir_build_release}/miniloader_en.bin >> ${preboot_outdir_releas
 
 cat ${preboot_outdir_build_release}/tsm.bin >> ${preboot_outdir_release}/preboot_esmt.bin
 
+# Generate PMIC configuration binary
+if [ "x${CONFIG_PMIC_MODE_I2C}" = "xy" ]; then
+  # Remove quotes from PMIC model names
+  vcore_model=$(echo ${CONFIG_VCORE_PMIC_MODEL} | sed 's/"//g')
+  vcpu_model=$(echo ${CONFIG_VCPU_PMIC_MODEL} | sed 's/"//g')
+
+  # Only generate PMIC config if at least one PMIC model is specified
+  if [ "x${vcore_model}" != "x" ] || [ "x${vcpu_model}" != "x" ]; then
+    echo "Generating PMIC configuration for I2C mode - VCORE: ${CONFIG_VCORE_PMIC_MODEL}, VCPU: ${CONFIG_VCPU_PMIC_MODEL}"
+
+    # Generate PMIC config binary for I2C mode
+    pmic_args="--output ${preboot_outdir_release}/pmic_config.bin"
+    if [ "x${vcore_model}" != "x" ]; then
+      pmic_args="${pmic_args} --vcore-model ${vcore_model}"
+    fi
+    if [ "x${vcpu_model}" != "x" ]; then
+      pmic_args="${pmic_args} --vcpu-model ${vcpu_model}"
+    fi
+    # Pass empty PWM parameters for I2C mode (gen_pmic_config.sh will set them to 0)
+    pmic_args="${pmic_args} --vcore-pwm-ch \"\" --vcpu-pwm-ch \"\""
+  else
+    echo "Info: I2C mode selected but no PMIC models specified, skipping PMIC configuration generation"
+    pmic_args=""
+  fi
+
+elif [ "x${CONFIG_PMIC_MODE_PWM}" = "xy" ]; then
+  echo "Generating PMIC configuration for PWM mode - VCORE PWM: ${CONFIG_VCORE_PMIC_PWMCH}, VCPU PWM: ${CONFIG_VCPU_PMIC_PWMCH}"
+
+  # Remove quotes from PWM channels
+  vcore_pwm_ch=$(echo ${CONFIG_VCORE_PMIC_PWMCH} | sed 's/"//g')
+  vcpu_pwm_ch=$(echo ${CONFIG_VCPU_PMIC_PWMCH} | sed 's/"//g')
+
+  # Generate PMIC config binary for PWM mode
+  pmic_args="--output ${preboot_outdir_release}/pmic_config.bin"
+  # No PMIC models for PWM mode
+  pmic_args="${pmic_args} --vcore-pwm-ch \"${vcore_pwm_ch}\" --vcpu-pwm-ch \"${vcpu_pwm_ch}\""
+
+else
+  echo "Info: No PMIC configuration specified, skipping PMIC configuration generation"
+  pmic_args=""
+fi
+
+if [ "x${pmic_args}" != "x" ]; then
+
+  ${topdir}/build/module/preboot/gen_pmic_config.sh ${pmic_args}
+
+  if [ $? -eq 0 ]; then
+    echo "PMIC configuration binary generated successfully"
+
+    # Align preboot_esmt.bin to 512KB and place PMIC config
+    # Structure: [preboot code] [padding] [PMIC 32B at 0x7f1e0] [padding] [VT 2KB at 0x7f800]
+    current_size=$(stat -c %s ${preboot_outdir_release}/preboot_esmt.bin)
+    align_size=$((512 * 1024))  # 512KB
+    reserved_size=$((3 * 1024))  # Reserve last 3KB for SPI boot (version_table 2KB + header 1KB)
+    pmic_config_size=32  # PMIC config is always 32 bytes
+
+    # Calculate padding to make room for PMIC config at 0x7f1e0 (512KB-3KB-32 bytes = 521184)
+    target_size=$((align_size - reserved_size - pmic_config_size))
+    if [ $current_size -gt $target_size ]; then
+      echo "Error: preboot_esmt.bin size ($current_size) exceeds available space ($target_size) for PMIC config"
+      exit 1
+    fi
+
+    padding_size=$((target_size - current_size))
+    echo "Padding preboot_esmt.bin with ${padding_size} bytes, placing PMIC config at 0x7f1e0 (521184) offset"
+    dd if=/dev/zero bs=1 count=${padding_size} >> ${preboot_outdir_release}/preboot_esmt.bin 2>/dev/null
+
+    # Append PMIC config to the last 32 bytes of 512KB
+    cat ${preboot_outdir_release}/pmic_config.bin >> ${preboot_outdir_release}/preboot_esmt.bin
+  else
+    echo "Error: Failed to generate PMIC configuration binary"
+    exit 1
+  fi
+else
+  echo "Info: No PMIC configuration specified, skipping PMIC configuration generation"
+fi
+
 if [ -f ${preboot_outdir_build_release}/erom.factory ] && [ -f ${preboot_outdir_build_release}/tsm.factory ]; then
   cat ${preboot_outdir_build_release}/erom.factory > ${preboot_outdir_release}/preboot_esmt_factory.bin
   cat ${preboot_outdir_build_release}/sysinit_en.bin >> ${preboot_outdir_release}/preboot_esmt_factory.bin
@@ -318,6 +475,25 @@ if [ -f ${preboot_outdir_build_release}/erom.factory ] && [ -f ${preboot_outdir_
   fi
   cat ${preboot_outdir_build_release}/miniloader_en.bin >> ${preboot_outdir_release}/preboot_esmt_factory.bin
   cat ${preboot_outdir_build_release}/tsm.factory >> ${preboot_outdir_release}/preboot_esmt_factory.bin
+
+  # Add PMIC config to factory version if it exists
+  if ([ "x${CONFIG_PMIC_MODE_I2C}" = "xy" ] || [ "x${CONFIG_PMIC_MODE_PWM}" = "xy" ]) && [ -f ${preboot_outdir_release}/pmic_config.bin ]; then
+    current_size=$(stat -c %s ${preboot_outdir_release}/preboot_esmt_factory.bin)
+    align_size=$((512 * 1024))  # 512KB
+    reserved_size=$((3 * 1024))  # Reserve last 3KB for SPI boot (version_table 2KB + header 1KB)
+    pmic_config_size=32  # PMIC config is always 32 bytes
+    target_size=$((align_size - reserved_size - pmic_config_size))
+    if [ $current_size -gt $target_size ]; then
+      echo "Error: preboot_esmt_factory.bin size ($current_size) exceeds available space ($target_size) for PMIC config"
+      exit 1
+    fi
+    padding_size=$((target_size - current_size))
+    if [ $padding_size -gt 0 ]; then
+      echo "Padding preboot_esmt_factory.bin with ${padding_size} bytes, placing PMIC config at 0x7f1e0 (521184) offset"
+      dd if=/dev/zero bs=1 count=${padding_size} >> ${preboot_outdir_release}/preboot_esmt_factory.bin 2>/dev/null
+    fi
+    cat ${preboot_outdir_release}/pmic_config.bin >> ${preboot_outdir_release}/preboot_esmt_factory.bin
+  fi
 fi
 
 # Generate information of packed binaries
@@ -337,5 +513,11 @@ stat -c %s ${preboot_outdir_build_release}/miniloader_en.bin >> ${preboot_outdir
 
 echo -n "tsm," >> ${preboot_outdir_release}/preboot_esmt.info
 stat -c %s ${preboot_outdir_build_release}/tsm.bin >> ${preboot_outdir_release}/preboot_esmt.info
+
+# Add PMIC config info if it was generated
+if ([ "x${CONFIG_PMIC_MODE_I2C}" = "xy" ] || [ "x${CONFIG_PMIC_MODE_PWM}" = "xy" ]) && [ -f ${preboot_outdir_release}/pmic_config.bin ]; then
+  echo -n "pmic_config," >> ${preboot_outdir_release}/preboot_esmt.info
+  stat -c %s ${preboot_outdir_release}/pmic_config.bin >> ${preboot_outdir_release}/preboot_esmt.info
+fi
 
 fi

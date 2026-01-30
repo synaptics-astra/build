@@ -61,4 +61,71 @@ config PREBOOT_SECURITY_IMAGE_PATH
 config PREBOOT_ANDROID_BOOTCTRL
 	bool "use android bootctrl format"
     default n
+
+choice
+	prompt "PMIC Control Mode"
+	optional
+	help
+		Choose between I2C PMIC control or PWM voltage regulation.
+		I2C mode uses traditional PMIC drivers via I2C bus.
+		PWM mode uses direct PWM signals for voltage control.
+		Leave unselected to disable PMIC configuration.
+
+config PMIC_MODE_I2C
+	bool "I2C PMIC Control"
+	help
+		Use traditional I2C PMIC drivers for voltage regulation.
+		Configure VCORE and VCPU PMIC models below.
+
+config PMIC_MODE_PWM
+	bool "PWM Voltage Control"
+	help
+		Use PWM signals for direct voltage regulation.
+		Configure PWM channels for VCORE and VCPU below.
+
+endchoice
+
+config VCORE_PMIC_MODEL
+	string "VCORE PMIC Model"
+	depends on PMIC_MODE_I2C
+	help
+		Specify the PMIC model to be used for VCORE by the miniloader.
+		Supported models: m88pg86x, sy8824b, ncp6335d, mp886x, sy8827n,
+		hl7593wl06, tps62868, rt5739, fp6359, tps6287x...
+		This configuration will be used to generate a binary configuration
+		file that miniloader reads during boot to select the appropriate
+		PMIC driver for VCORE. Supported PMIC_MODELS list refers to ./gen_pmic_config.sh
+
+config VCPU_PMIC_MODEL
+	string "VCPU PMIC Model"
+	depends on PMIC_MODE_I2C
+	help
+		Specify the PMIC model to be used for VCPU by the miniloader.
+		Supported models: m88pg86x, sy8824b, ncp6335d, mp886x, sy8827n,
+		hl7593wl06, tps62868, rt5739, fp6359, tps6287x...
+		This configuration will be used to generate a binary configuration
+		file that miniloader reads during boot to select the appropriate
+		PMIC driver for VCPU. Supported PMIC_MODELS list refers to ./gen_pmic_config.sh
+
+config VCORE_PMIC_PWMCH
+	string "VCORE PMIC PWM Channel"
+	depends on PMIC_MODE_PWM
+	help
+		Specify the PWM channel to be used for VCORE by the miniloader.
+		Supported channels: 0-255, or empty string for not configured.
+		Empty string will be converted to 0xFF (not configured).
+		This configuration will be used to generate a binary configuration
+		file that miniloader reads during boot to select the appropriate
+		PWM channel for VCORE voltage regulation.
+
+config VCPU_PMIC_PWMCH
+	string "VCPU PMIC PWM Channel"
+	depends on PMIC_MODE_PWM
+	help
+		Specify the PWM channel to be used for VCPU by the miniloader.
+		Supported channels: 0-255, or empty string for not configured.
+		Empty string will be converted to 0xFF (not configured).
+		This configuration will be used to generate a binary configuration
+		file that miniloader reads during boot to select the appropriate
+		PWM channel for VCPU voltage regulation.
 endmenu

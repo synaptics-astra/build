@@ -10,6 +10,8 @@ opt_cross_compile="${CONFIG_TOOLCHAIN_BSP}"
 
 opt_production_build="${CONFIG_PRODUCTION_BUILD}"
 
+opt_bl_cpupll="${CONFIG_BL_CPUPLL}"
+
 if [ "is${CONFIG_GENX_ENABLE}" = "isy" ]; then
     opt_genx_enable=${CONFIG_GENX_ENABLE}
 fi
