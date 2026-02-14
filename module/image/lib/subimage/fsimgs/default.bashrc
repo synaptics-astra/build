@@ -5,6 +5,78 @@ export PATH="/sbin:$PATH"
 declare -a a_fsname
 declare -a a_fstype
 
+load_nand_flash_config() {
+  local f_flash_cfg=${workdir_product_config}/flash_type.cfg
+  [ -f $f_flash_cfg ] || { echo "Error: flash_type.cfg not found"; return 1; }
+
+  local list_cfgs=$(cat $f_flash_cfg)
+
+  for c in $list_cfgs; do
+    local v=$(expr $c : "^nand_\(.*=.*\)")
+
+    if [ "x$v" != "x" ]; then
+      local param_name=$(echo $v | cut -d = -f 1)
+      local param_val=$(echo $v | cut -d = -f 2)
+
+      case "$param_name" in
+        "page_size") nand_param_page_size=${param_val} ;;
+        "block_size") nand_param_block_size=${param_val} ;;
+        "boot_part_size") nand_param_boot_part_size=${param_val} ;;
+        "total_size") nand_param_total_size=${param_val} ;;
+        "ecc_strength") nand_param_ecc_strength=${param_val} ;;
+        *) /bin/false ;;
+      esac
+    fi
+  done
+
+  nand_param_total_blocks=$(( ${nand_param_total_size}/${nand_param_block_size} ))
+  nand_param_pages_per_block=$(( ${nand_param_block_size}/${nand_param_page_size} ))
+
+  [ $(( ${nand_param_block_size}*${nand_param_total_blocks} )) -eq ${nand_param_total_size} ] || { echo "Error: invalid NAND parameters"; return 1; }
+  [ $(( ${nand_param_page_size}*${nand_param_pages_per_block} )) -eq ${nand_param_block_size} ] || { echo "Error: invalid NAND block parameters"; return 1; }
+}
+
+parse_nand_partition_table() {
+  local f_nand_pt=${workdir_product_config}/nand.pt
+  [ -f $f_nand_pt ] || { echo "Error: nand.pt not found"; return 1; }
+
+  local fs_name=$1
+  [ -n "$fs_name" ] || { echo "Error: filesystem name not provided"; return 1; }
+
+  grep "^[0-9].*${fs_name}" $f_nand_pt | {
+    read size name rest
+    if [ -n "$size" ]; then
+      size=${size%M}
+      size=${size%B}
+      echo "${size}"
+    else
+      echo "0"
+    fi
+  }
+}
+
+calculate_ubifs_parameters() {
+  local vol_size_mib=$1
+  [ -n "$vol_size_mib" ] || { echo "Error: volume size not provided"; return 1; }
+
+  local page_size=${nand_param_page_size}
+  local block_size=${nand_param_block_size}
+
+  local leb_size=$(( ${block_size} - 2*${page_size} ))
+
+  local vol_size_bytes=$(( ${vol_size_mib} * 1024 * 1024 ))
+
+  local partition_peb_count=$(( ${vol_size_bytes} / ${block_size} ))
+
+  local ubi_reserved_pebs=8
+
+  local max_leb_count=$(( ${partition_peb_count} - ${ubi_reserved_pebs} ))
+
+  local actual_vol_size=$(( ${max_leb_count} * ${leb_size} ))
+
+  echo "leb_size=${leb_size},max_leb_count=${max_leb_count},actual_vol_size=${actual_vol_size}"
+}
+
 #############
 # Functions #
 #############
@@ -48,6 +120,9 @@ handle_fs_subdir() {
   if [ ${#a_fsname[*]} -eq 2 ] || [ ${#a_fsname[*]} -eq 3 ]; then
     if [ "${a_fsname[1]}" = "app" ]; then
       rm -frv ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/app
+      if [ ! -d "${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_ROOTFS}/home/galois" ]; then
+        mkdir -p ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_ROOTFS}/home/galois
+      fi
       mv -v ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_ROOTFS}/home/galois ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/app
       mkdir -p ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_SYNA_SDK_OUT_ROOTFS}/home/galois
     else
@@ -84,6 +159,9 @@ create_filesystem_image() {
       ;;
     "ext4")
       mkfsimg_ext4 ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${fsname} ${outdir_subimg_intermediate}/${fsname}.subimg
+      ;;
+    "ubifs")
+      mkfsimg_ubifs ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${fsname} ${outdir_subimg_intermediate}/${fsname}.subimg
       ;;
     *)
       /bin/false
@@ -213,6 +291,62 @@ mkfsimg_ext4() {
   exec2run="tune2fs"
   cmd_args="-O extents,uninit_bg,dir_index"
   cmd_args="${cmd_args} ${fs_dstimg}"
+  eval $exec2run "$cmd_args"
+}
+
+mkfsimg_ubifs() {
+  local fs_srcdir
+  local fs_dstimg
+
+  fs_srcdir=$1; shift; [ "x${fs_srcdir}" != "x" ]
+  fs_dstimg=$1; shift; [ "x${fs_dstimg}" != "x" ]
+
+  [ -d $fs_srcdir ]
+
+  ### copy linux kernel into boot folder ###
+  mkdir -p ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/rootfs/boot/
+  cp ${outdir_subimg_intermediate}/linux_bootimgs.subimg ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/rootfs/boot/
+
+  local fs_dstubi
+  local exec2run
+  local cmd_args
+  local ubifs_params
+  local leb_size
+  local max_leb_count
+  local vol_size_mib
+  local block_size_kib
+
+  ### Load NAND flash configuration ###
+  load_nand_flash_config || exit 1
+
+  vol_size_mib=$(parse_nand_partition_table "${fsname}")
+  [ $? -eq 0 ] && [ "${vol_size_mib}" -gt 0 ] || { echo "Error: failed to parse partition size for ${fsname}"; return 1; }
+
+  ubifs_params=$(calculate_ubifs_parameters ${vol_size_mib})
+  leb_size=$(echo ${ubifs_params} | cut -d',' -f1 | cut -d'=' -f2)
+  max_leb_count=$(echo ${ubifs_params} | cut -d',' -f2 | cut -d'=' -f2)
+  actual_vol_size=$(echo ${ubifs_params} | cut -d',' -f3 | cut -d'=' -f2)
+  block_size_kib=$(( ${nand_param_block_size} / 1024 ))
+  actual_vol_size_mib=$(( ${actual_vol_size} / 1024 / 1024 ))
+
+  fs_dstubi=${fs_dstimg}.ubifs
+  exec2run="mkfs.ubifs"
+  #cmd_args=" -F -r ${fs_srcdir} -m ${nand_param_page_size} -e ${leb_size} -c ${max_leb_count} -o ${fs_dstubi} --hash-algo=sha256 --auth-cert=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/linux/intermediate/certs/signing_key.x509 --auth-key=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/linux/intermediate/certs/signing_key.pem"
+  cmd_args=" -F -r ${fs_srcdir} -m ${nand_param_page_size} -e ${leb_size} -c ${max_leb_count} -o ${fs_dstubi}"
+  eval $exec2run "$cmd_args"
+
+  ubinize_cfg=${fs_dstimg}-ubinize.cfg
+  echo "[rootfs-volume]" > ${ubinize_cfg}
+  echo "mode=ubi" >> ${ubinize_cfg}
+  echo "image=${fs_dstubi}" >> ${ubinize_cfg}
+  echo "vol_id=0" >> ${ubinize_cfg}
+  echo "vol_size=${actual_vol_size_mib}MiB" >> ${ubinize_cfg}
+  echo "vol_type=dynamic" >> ${ubinize_cfg}
+  echo "vol_name=${fsname}" >> ${ubinize_cfg}
+  echo "vol_flags=autoresize" >> ${ubinize_cfg}
+
+  exec2run="ubinize"
+  cmd_args=" -vv -o ${fs_dstimg} -m ${nand_param_page_size} -p ${block_size_kib}KiB -s ${nand_param_page_size} ${ubinize_cfg}"
   eval $exec2run "$cmd_args"
 }
 

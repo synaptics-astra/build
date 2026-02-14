@@ -1,6 +1,14 @@
 # Bash script: subimage: bootloader: nand
 
-### Copy pre-built binary of tee ###
-#cp -ad ${outdir_bootloader_release}/bootloader_en.bin ${outfile_bootloader_subimg}
+if [ "is${CONFIG_GENX_MCU}" = "isy" ]; then
+  process_cmd="cp"
+else
+  process_cmd="${basedir_tools}/prepend_image_info.sh"
+fi
+
 # Generate subimg
-${basedir_tools}/prepend_image_info.sh ${outdir_bootloader_release}/bootloader_en.bin ${outfile_bootloader_subimg}
+if [ "is${CONFIG_UBOOT_SUBOOT}" = "isy" ]; then
+  eval ${process_cmd} ${outdir_uboot_suboot_release}/uboot_en.bin ${outfile_bootloader_subimg}
+else
+  eval ${process_cmd} ${outdir_bootloader_release}/bootloader_en.bin ${outfile_bootloader_subimg}
+fi

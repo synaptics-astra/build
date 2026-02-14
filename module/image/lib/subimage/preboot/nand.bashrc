@@ -22,13 +22,17 @@ gen_preboot_subimg() {
 }
 
 ### Copy pre-built binary of preboot ###
-if [ "is${CONFIG_NAND_FACTORY}" = "isy" ]; then
-  cp -ad ${outdir_preboot_release}/preboot_esmt_factory.bin ${outfile_preboot_subimg}
-  cp -ad ${outdir_preboot_release}/preboot_esmt.bin ${outdir_preboot_release}/preboot_esmt.bin.ext
-  gen_preboot_subimg ${outdir_preboot_release}/preboot_esmt.bin.ext
+if [ "is${CONFIG_GENX_MCU}" = "isy" ]; then
+  cp -ad ${outdir_preboot_release}/preboot_ksb.bin ${outfile_preboot_subimg}
+  cp -ad ${outdir_preboot_release}/sysmgr_en.bin ${outdir_subimg_intermediate}/sysmgr.subimg
 else
-  cp -ad ${outdir_preboot_release}/preboot_esmt.bin ${outfile_preboot_subimg}
+  if [ "is${CONFIG_NAND_FACTORY}" = "isy" ]; then
+    cp -ad ${outdir_preboot_release}/preboot_esmt_factory.bin ${outfile_preboot_subimg}
+    cp -ad ${outdir_preboot_release}/preboot_esmt.bin ${outdir_preboot_release}/preboot_esmt.bin.ext
+    gen_preboot_subimg ${outdir_preboot_release}/preboot_esmt.bin.ext
+  else
+    cp -ad ${outdir_preboot_release}/preboot_esmt.bin ${outfile_preboot_subimg}
+  fi
 fi
 
 gen_preboot_subimg ${outfile_preboot_subimg}
-

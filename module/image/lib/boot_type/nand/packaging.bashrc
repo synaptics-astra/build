@@ -95,6 +95,36 @@ unand_gen_images() {
   eval $exec2run "$cmd_args"
 }
 
+unand_truncate_image() {
+  local unandimg_name
+  local list_parts
+  local shrink_part
+
+  unandimg_name=$1; shift
+  list_parts=$1; shift
+  shrink_part=$1; shift
+
+  if [ ! -f "${outdir_product_release_unand}/subimgs/${shrink_part}.subimg" ]; then
+    echo "INFO: $shrink_part does not exist, skip truncating image."
+    return 0
+  fi
+
+  last_item=$(echo "$list_parts" | tail -n 1 | awk '{print $1}')
+
+  if [ "$(basename "$shrink_part")" == "$last_item" ]; then
+    file_size=$(stat -c%s "${outdir_product_release_unand}/subimgs/${shrink_part}.subimg")
+
+    if [ $(stat -c%s "${outdir_product_release_unand}/${unandimg_name}.img") -ge "$file_size" ]; then
+      truncate -s "-$file_size" "${outdir_product_release_unand}/${unandimg_name}.img"
+    else
+      echo "ERROR: ${unandimg_name}.img size smaller than $shrink_part"
+      exit 1
+    fi
+  else
+    echo "$shrink_part is not the last item of list"
+  fi
+}
+
 ########
 # Main #
 ########
@@ -156,6 +186,10 @@ source ${basedir_script_subimg}/tee/nand.bashrc
 source ${basedir_script_subimg}/bootloader/common.bashrc
 source ${basedir_script_subimg}/bootloader/nand.bashrc
 
+### Combined Boot ###
+source ${basedir_script_subimg}/cmboot/common.bashrc
+source ${basedir_script_subimg}/cmboot/nand.bashrc
+
 ### Kernel/RAMDISK ###
 source ${basedir_script_subimg}/linux_bootimgs/common.bashrc
 source ${basedir_script_subimg}/linux_bootimgs/nand.bashrc
@@ -187,17 +221,23 @@ for part in $part_list_full; do
 		"pre-bootloader")
 			module="preboot"
 			;;
-		"tzk_normal"|"tzk_normalB")
+		"tzk_a"|"tzk_b")
 			module="tee"
 			;;
-		"bl_normal"|"bl_normalB")
+		"bl_a"|"bl_b")
 			module="bootloader"
 			;;
-		"key_1st"|"key_2nd")
+		"key_a"|"key_b")
 			module="key"
 			;;
-		"boot"|"recovery")
+		"boot_a"|"boot_b")
 			module="linux_bootimgs"
+			;;
+		"rootfs_a"|"rootfs_b")
+			module="rootfs"
+			;;
+		"cmboot_a"|"cmboot_b")
+			module="cmboot"
 			;;
 		*)
 			module=$part
@@ -227,3 +267,4 @@ done
 
 #unand_gen_images "uNAND_boot" "${part_list_bootonly}"
 unand_gen_images "uNAND_full" "${part_list_full}"
+unand_truncate_image "uNAND_full" "${part_list_full}" "rootfs_b"
