@@ -1,3 +1,5 @@
+#! /bin/bash
+
 echo "tee build script called"
 . build/header.rc
 . build/chip.rc

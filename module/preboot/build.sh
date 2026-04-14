@@ -1,4 +1,4 @@
-# POSIX shell script: preboot build
+#! /bin/bash
 
 . build/header.rc
 

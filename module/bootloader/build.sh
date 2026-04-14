@@ -127,6 +127,10 @@ build_bootloader() {
     fi
   fi
 
+  if [ "is${CONFIG_BL_RANDOM}" = "isy" ]; then
+    cmd2run="${cmd2run} BL_RANDOM=y"
+    cmd2run="${cmd2run} CONFIG_BL_RANDOM_SIZE=${CONFIG_BL_RANDOM_SIZE}"
+  fi
   if [ "is${CONFIG_BL_PV_COMP_MULTI}" = "isy" ]; then
     cmd2run="${cmd2run} PV_COMP_MULTI=y"
   fi

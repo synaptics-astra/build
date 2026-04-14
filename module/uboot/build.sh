@@ -429,7 +429,7 @@ fi
 
 ### Build SM ###
 if [ "is${CONFIG_UBOOT_SUBOOT}" = "isy" ]; then
-  if [ "is${CONFIG_BL_SYSTEM_MANAGER}" = "isy" ]; then
+  if [ "is${CONFIG_BL_SYSTEM_MANAGER}" = "isy" ] && [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
     ### Build system manager ###
     echo "${1}"
     . build/module/bootloader/build_sm.sh ${1}

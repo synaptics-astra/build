@@ -38,9 +38,17 @@ if [ "is${CONFIG_AMP_COMPONENT_VDEC_ENABLE}" = "isy" ]; then
     ta_list="${ta_list} libvmeta.ta"
 fi
 
-if [ "is${CONFIG_AMP_COMPONENT_DMX_ENABLE}" = "isy" ]; then
-    ta_path_list="${ta_path_list} libtsp.ta libm2m.ta libdss.ta"
-    ta_list="${ta_list} libtsp.ta libm2m.ta libdss.ta"
+if [ "is${CONFIG_AMP_COMPONENT_DMX_ENABLE}" = "isy" ] || [ "is${CONFIG_HW_CRYPTO_ENABLE}" = "isy" ]; then
+    ta_path_list="${ta_path_list} libtsp.ta"
+    ta_list="${ta_list} libtsp.ta"
+    if [ "is${CONFIG_AMP_COMPONENT_DMX_ENABLE}" = "isy" ]; then
+        ta_path_list="${ta_path_list} libdss.ta"
+        ta_list="${ta_list} libdss.ta"
+    fi
+    if [ "is${CONFIG_HW_CRYPTO_ENABLE}" = "isy" ]; then
+        ta_path_list="${ta_path_list} libm2m.ta"
+        ta_list="${ta_list} libm2m.ta"
+    fi
 fi
 
 if [ "is${CONFIG_AMP_COMPONENT_DVS_ENABLE}" = "isy" ]; then

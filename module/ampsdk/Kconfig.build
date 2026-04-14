@@ -22,5 +22,6 @@ source "module/ampsdk/kconfig/Kconfig.isp"
 source "module/ampsdk/kconfig/Kconfig.fe"
 source "module/ampsdk/kconfig/Kconfig.scrd"
 source "module/ampsdk/kconfig/Kconfig.amplitude"
+source "module/ampsdk/kconfig/Kconfig.crypto"
 
 endif

@@ -77,6 +77,19 @@ config BL_RECOVERY_DTBO
 	help
 		config to enable recovery dtbo
 
+config BL_RANDOM
+	bool "collect entropy"
+	default y
+	help
+		config to collect entropy and populate /chosen/rng-seed
+
+config BL_RANDOM_SIZE
+	int "generate random size"
+	default 64
+	depends on BL_RANDOM
+	help
+		generate random size
+
 menuconfig BL_PV_COMP
 	bool "PV Compensation"
 	default y

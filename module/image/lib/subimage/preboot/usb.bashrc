@@ -5,6 +5,16 @@
 preboot_outdir_build_release="${outdir_preboot_release}/intermediate/release"
 
 ### Copy pre-built binary of preboot ###
+
+### for MCU only ###
+if [ "is${CONFIG_GENX_MCU}" = "isy" ]; then
+	cp -ad ${preboot_outdir_build_release}/key.bin ${outdir_subimg_intermediate}/
+	cp -ad ${preboot_outdir_build_release}/spk_raw.bin ${outdir_subimg_intermediate}/spk.bin
+	cp -ad ${preboot_outdir_build_release}/bl_en.bin ${outdir_subimg_intermediate}/m52bl.bin
+	cp -ad ${preboot_outdir_build_release}/sysmgr_en.bin ${outdir_subimg_intermediate}/sysmgr.subimg
+	return
+fi
+
 ### eROM ###
 cp -ad ${preboot_outdir_build_release}/erom.bin ${outdir_subimg_intermediate}/
 

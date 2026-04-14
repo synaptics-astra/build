@@ -8,6 +8,15 @@ outdir_subimg_intermediate=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/obj/PACKAGING/subi
 workdir_product_config=${CONFIG_SYNA_SDK_PRODUCT_PATH}/${CONFIG_PRODUCT_NAME}
 mkdir -p ${outdir_subimg_intermediate}
 
+if [ "is${CONFIG_GENX_MCU}" = "isy" ]; then
+	rel_usb_tee_img=tzk.subimg
+	rel_usb_uboot_img=bl.subimg
+else
+	rel_usb_need_header=y
+	rel_usb_tee_img=gen3_tzk.bin.usb
+	rel_usb_uboot_img=gen3_uboot.bin.usb
+fi
+
 #
 # Generate single subimage (for eng only)
 #
@@ -80,16 +89,27 @@ if [ -f ${outdir_subimg_intermediate}/miniloader_en.bin ]; then
   fi
 fi
 
+if [ -f ${outdir_subimg_intermediate}/key.bin ]; then
+  cp ${outdir_subimg_intermediate}/key.bin ${outdir_product_release_usb}/key.bin
+  cp ${outdir_subimg_intermediate}/spk.bin ${outdir_product_release_usb}/spk.bin
+  cp ${outdir_subimg_intermediate}/m52bl.bin ${outdir_product_release_usb}/m52bl.bin
+  cp ${outdir_subimg_intermediate}/sysmgr.subimg ${outdir_product_release_usb}/sysmgr.subimg
+fi
+
 ### TEE ###
 if [ -f ${outdir_subimg_intermediate}/tee.subimg ]; then
-  cp ${outdir_subimg_intermediate}/tee.subimg ${outdir_product_release_usb}/gen3_tzk.bin.usb
-  dd if=${outdir_product_release_usb}/gen3_tzk.bin.usb of=${outdir_product_release_usb}/gen3_tzk.bin.usb.header bs=1 count=512
+  cp ${outdir_subimg_intermediate}/tee.subimg ${outdir_product_release_usb}/${rel_usb_tee_img}
+  if [ "is${rel_usb_need_header}" = "isy" ]; then
+    dd if=${outdir_product_release_usb}/${rel_usb_tee_img} of=${outdir_product_release_usb}/${rel_usb_tee_img}.header bs=1 count=512
+  fi
 fi
 
 ### Bootloader ###
 if [ -f ${outdir_subimg_intermediate}/bootloader.subimg ]; then
-  cp ${outdir_subimg_intermediate}/bootloader.subimg ${outdir_product_release_usb}/gen3_uboot.bin.usb
-  dd if=${outdir_product_release_usb}/gen3_uboot.bin.usb of=${outdir_product_release_usb}/gen3_uboot.bin.usb.header bs=1 count=512
+  cp ${outdir_subimg_intermediate}/bootloader.subimg ${outdir_product_release_usb}/${rel_usb_uboot_img}
+  if [ "is${rel_usb_need_header}" = "isy" ]; then
+    dd if=${outdir_product_release_usb}/${rel_usb_uboot_img} of=${outdir_product_release_usb}/${rel_usb_uboot_img}.header bs=1 count=512
+  fi
 fi
 
 ### Linux Kernel ###

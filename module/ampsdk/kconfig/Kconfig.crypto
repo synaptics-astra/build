@@ -1,0 +1,7 @@
+menu "Cryption/Decryption"
+
+config HW_CRYPTO_ENABLE
+    bool "Synaptics HW Crypto Enable"
+    default y
+
+endmenu

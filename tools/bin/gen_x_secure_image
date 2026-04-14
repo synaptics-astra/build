@@ -204,9 +204,11 @@ class GenXSecureImage:
                 'SM': 'K1_B.EC521.priv.pem',
                 'GPU': 'K1_B.EC521.priv.pem',
                 'ATF': 'K1_C.EC521.priv.pem',
+                'FASTLOGO': 'K1_C.EC521.priv.pem',
                 'OPTEE': 'K1_C.EC521.priv.pem',
                 'TEE_BOOT_PARAMETER': 'K1_C.EC521.priv.pem',
                 'UBOOT': 'K1_C.EC521.priv.pem',
+                'AVB_KEYS':'K1_C.EC521.priv.pem',
                 'LINUX': 'K1_C.EC521.priv.pem'}
 
     if type_map_list.get(self.opts.img_type[0]) is not None:

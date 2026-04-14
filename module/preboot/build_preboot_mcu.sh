@@ -104,6 +104,7 @@ cp $f_K1_C_store ${preboot_outdir_build_release}/K1_C_store_4k.bin
 cp $f_K1_D_store ${preboot_outdir_build_release}/K1_D_store_4k.bin
 
 cp $f_SPK ${preboot_outdir_build_release}/spk.bin
+cp $f_SPK ${preboot_outdir_build_release}/spk_raw.bin
 
 # 128KB space for spk
 truncate --size=131072 ${preboot_outdir_build_release}/spk.bin
@@ -120,6 +121,7 @@ cat ${preboot_outdir_build_release}/K1_A_store_4k.bin >> ${preboot_outdir_releas
 cat ${preboot_outdir_build_release}/K1_B_store_4k.bin >> ${preboot_outdir_release}/preboot_ksb.bin
 cat ${preboot_outdir_build_release}/K1_C_store_4k.bin >> ${preboot_outdir_release}/preboot_ksb.bin
 cat ${preboot_outdir_build_release}/K1_D_store_4k.bin >> ${preboot_outdir_release}/preboot_ksb.bin
+/bin/cp ${preboot_outdir_release}/preboot_ksb.bin ${preboot_outdir_build_release}/key.bin
 cat ${preboot_outdir_build_release}/spk.bin >> ${preboot_outdir_release}/preboot_ksb.bin
 cat ${preboot_outdir_build_release}/bl_en.bin >> ${preboot_outdir_release}/preboot_ksb.bin
 
