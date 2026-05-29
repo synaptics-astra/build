@@ -72,6 +72,14 @@ if [ "is${CONFIG_PREBOOT_ANDROID_BOOTCTRL}" = "isy" ]; then
   opt_android_bootctrl=y
 fi
 
+if [ "is${CONFIG_PREBOOT_SKIP_FW}" = "isy" ]; then
+  opt_skip_fw=y
+fi
+
+if [ "is${CONFIG_PREBOOT_FORCE_SPI}" = "isy" ]; then
+  opt_force_spi=y
+fi
+
 if [ "is${CONFIG_PREBOOT_DDR_PHY_FW}" = "isy" ]; then
   opt_config_ddrphyfw=y
 else

@@ -95,3 +95,7 @@ config SYNA_COMPOSITOR
 config V4L2ISP
 	bool "v4l2isp driver tframeworks mediacontrol"
 	default n
+
+config DISPLAY
+	bool "Synaptics display applications"
+	default n

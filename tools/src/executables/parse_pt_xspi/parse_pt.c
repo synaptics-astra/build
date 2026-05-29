@@ -30,11 +30,10 @@
 #define SECTOR_SIZE 512
 #define ToM         2048
 #define USE_ZERO_START
+#define XSPI_PARAM_COUNT		(12)
+
 int block_size;
 long long chip_size;
-#define EMMC_RESERVED_SIZE (0)
-int emmc_chip_reserved_size = EMMC_RESERVED_SIZE;
-int half_size_entry = -1;
 
 struct table_entry{
 	char layout[PART_NAME_MAX_LEN+1];
@@ -49,9 +48,8 @@ struct table_entry{
 	unsigned char flash_plane;
 	unsigned char flash_type;
 	char partition_type[PART_NAME_MAX_LEN + 1];
-	char emmc_operation[PART_NAME_MAX_LEN + 1];
-	char emmc_burn_option[PART_NAME_MAX_LEN + 1];
-	char emmc_write_protection[PART_NAME_MAX_LEN + 1];
+	char filesystem[PART_NAME_MAX_LEN + 1];
+	char write_protection[PART_NAME_MAX_LEN + 1];
 };
 struct table_entry cfg_table[256];
 int entries;
@@ -69,7 +67,7 @@ void usage(int argc, char **argv)
 {
 	fprintf(stderr, "usage:\n");
 	fprintf(stderr, "%s major_version minor_version block_size chip_size part_config_file "
-		"kernel_parameter_file version_table_file layout_file [emmc_part_table emmc_part_list emmc_image_list]\n",
+		"kernel_parameter_file version_table_file layout_file [xspi_part_table xspi_part_list xspi_image_list]\n",
 		argv[0]);
 }
 
@@ -148,8 +146,6 @@ int parse_name(struct table_entry * entry)
 		return 0;
 	entry->invisible = 1;
 	strcpy(str, &entry->name[1]);
-//	printf("%s\n", entry->name);
-#if 0
 	for(i=0;i<entries;i++)
 	{
 		if(entry == &cfg_table[i])
@@ -163,12 +159,11 @@ int parse_name(struct table_entry * entry)
 		printf("match partition name: %s\n", cfg_table[i].name);
 		break;
 	}
-#endif
 	strcpy(entry->name, str);
 	return 0;
 }
 
-int gen_emmc_part_table(char *part_table_path)
+int gen_xspi_part_table(char *part_table_path)
 {
 	FILE *ftable = NULL;
 	int i, ret = -1;
@@ -199,13 +194,12 @@ end:
 	return ret;
 }
 
-int gen_emmc_part_list(const char *part_table_path, const char *part_list_path)
+int gen_xspi_part_list(const char *part_list_path)
 {
 	int i, ret = -1;
 	unsigned int start, size;
 	FILE *f_part_out=NULL;
 	char *name_start;
-	char part_option[64] = "";
 	unsigned int offset_from_prev = 0;
 
 	f_part_out = fopen(part_list_path, "w");
@@ -217,7 +211,6 @@ int gen_emmc_part_list(const char *part_table_path, const char *part_list_path)
 	fprintf(f_part_out, "#DOS\n");
 	for(i = 0; i < entries; i++)
 	{
-		strcpy(part_option, "");
 		start = (unsigned int)(cfg_table[i].start);
 		size = (unsigned int)(cfg_table[i].size);
 		name_start = strchr(cfg_table[i].name, '@');
@@ -225,17 +218,13 @@ int gen_emmc_part_list(const char *part_table_path, const char *part_list_path)
 			name_start = cfg_table[i].name;
 		else
 			name_start++;
-		if (half_size_entry == i)
-		{
-			strcpy(part_option, "enhanced");
-		}
 #ifndef USE_ZERO_START
-	fprintf(f_part_out, "%-" PART_NAME_STR_MAX "s,%d\t,%d\t,%-16s\n", name_start, start, size,part_option);
+	fprintf(f_part_out, "%-" PART_NAME_STR_MAX "s,%d\t,%d\t,%-16s\n", name_start, start, size, "");
 #else
 	if (offset_from_prev == start)
-		fprintf(f_part_out, "%-" PART_NAME_STR_MAX "s,0\t,%d\t,%-16s\n", name_start,size,part_option);
+		fprintf(f_part_out, "%-" PART_NAME_STR_MAX "s,0\t,%d\t,%-16s\n", name_start,size, "");
 	else
-		fprintf(f_part_out, "%-" PART_NAME_STR_MAX "s,%d\t,%d\t,%-16s\n", name_start,start, size,part_option);
+		fprintf(f_part_out, "%-" PART_NAME_STR_MAX "s,%d\t,%d\t,%-16s\n", name_start,start, size, "");
 	offset_from_prev = start + size;
 #endif
 
@@ -264,48 +253,17 @@ int human_format(unsigned long long size, char *buf, int buf_len)
 	sprintf(buf, "%Ld%s", size, unit[i]);
 	return strlen(buf);
 }
-static int parse_arg(char* input, int len, int* argc, char* argv[])
-{
-    char* p = input;
-    char* dot;
-    int i=0;
-    *argc = 0;
-//    printf("parse_arg %s\n", input);
-
-    while(p < (input+len))
-    {
-        argv[i++] = p;
-        dot = strchr(p, ',');
-        if (dot)
-        {
-            *dot = 0;
-            p = dot + 1;
-//            printf("parse arg got one %s\n", argv[i-1]);
-        }
-        else
-        {
-//            printf("parse arg got one %s\n", argv[i-1]);
-            break;
-        }
-    }
-
-    *argc = i;
-    return i;
-}
-#define NAND_PARAM_COUNT		(9)
-#define EMMC_PARAM_COUNT		(12)
 
 int main(int argc, char **argv)
 {
-	int i, j;
+	int i;
 	int kernel_param_len = 0, flash_plane_info_len = 0;
-	int ret,tmp;
+	int ret;
 	long long pos1, pos2;
 	int _entry=-1;
-	int enhanced_partition = -1;
 	int ver_major, ver_minor;
 	char *part_cfg_file, *kernel_param_file, *version_table_file, *layout_file;
-	char *part_table_path, *part_list_path, *image_list_path;
+	char *part_table_path = NULL, *part_list_path = NULL, *image_list_path = NULL;
 	FILE *fcfg=NULL, *fparam=NULL, *fvt=NULL, *flayout=NULL, *fimg=NULL;
 
 	char line_buffer[1024];
@@ -314,7 +272,7 @@ int main(int argc, char **argv)
 	version_table_t ver_t;
 	ver_table_entry_t vt;
 
-	if (argc != NAND_PARAM_COUNT && argc != EMMC_PARAM_COUNT) {
+	if (argc != XSPI_PARAM_COUNT) {
 		usage(argc, argv);
 		return 1;
 	}
@@ -327,17 +285,14 @@ int main(int argc, char **argv)
 	kernel_param_file = argv[6];
 	version_table_file = argv[7];
 	layout_file = argv[8];
-	if (argc == EMMC_PARAM_COUNT)
+	part_table_path = argv[9];
+	part_list_path = argv[10];
+	image_list_path = argv[11];
+	fimg = fopen(image_list_path, "w");
+	if(fimg == NULL)
 	{
-		part_table_path = argv[9];
-		part_list_path = argv[10];
-		image_list_path = argv[11];
-		fimg = fopen(image_list_path, "w");
-		if(fimg == NULL)
-		{
-			fprintf(stderr, "Open %s failed.\n", image_list_path);
-			return -1;
-		}
+		fprintf(stderr, "Open %s failed.\n", image_list_path);
+		return -1;
 	}
 
 	if((block_size <= 0) || (chip_size <=0 ))
@@ -358,8 +313,6 @@ int main(int argc, char **argv)
 	i=0;
 	while(fgets(line_buffer, 512, fcfg))
 	{
-		char str[PART_NAME_MAX_LEN + 1] = "";
-
 		// cut the comments chars
 		char *comment_pos = (char *)strchr(line_buffer, '#');
 		if (comment_pos)
@@ -368,61 +321,21 @@ int main(int argc, char **argv)
 		if((line_buffer[0] == '#')|| (strlen(line_buffer)<2))
 			continue;
 
-		if (argc == NAND_PARAM_COUNT) {
-			ret = sscanf(line_buffer, "%s%s%hhd%s%s",
-					cfg_table[i].layout, cfg_table[i].name, &cfg_table[i].flash_plane, cfg_table[i].partition_type, str);
-			if (ret < 2) {
-				fprintf(stderr, "parse entry %d error.\n", i+1);
-				goto fail_out;
-			}
-			if (cfg_table[i].flash_plane != 2)
-				cfg_table[i].flash_plane = 1;
-
-			if (!strcmp(str, "yaffs"))
-				cfg_table[i].flash_type = 1;
-			else if (!strcmp(str, "raw"))
-				cfg_table[i].flash_type = 2;
-			else
-				cfg_table[i].flash_type = 0;
-		} else {
-			char str1[PART_NAME_MAX_LEN + 1] = "";
-#ifdef CONFIG_EMMC_WRITE_PROTECT
-			ret = sscanf(line_buffer, "%s%s%s%s%s",
-					cfg_table[i].layout, cfg_table[i].name, cfg_table[i].emmc_operation, cfg_table[i].emmc_burn_option,
-					cfg_table[i].emmc_write_protection);
-			if (ret < 5) {
-				fprintf(stderr, "parse entry %d error.\n", i+1);
-				goto fail_out;
-			}
-#else
-			ret = sscanf(line_buffer, "%s%s%s%s",
-					cfg_table[i].layout, cfg_table[i].name, cfg_table[i].emmc_operation, cfg_table[i].emmc_burn_option);
-			if (ret < 3) {
-				fprintf(stderr, "parse entry %d error.\n", i+1);
-				goto fail_out;
-			}
-#endif
-			int emmc_argc;
-			char* emmc_argv[8];
-			parse_arg(cfg_table[i].emmc_operation, strlen(cfg_table[i].emmc_operation),
-						&emmc_argc, emmc_argv);
-			for (j = 0; j < emmc_argc; j++)
-			{
-				if (strcmp(emmc_argv[j], "enhance") == 0)
-				{
-					if (enhanced_partition == 1){
-							fprintf(stderr, "Only one partition can be set to enhanced... \n");
-							goto	fail_out;
-						}
-					enhanced_partition = 1;
-					half_size_entry = i;
-					fprintf(stdout, "half_size_entry=%d\n", half_size_entry);
-				}else
-				{
-					strcpy(cfg_table[i].emmc_operation,emmc_argv[j]);
-				}
-			}
+		ret = sscanf(line_buffer, "%s%s%hhd%s%s%s",
+				cfg_table[i].layout, cfg_table[i].name, &cfg_table[i].flash_plane,
+				cfg_table[i].partition_type, cfg_table[i].filesystem, cfg_table[i].write_protection);
+		if (ret < 6) {
+			fprintf(stderr, "parse entry %d error.\n", i+1);
+			goto fail_out;
 		}
+		if (cfg_table[i].flash_plane != 2)
+			cfg_table[i].flash_plane = 1;
+		if (!strcmp(cfg_table[i].filesystem, "yaffs"))
+			cfg_table[i].flash_type = 1;
+		else if (!strcmp(cfg_table[i].filesystem, "raw"))
+			cfg_table[i].flash_type = 2;
+		else
+			cfg_table[i].flash_type = 0;
 
 		if(strncmp(cfg_table[i].layout, "-", 2) == 0)
 		{
@@ -440,13 +353,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if(parse_layout(&cfg_table[i]))
-			return -1;
-		if (half_size_entry == i)
-		{
-			cfg_table[i].size = cfg_table[i].size >> 1;
-			chip_size -= cfg_table[i].size;
-			chip_size += emmc_chip_reserved_size;
-		}
+			goto fail_out;
 		if(cfg_table[i].start == 0)
 		{//increase pos
 			cfg_table[i].start = pos1;
@@ -456,7 +363,7 @@ int main(int argc, char **argv)
 			pos1 = cfg_table[i].start+cfg_table[i].size;
 		if(pos1>chip_size) {
 			fprintf(stderr, "partition %s end %llu exceed chip size.\n", cfg_table[i].name, pos1);
-			return -1;
+			goto fail_out;
 		}
 
 		printf("pos1=%lld\n", pos1);
@@ -471,14 +378,7 @@ int main(int argc, char **argv)
 		for(i=entries-1; i>_entry; i--)
 		{
 			if(parse_layout(&cfg_table[i]))
-				return -1;
-			if (i == half_size_entry)
-			{
-				cfg_table[half_size_entry].size = cfg_table[half_size_entry].size >> 1;
-				chip_size -= cfg_table[half_size_entry].size;
-				chip_size += emmc_chip_reserved_size;
-				pos2 = chip_size;
-			}
+				goto fail_out;
 			printf("cfg_table[%d].size = %lld\n", i, cfg_table[i].size);
 			pos2 -= cfg_table[i].size;
 			if(cfg_table[i].start == 0)
@@ -488,40 +388,16 @@ int main(int argc, char **argv)
 		if(pos2<pos1)
 		{
 			fprintf(stderr, "sum of partition size exceed chip size.\n");
-			return -1;
+			goto fail_out;
 		}
 		cfg_table[_entry].start = pos1;
 		cfg_table[_entry].size = pos2 - pos1;
-		if (_entry == half_size_entry)
-		{
-			cfg_table[half_size_entry].size = cfg_table[half_size_entry].size >> 1;
-			chip_size -= cfg_table[half_size_entry].size;
-			chip_size += emmc_chip_reserved_size;
-			pos2 = chip_size;
-			printf("pos2 = %lld\n",pos2);
-			for(i=entries-1; i>_entry; i--)
-			{
-				if(parse_layout(&cfg_table[i]))
-					return -1;
-				printf("cfg_table[%d].size = %lld\n", i, cfg_table[i].size);
-				pos2 -= cfg_table[i].size;
-				printf("pos2=%lld\n", pos2);
-			}
-			if(pos2<pos1)
-			{
-				fprintf(stderr, "sum of partition size exceed chip size.\n");
-				return -1;
-			}
-		}
 	}
 
-	if (argc == EMMC_PARAM_COUNT)
-	{
-		if (gen_emmc_part_table(part_table_path))
-			return -1;
- 		if (gen_emmc_part_list(part_table_path, part_list_path))
-			return -1;
-	}
+	if (gen_xspi_part_table(part_table_path))
+		goto fail_out;
+	if (gen_xspi_part_list(part_list_path))
+		goto fail_out;
 
 	//pick out invisible and back up partitions
 	for(i=0;i<entries;i++)
@@ -532,16 +408,10 @@ int main(int argc, char **argv)
 			goto fail_out;
 		}
 		parse_name(&cfg_table[i]);
-#ifdef CONFIG_EMMC_WRITE_PROTECT
-		printf("part name %s, off %Ld, size %lld, plane %d, type %d, operation %s, burn option %s, write protection %s\n",
+		printf("part name %s, off %Ld, size %lld, plane %d, type %d, partition_type %s, fs %s, write_protection %s\n",
 			cfg_table[i].name, cfg_table[i].start, cfg_table[i].size,
-			cfg_table[i].flash_plane, cfg_table[i].flash_type, cfg_table[i].emmc_operation,
-			cfg_table[i].emmc_burn_option, cfg_table[i].emmc_write_protection);
-#else
-		printf("part name %s, off %Ld, size %lld, plane %d, type %d, operation %s, %s\n",
-			cfg_table[i].name, cfg_table[i].start, cfg_table[i].size,
-			cfg_table[i].flash_plane, cfg_table[i].flash_type, cfg_table[i].emmc_operation, cfg_table[i].emmc_burn_option);
-#endif
+			cfg_table[i].flash_plane, cfg_table[i].flash_type,
+			cfg_table[i].partition_type, cfg_table[i].filesystem, cfg_table[i].write_protection);
 	}
 	//generate files
 	fparam = fopen(kernel_param_file, "w+");
@@ -568,33 +438,6 @@ int main(int argc, char **argv)
 		fprintf(stderr, "write to %s error.\n", version_table_file);
 		goto fail_out;
 	}
-	/* for emmc */
-	if (argc == EMMC_PARAM_COUNT)
-	{
-		//fprintf(flayout, "%s\t\t%d\t%d\n", "preboot", 0, 1);
-		//fprintf(fimg, "preboot.subimg,b1\npreboot.subimg,b2\n");
-
-		strcpy(vt.name, "preboot");
-		vt.part1_version.major_version = ver_major;
-		vt.part1_version.minor_version = ver_minor;
-		vt.part1_start_blkind = 0;
-		vt.part1_blks = 1;
-#ifdef CONFIG_EMMC_WRITE_PROTECT
-		vt.write_protect_flag = 0;
-#else
-		vt.part2_version.major_version = 0;
-		vt.part2_version.minor_version = 0;
-		vt.part2_start_blkind = 0;
-		vt.part2_blks = 1;
-#endif
-		if(fwrite(&vt, sizeof(vt), 1, fvt) != 1)
-		{
-			fprintf(stderr, "write to %s error.\n", version_table_file);
-			goto fail_out;
-		}
-		ver_t.num_entries = 1;
-	}
-
 	kernel_param_len = sprintf(kernel_param, " mtdparts=mv_nand:");
 	flash_plane_info_len = 0;
 	for(i=0;i<entries;i++)
@@ -607,72 +450,58 @@ int main(int argc, char **argv)
 		human_format(cfg_table[i].size, size_buf, sizeof(size_buf));
 		human_format(cfg_table[i].start, start_buf, sizeof(start_buf));
 
-		if (cfg_table[i].has_offset) {
-			kernel_param_len += sprintf(&kernel_param[kernel_param_len], "%s@%s(%s),",
-				size_buf, start_buf, cfg_table[i].name);
-		} else {
-			kernel_param_len += sprintf(&kernel_param[kernel_param_len], "%s(%s),",
-				size_buf, cfg_table[i].name);
+		/* Skip invisible partitions in kernel parameters */
+		if(!cfg_table[i].invisible)
+		{
+			if (cfg_table[i].has_offset) {
+				kernel_param_len += sprintf(&kernel_param[kernel_param_len], "%s@%s(%s),",
+					size_buf, start_buf, cfg_table[i].name);
+			} else {
+				kernel_param_len += sprintf(&kernel_param[kernel_param_len], "%s(%s),",
+					size_buf, cfg_table[i].name);
+			}
 		}
 
-		if (argc == NAND_PARAM_COUNT) {
-			if (cfg_table[i].flash_plane == 2) {
-				if (flash_plane_info_len == 0)
-					flash_plane_info_len = sprintf(flash_plane_info, " pxa3xx_nand.use_dp=1 pxa3xx_nand.plane_cmdline=");
-				flash_plane_info_len += sprintf(&flash_plane_info[flash_plane_info_len], "(%s)dp,", cfg_table[i].name);
-			}
-			if(strncmp(cfg_table[i].partition_type, "eslc", 4) == 0){
-				if (flash_plane_info_len == 0)
-					flash_plane_info_len = sprintf(flash_plane_info, " pxa3xx_nand.plane_cmdline=");
-				flash_plane_info_len += sprintf(&flash_plane_info[flash_plane_info_len], "(%s)eslc,", cfg_table[i].name);
-			}else if (strncmp(cfg_table[i].partition_type, "slc", 3) == 0){
-				if (flash_plane_info_len == 0)
-					flash_plane_info_len = sprintf(flash_plane_info, " pxa3xx_nand.plane_cmdline=");
-				flash_plane_info_len += sprintf(&flash_plane_info[flash_plane_info_len], "(%s)slc,", cfg_table[i].name);
-			}
+		if (cfg_table[i].flash_plane == 2) {
+			if (flash_plane_info_len == 0)
+				flash_plane_info_len = sprintf(flash_plane_info, " pxa3xx_nand.use_dp=1 pxa3xx_nand.plane_cmdline=");
+			flash_plane_info_len += sprintf(&flash_plane_info[flash_plane_info_len], "(%s)dp,", cfg_table[i].name);
+		}
+		if(strncmp(cfg_table[i].partition_type, "eslc", 4) == 0){
+			if (flash_plane_info_len == 0)
+				flash_plane_info_len = sprintf(flash_plane_info, " pxa3xx_nand.plane_cmdline=");
+			flash_plane_info_len += sprintf(&flash_plane_info[flash_plane_info_len], "(%s)eslc,", cfg_table[i].name);
+		}else if (strncmp(cfg_table[i].partition_type, "slc", 3) == 0){
+			if (flash_plane_info_len == 0)
+				flash_plane_info_len = sprintf(flash_plane_info, " pxa3xx_nand.plane_cmdline=");
+			flash_plane_info_len += sprintf(&flash_plane_info[flash_plane_info_len], "(%s)slc,", cfg_table[i].name);
 		}
 
 		if(!cfg_table[i].invisible)
 		{
-			if (argc == NAND_PARAM_COUNT)
-				switch (cfg_table[i].flash_type) {
-				case 1:
-					fprintf(flayout, "%s\t\t%d\t%lld\toob\t%s\n", cfg_table[i].name, (int)(cfg_table[i].start/block_size),
-						cfg_table[i].size/block_size, cfg_table[i].partition_type);
-					break;
-				case 2:
-					fprintf(flayout, "%s\t\t%d\t%lld\traw\t%s\n", cfg_table[i].name, (int)(cfg_table[i].start/block_size),
-						cfg_table[i].size/block_size, cfg_table[i].partition_type);
-					break;
-				default:
-					fprintf(flayout, "%s\t\t%d\t%lld\tnormal\t%s\n", cfg_table[i].name, (int)(cfg_table[i].start/block_size),
-						cfg_table[i].size/block_size, cfg_table[i].partition_type);
-					break;
-				}
-
-
-			if (argc == EMMC_PARAM_COUNT)
-			{
-				fprintf(flayout, "%s\t\t%d\t%lld\n", cfg_table[i].name, (int)(cfg_table[i].start/block_size),
-					cfg_table[i].size/block_size);
-
-				//if (strcmp(cfg_table[i].name, "preboot") == 0)
-				//{
-				//	fprintf(stderr, "'preboot' cannot be included in the eMMC partition table.\n");
-				//	goto fail_out;
-				//}
-
-				if (strcmp(cfg_table[i].emmc_operation, "default") && strcmp(cfg_table[i].emmc_operation, "fixed"))
-					strcpy(img_name, cfg_table[i].emmc_operation);
-				else
-					sprintf(img_name, "%s.subimg", cfg_table[i].name);
-				fprintf(fimg, "%s,mtd%d", img_name, i + 1);
-				if (strcmp(cfg_table[i].emmc_burn_option, "first_burn") == 0)
-					fprintf(fimg, ",%s\n", cfg_table[i].emmc_burn_option);
-				else
-					fprintf(fimg, "\n");
+			switch (cfg_table[i].flash_type) {
+			case 1:
+				fprintf(flayout, "%s\t\t%d\t%lld\toob\t%s\n", cfg_table[i].name, (int)(cfg_table[i].start/block_size),
+					cfg_table[i].size/block_size, cfg_table[i].partition_type);
+				break;
+			case 2:
+				fprintf(flayout, "%s\t\t%d\t%lld\traw\t%s\n", cfg_table[i].name, (int)(cfg_table[i].start/block_size),
+					cfg_table[i].size/block_size, cfg_table[i].partition_type);
+				break;
+			default:
+				fprintf(flayout, "%s\t\t%d\t%lld\tnormal\t%s\n", cfg_table[i].name, (int)(cfg_table[i].start/block_size),
+					cfg_table[i].size/block_size, cfg_table[i].partition_type);
+				break;
 			}
-		}
+
+			if (!cfg_table[i].is_back_up)
+			{
+				sprintf(img_name, "%s.subimg", cfg_table[i].name);
+				fprintf(fimg, "%s,mtd%d\n", img_name, i + 1);
+			}
+		} else if (!cfg_table[i].is_back_up)
+			fprintf(fimg, "erase,mtd%d\n", i + 1);
+
 		if(cfg_table[i].is_back_up)
 			continue;
 		strcpy(vt.name, cfg_table[i].name);
@@ -681,30 +510,31 @@ int main(int argc, char **argv)
 		vt.part1_start_blkind = cfg_table[i].start/block_size;
 		vt.part1_blks = cfg_table[i].size/block_size;
 		strcpy(vt.part_type,cfg_table[i].partition_type);
-#ifdef CONFIG_EMMC_WRITE_PROTECT
+
 		vt.write_protect_flag = 0;
-		if(strstr(cfg_table[i].emmc_write_protection, "normal"))
+		if(strstr(cfg_table[i].write_protection, "normal"))
 		{
 			vt.write_protect_flag |= NORMAL_WP_MASK;
 		}
-		if(strstr(cfg_table[i].emmc_write_protection, "recovery"))
+		if(strstr(cfg_table[i].write_protection, "recovery"))
 		{
 			vt.write_protect_flag |= RECOVERY_WP_MASK;
 		}
-#else
-		vt.part2_version.major_version = 0;
-		vt.part2_version.minor_version = 0;
-		if(cfg_table[i].has_back_up)
+
 		{
-			vt.part2_start_blkind = cfg_table[i].back_up_entry->start/block_size;
-			vt.part2_blks = cfg_table[i].back_up_entry->size/block_size;
+			vt.part2_version.major_version = 0;
+			vt.part2_version.minor_version = 0;
+			if(cfg_table[i].has_back_up)
+			{
+				vt.part2_start_blkind = cfg_table[i].back_up_entry->start/block_size;
+				vt.part2_blks = cfg_table[i].back_up_entry->size/block_size;
+			}
+			else
+			{
+				vt.part2_start_blkind = cfg_table[i].start/block_size;
+				vt.part2_blks = cfg_table[i].size/block_size;
+			}
 		}
-		else
-		{
-			vt.part2_start_blkind = cfg_table[i].start/block_size;
-			vt.part2_blks = cfg_table[i].size/block_size;
-		}
-#endif
 		if(fwrite(&vt, sizeof(vt), 1, fvt) != 1)
 		{
 			fprintf(stderr, "write to %s error.\n", version_table_file);
@@ -718,37 +548,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "write to %s error.\n", version_table_file);
 		goto fail_out;
 	}
-#if 0 /* we should not pad version_table now, because we need add crc for it */
-	{ /* padding version table file */
-		char *padding_buf;
-		struct stat st;
-		int padding_size;
 
-		if (stat(version_table_file, &st)) {
-			fprintf(stderr, "fail to stat %s\n", version_table_file);
-			goto fail_out;
-		}
-
-		padding_size = VT_SIZE - st.st_size;
-		if (padding_size < 0) {
-			fprintf(stderr, "too many entries to fit into version table\n");
-			goto fail_out;
-		}
-
-		padding_buf = malloc(padding_size);
-		if (padding_buf == NULL) {
-			fprintf(stderr, "fail to allocate buffer for padding bytes\n");
-			goto fail_out;
-		}
-		memset(padding_buf, 0, padding_size);
-		fseek(fvt, 0, SEEK_END);
-		if (fwrite(padding_buf, padding_size, 1, fvt) != 1) {
-			fprintf(stderr, "fail to write padding bytes to %s\n", \
-					version_table_file);
-			goto fail_out;
-		}
-	}
-#endif
 	if (flash_plane_info_len) {
 		flash_plane_info[flash_plane_info_len - 1] = '\0';
 		if(fwrite(flash_plane_info, flash_plane_info_len - 1, 1, fparam)!= 1)
@@ -774,7 +574,7 @@ int main(int argc, char **argv)
 		fclose(fvt);
 	if(flayout != NULL)
 		fclose(flayout);
-	if (argc == EMMC_PARAM_COUNT && fimg != NULL)
+	if (fimg != NULL)
 		fclose(fimg);
 	return 0;
 fail_out:
@@ -786,7 +586,7 @@ fail_out:
 		fclose(fvt);
 	if(flayout != NULL)
 		fclose(flayout);
-	if (argc == EMMC_PARAM_COUNT && fimg != NULL)
+	if (fimg != NULL)
 		fclose(fimg);
 	return -1;
 }

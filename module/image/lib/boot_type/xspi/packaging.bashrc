@@ -36,6 +36,83 @@ xspi_release_subimg_imagelist() {
   done
 }
 
+spi_suboot_combo() {
+  # Parse arguments
+  local f_bootinfo
+  local f_preboot
+  local f_sysmgr
+  local f_tzk
+  local f_bl
+  local f_spi_combo
+
+  f_bootinfo=$1; shift
+  f_preboot=$1; shift
+  f_sysmgr=$1; shift
+  f_tzk=$1; shift
+  f_bl=$1; shift
+  f_spi_combo=$1; shift
+
+  local spi_vt_file="${outdir_subimg_intermediate}/version_table"
+  local spi_vt_size=2048
+
+  # Append bootinfo
+  cat $f_bootinfo > $f_spi_combo
+  f_bootinfo_size=`stat -c %s ${f_spi_combo}`
+  if [ $f_bootinfo_size -gt $xspi_bootinfo_part_size ]; then echo "Error: bootinfo too large"; exit 1; fi
+  padding_size=$[$xspi_bootinfo_part_size - $f_bootinfo_size]
+  if [ $padding_size -gt 0 ]; then
+    dd if=/dev/zero bs=$padding_size count=1 >> $f_spi_combo 2>/dev/null
+  fi
+
+  # Append preboot and version table
+  f_preboot_size=`stat -c %s ${f_preboot}`
+  if [ $f_preboot_size -gt $xspi_preboot_part_size ]; then echo "Error: preboot too large"; exit 1; fi
+
+  [ ! $(( $f_preboot_size + $spi_vt_size )) -gt ${xspi_preboot_part_size} ]
+  fill_length=$(( ${xspi_preboot_part_size} - ${spi_vt_size} - ${f_preboot_size} ))
+
+  if [ $fill_length -gt 0 ]; then
+    dd if=/dev/zero bs=$fill_length count=1 >> ${f_preboot} 2>/dev/null
+  fi
+
+  cat ${spi_vt_file} >> ${f_preboot}
+  f_preboot_size=`stat -c %s ${f_preboot}`
+  [ ! $f_preboot_size -gt ${xspi_preboot_part_size} ]
+
+  fill_length=$(( ${xspi_preboot_part_size} - ${f_preboot_size} ))
+  if [ $fill_length -gt 0 ]; then
+    dd if=/dev/zero bs=$fill_length count=1 >> ${f_preboot} 2>/dev/null
+  fi
+  cat $f_preboot >> $f_spi_combo
+
+  # Append sysmgr
+  cat $f_sysmgr >> $f_spi_combo
+  f_sysmgr_size=`stat -c %s ${f_sysmgr}`
+  if [ $f_sysmgr_size -gt $xspi_sysmgr_part_size ]; then echo "Error: sysmgr too large"; exit 1; fi
+  padding_size=$[$xspi_sysmgr_part_size - $f_sysmgr_size]
+  if [ $padding_size -gt 0 ]; then
+    dd if=/dev/zero bs=$padding_size count=1 >> $f_spi_combo 2>/dev/null
+  fi
+
+  # Append TZK
+  cat $f_tzk >> $f_spi_combo
+  f_tzk_size=`stat -c %s ${f_tzk}`
+  if [ $f_tzk_size -gt $xspi_tzk_part_size ]; then echo "Error: TZK too large"; exit 1; fi
+  padding_size=$[$xspi_tzk_part_size - $f_tzk_size]
+  if [ $padding_size -gt 0 ]; then
+    dd if=/dev/zero bs=$padding_size count=1 >> $f_spi_combo 2>/dev/null
+  fi
+
+  # Append BL
+  cat $f_bl >> $f_spi_combo
+  f_bl_size=`stat -c %s ${f_bl}`
+  if [ $f_bl_size -gt $xspi_bl_part_size ]; then echo "Error: BL too large"; exit 1; fi
+  padding_size=$[$xspi_bl_part_size - $f_bl_size]
+  if [ $padding_size -gt 0 ]; then
+    dd if=/dev/zero bs=$padding_size count=1 >> $f_spi_combo 2>/dev/null
+  fi
+}
+
 ########
 # Main #
 ########
@@ -148,13 +225,12 @@ if [ "is${CONFIG_UBOOT_FASTBOOT}" == "isy" ]; then
   source ${basedir_script_subimg}/uboot/xspi.bashrc
 fi
 
-### Runtime ###
-if [ "has${CONFIG_RUNTIME_FILESYSTEMS}" != "has" ]; then
-  ### Kernel/RAMDISK ###
-  source ${basedir_script_subimg}/linux_bootimgs/common.bashrc
-  source ${basedir_script_subimg}/linux_bootimgs/xspi.bashrc
+### Kernel/RAMDISK ###
+source ${basedir_script_subimg}/linux_bootimgs/common.bashrc
+source ${basedir_script_subimg}/linux_bootimgs/xspi.bashrc
 
-  ### Filesystems ###
+### Filesystems ###
+if [ "has${CONFIG_RUNTIME_FILESYSTEMS}" != "has" ]; then
   source ${basedir_script_subimg}/fsimgs/common.bashrc
 
   system_partition_name="system"
@@ -169,10 +245,26 @@ if [ "has${CONFIG_RUNTIME_FILESYSTEMS}" != "has" ]; then
 fi
 
 #
+# Generate spi combo images
+#
+outdir_product_release=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/release
+outdir_product_release_spi=${outdir_product_release}/spi
+mkdir -p ${outdir_product_release_spi}
+
+spi_suboot_combo \
+  ${outdir_subimg_intermediate}/bootinfo.subimg \
+  ${outdir_subimg_intermediate}/preboot.subimg \
+  ${outdir_subimg_intermediate}/sysmgr.subimg \
+  ${outdir_subimg_intermediate}/tee.subimg \
+  ${outdir_subimg_intermediate}/bootloader.subimg \
+  ${outdir_product_release_spi}/spi_suboot.bin
+
+  cp ${outdir_subimg_intermediate}/linux_bootimgs.subimg ${outdir_product_release_spi}/boot.subimg
+
+#
 # Generate EMMC images
 #
 product_dir=${CONFIG_SYNA_SDK_PRODUCT_PATH}/${CONFIG_PRODUCT_NAME}
-outdir_product_release=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/release
 outdir_product_release_xspi=${outdir_product_release}/xSPIimg
 mkdir -p ${outdir_product_release_xspi}
 
@@ -204,8 +296,9 @@ fi
 
 xspi_release_subimg_imagelist "key" "${subimg_list}"
 
+xspi_release_subimg_imagelist "linux_bootimgs" "${subimg_list}"
+
 if [ "has${CONFIG_RUNTIME_FILESYSTEMS}" != "has" ]; then
-  xspi_release_subimg_imagelist "linux_bootimgs" "${subimg_list}"
   xspi_release_subimg_imagelist "system" "${subimg_list}"
 fi
 

@@ -10,10 +10,10 @@ gen_preboot_subimg() {
   f_len=$(stat -c %s ${f_input})
   [ ! $(( $f_len + 2048 )) -gt ${spi_param_boot_part_size} ]
 
-  ### Check if PMIC config is included ###
-  expected_size_with_pmic=$(( ${spi_param_boot_part_size} - ${spi_vt_size} - ${spi_header_size} ))
-  if [ $f_len -lt $expected_size_with_pmic ]; then
-    echo "Warning: preboot_esmt.bin may be missing PMIC config (size: $f_len, expected: $expected_size_with_pmic)"
+  ### Check if BOOT config is included ###
+  expected_size_with_boot_config=$(( ${spi_param_boot_part_size} - ${spi_vt_size} - ${spi_header_size} ))
+  if [ $f_len -lt $expected_size_with_boot_config ]; then
+    echo "Warning: preboot_esmt.bin may be missing BOOT config (size: $f_len, expected: $expected_size_with_boot_config)"
   fi
 
   fill_length=$(( ${spi_param_boot_part_size} - ${spi_vt_size} - ${spi_header_size} - ${f_len} ))

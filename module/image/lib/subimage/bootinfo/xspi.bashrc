@@ -23,7 +23,7 @@ get_pt_name() {
 
 to_bytes() {
   local size=$1
-  local unit=${size: -1}
+  local unit=$(echo -n ${size} | tail -c 1)
   local num=${size%[KMG]}
 
   case $unit in
@@ -186,13 +186,18 @@ cat ${intermediate_dir}/appartAoffset >> ${intermediate_dir}/flash_attr
 
 rm -f ${intermediate_dir}/pt_a_normal
 
-for ((i=2; i<=${lines}; i++)); do
+i=2
+while [ $i -le ${lines} ]; do
   pt_name=$(get_pt_name ${i} ${product_dir}/xspi.pt)
   pt_size=$(get_pt_size ${i})
+  pt_name=${pt_name#@}
+  base_name=${pt_name%_[ab]}
+  var_name="xspi_${base_name}_part_size"
+  eval "${var_name}=${pt_size}"
 
   # caculate the rest space for userdata
   if [ "$pt_size" = "-" ]; then
-    pt_size=$((${CONFIG_XSPI_TOTAL_SIZE} - ${flash_offset})) 
+    pt_size=$((${CONFIG_XSPI_TOTAL_SIZE} - ${flash_offset}))
   fi
 
   echo "$pt_name: size(${pt_size}) flash offset(${flash_offset})"
@@ -218,6 +223,7 @@ for ((i=2; i<=${lines}; i++)); do
   esac
 
   flash_offset=$((${flash_offset} + ${pt_size}))
+  i=$(($i + 1))
 done
 
 #echo "${pt_offset} ${entry_num}"
@@ -233,7 +239,8 @@ cat ${intermediate_dir}/appartBoffset >> ${intermediate_dir}/flash_attr
 
 rm -f ${intermediate_dir}/pt_b_normal
 
-for ((i=2; i<=${lines}; i++)); do
+i=2
+while [ $i -le ${lines} ]; do
   pt_name=$(get_pt_name ${i} ${product_dir}/xspi.pt)
   pt_size=$(get_pt_size ${i})
 
@@ -264,6 +271,7 @@ for ((i=2; i<=${lines}; i++)); do
   esac
 
   flash_offset=$((${flash_offset} + ${pt_size}))
+  i=$(($i + 1))
 done
 else
 ## append AP part B offset to flash_attr
@@ -277,7 +285,8 @@ fi
 rm -f ${intermediate_dir}/pt_common
 flash_offset=0
 
-for ((i=2; i<=${lines}; i++)); do
+i=2
+while [ $i -le ${lines} ]; do
   pt_name=$(get_pt_name ${i} ${product_dir}/xspi.pt)
   pt_size=$(get_pt_size ${i})
 
@@ -299,6 +308,7 @@ for ((i=2; i<=${lines}; i++)); do
   esac
 
   flash_offset=$((${flash_offset} + ${pt_size}))
+  i=$(($i + 1))
 done
 
 #echo "${pt_offset} ${entry_num}"

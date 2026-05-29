@@ -105,4 +105,8 @@ config AMP_MIPI_PANEL
     string "MIPI Config Params File name"
     default ""
 
+config SMP_OFF
+    bool "Secure Media Path is not supported"
+    default n
+
 endmenu

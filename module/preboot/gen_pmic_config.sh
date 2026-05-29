@@ -9,7 +9,7 @@ declare -A PMIC_MODELS=(
     ["sy8827n"]=5
     ["hl7593wl06"]=6
     ["tps62868"]=7
-    ["rt5739"]=8
+    ["rt573x"]=8
     ["fp6359"]=9
     ["tps6287x"]=10
 )
@@ -17,6 +17,7 @@ declare -A PMIC_MODELS=(
 PMIC_CONFIG_MAGIC=0x504D4943
 PMIC_CONFIG_VERSION=0x00000001
 PMIC_CONFIG_SIZE=32
+PMIC_TARGET_SIZE=192
 
 # PWM channel constants
 PWM_INVALID_CHANNEL=255
@@ -232,6 +233,16 @@ generate_pmic_config() {
     fi
 
     hex_to_binary "$config_data" "$output_file"
+
+    current_size=$(stat -c %s $output_file)
+    if [ $current_size -gt $PMIC_TARGET_SIZE ]; then
+      echo "Error: PMIC configure exceeds available space ($PMIC_TARGET_SIZE)"
+      exit 1
+    fi
+
+    padding_size=$((PMIC_TARGET_SIZE - current_size))
+    echo "Padding PMIC configure with ${padding_size} bytes"
+    dd if=/dev/zero bs=1 count=${padding_size} >> $output_file 2>/dev/null
 
     if [ $? -eq 0 ]; then
         #echo "Generated PMIC config: $output_file"

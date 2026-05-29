@@ -39,6 +39,14 @@ if [ "x${opt_android_bootctrl}" != "x" ]; then
   cmd_args="${cmd_args} --android-bootctrl=${opt_android_bootctrl}"
 fi
 
+if [ "x${opt_skip_fw}" != "x" ]; then
+  cmd_args="${cmd_args} --skip-fw=${opt_skip_fw}"
+fi
+
+if [ "x${opt_force_spi}" != "x" ]; then
+  cmd_args="${cmd_args} --force-spi=${opt_force_spi}"
+fi
+
 if [ "x${opt_flash_type}" != "x" ]; then
   cmd_args="${cmd_args} --flash-type=${opt_flash_type}"
 else

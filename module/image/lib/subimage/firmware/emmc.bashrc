@@ -23,40 +23,6 @@ generate_firmware_subimg() {
   ### use genimg to pack all firmware images ###
   params=""
 
-  # TSP firmware
-  if [ -f ${infile_firmware}/tsp.fw ]; then
-    params="$params -i TSPF -d ${infile_firmware}/tsp.fw"
-  else
-    echo "no tsp.fw under ${infile_firmware}!!!"
-  #  exit 1
-  fi
-
-  # IFCP firmware
-  if [ "is${CONFIG_AMP_IP_DRM_IRDETO}" = "isy" ]; then
-    if [ -f ${infile_firmware}/ifcp.fw ]; then
-      params="$params -i IFCP -d ${infile_firmware}/ifcp.fw"
-    else
-      echo "no ifcp.fw under ${infile_firmware}!!!"
-      exit 1
-    fi
-  fi
-
-  # DSP firmware
-  if [ -f ${infile_firmware}/dsp.fw ]; then
-    params="$params -i DSPF -d ${infile_firmware}/dsp.fw"
-  else
-    echo "no dsp.fw under ${infile_firmware}!!!"
-  #  exit 1
-  fi
-
-  # GPU firmware
-  if [ -f ${infile_firmware}/gpu.fw ]; then
-    params="$params -i GPUF -d ${infile_firmware}/gpu.fw"
-  else
-    echo "no gpu.fw under ${infile_firmware}!!!"
-  #  exit 1
-  fi
-
   # SM firmware
   if [ "is${CONFIG_UBOOT_SUBOOT}" = "isy" ]; then
     if [ -f ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/${CONFIG_UBOOT_REL_PATH}/sm_fw_en.bin ]; then

@@ -31,6 +31,8 @@ install_ta_for_kernel() {
   install_ta_list+=('libptm.ta')
   install_ta_list+=('libfastlogo.ta')
   install_ta_list+=('libsynap.ta')
+  install_ta_list+=('libm2m.ta')
+  install_ta_list+=('libtsp.ta')
   if [ -d ${kernel_ta_path} ]; then
     for i in ${!install_ta_list[*]}; do
         ta=${install_ta_list[$i]}

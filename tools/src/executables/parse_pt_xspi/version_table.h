@@ -1,12 +1,15 @@
 #ifndef _VERSION_TABLE_H_
 #define _VERSION_TABLE_H_
 
-#define PART_NAME_MAX_LEN	32
+#define PART_NAME_MAX_LEN	15
 #define PART_NAME_STR_MAX	"20"
 #define IMG2_NAME	"bootloader"
 #define IMG3_NAME	"bootimgs"
 #define SYSCONF_NAME	"sysconf"
 #define FLASHLESS_NAME	"flashless_data"
+
+#define NORMAL_WP_MASK	(1)
+#define RECOVERY_WP_MASK	(1<<1)
 
 //DDR type
 #define DDR_TYPE_DDR2	2
@@ -78,10 +81,16 @@ typedef struct _ver_table_entry_t_ {
 	version_t part1_version;
 	unsigned part1_start_blkind;
 	unsigned part1_blks;
+#ifdef CONFIG_EMMC_WRITE_PROTECT
+	unsigned write_protect_flag;
+	unsigned char reserved[12];
+#else
 	version_t part2_version;
 	unsigned part2_start_blkind;
 	unsigned part2_blks;
+	unsigned write_protect_flag;
 	char part_type[PART_NAME_MAX_LEN+1];
+#endif
 } ver_table_entry_t;
 
 typedef struct _version_table_t_ {

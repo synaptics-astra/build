@@ -62,6 +62,14 @@ config PREBOOT_ANDROID_BOOTCTRL
 	bool "use android bootctrl format"
     default n
 
+config PREBOOT_SKIP_FW
+	bool "Skip firmware loading"
+    default n
+
+config PREBOOT_FORCE_SPI
+	bool "Skip SD card checking when booting from SPI"
+    default n
+
 choice
 	prompt "PMIC Control Mode"
 	optional
@@ -91,7 +99,7 @@ config VCORE_PMIC_MODEL
 	help
 		Specify the PMIC model to be used for VCORE by the miniloader.
 		Supported models: m88pg86x, sy8824b, ncp6335d, mp886x, sy8827n,
-		hl7593wl06, tps62868, rt5739, fp6359, tps6287x...
+		hl7593wl06, tps62868, rt573x, fp6359, tps6287x...
 		This configuration will be used to generate a binary configuration
 		file that miniloader reads during boot to select the appropriate
 		PMIC driver for VCORE. Supported PMIC_MODELS list refers to ./gen_pmic_config.sh
@@ -102,7 +110,7 @@ config VCPU_PMIC_MODEL
 	help
 		Specify the PMIC model to be used for VCPU by the miniloader.
 		Supported models: m88pg86x, sy8824b, ncp6335d, mp886x, sy8827n,
-		hl7593wl06, tps62868, rt5739, fp6359, tps6287x...
+		hl7593wl06, tps62868, rt573x, fp6359, tps6287x...
 		This configuration will be used to generate a binary configuration
 		file that miniloader reads during boot to select the appropriate
 		PMIC driver for VCPU. Supported PMIC_MODELS list refers to ./gen_pmic_config.sh
