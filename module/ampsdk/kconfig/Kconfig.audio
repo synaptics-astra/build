@@ -6,7 +6,7 @@
 menu "Audio"
 
 source "module/ampsdk/kconfig/audio/Kconfig.audio.general"
-source "module/ampsdk/kconfig/audio/Kconfig.audio.ctrl"
+source "module/ampsdk/kconfig/audio/Kconfig.audio.ms12"
 source "module/ampsdk/kconfig/audio/Kconfig.audio.adec"
 source "module/ampsdk/kconfig/audio/Kconfig.audio.aenc"
 source "module/ampsdk/kconfig/audio/Kconfig.audio.app"

@@ -71,69 +71,798 @@ config PREBOOT_FORCE_SPI
     default n
 
 choice
-	prompt "PMIC Control Mode"
-	optional
-	help
-		Choose between I2C PMIC control or PWM voltage regulation.
-		I2C mode uses traditional PMIC drivers via I2C bus.
-		PWM mode uses direct PWM signals for voltage control.
-		Leave unselected to disable PMIC configuration.
+	prompt "PMIC Control Interface"
+	default PMIC_IF_LEGACY
 
-config PMIC_MODE_I2C
-	bool "I2C PMIC Control"
-	help
-		Use traditional I2C PMIC drivers for voltage regulation.
-		Configure VCORE and VCPU PMIC models below.
+config PMIC_IF_I2C
+	bool "I2C"
 
-config PMIC_MODE_PWM
-	bool "PWM Voltage Control"
+config PMIC_IF_PWM
+	bool "PWM"
+
+config PMIC_IF_AUTO
+	bool "Auto Detect"
+
+config PMIC_IF_LEGACY
+	bool "Legacy"
+
+endchoice
+
+if PMIC_IF_PWM
+
+choice
+	prompt "PWM Backend"
+
+config PMIC_PWM_BACKEND_PWM
+	bool "PWM Controller"
+
+config PMIC_PWM_BACKEND_SMTIMER
+	bool "SM Timer Controller"
+
+endchoice
+
+endif
+
+choice
+	prompt "VCORE PMIC Model"
+	default VCORE_PMIC_MODEL_NONE
+	depends on PMIC_IF_I2C
 	help
-		Use PWM signals for direct voltage regulation.
-		Configure PWM channels for VCORE and VCPU below.
+		Specify the single PMIC model to be used for VCORE.
+		Select the model that matches the hardware configuration of your board.
+
+config VCORE_PMIC_MODEL_NONE
+	bool "None"
+
+config VCORE_PMIC_MODEL_M88PG86X
+	bool "m88pg86x"
+
+config VCORE_PMIC_MODEL_SY8824B
+	bool "sy8824b"
+
+config VCORE_PMIC_MODEL_NCP6335D
+	bool "ncp6335d"
+
+config VCORE_PMIC_MODEL_MP886X
+	bool "mp886x"
+
+config VCORE_PMIC_MODEL_SY8827N
+	bool "sy8827n"
+
+config VCORE_PMIC_MODEL_HL7593WL06
+	bool "hl7593wl06"
+
+config VCORE_PMIC_MODEL_TPS62868
+	bool "tps62868"
+
+config VCORE_PMIC_MODEL_RT5739
+	bool "rt5739"
+
+config VCORE_PMIC_MODEL_PWM_PMIC
+	bool "pwm_pmic"
+
+config VCORE_PMIC_MODEL_TPS6287X
+	bool "tps6287x"
+
+config VCORE_PMIC_MODEL_RT5733
+	bool "rt5733"
+
+config VCORE_PMIC_MODEL_SMTIMER
+	bool "smtimer"
 
 endchoice
 
 config VCORE_PMIC_MODEL
-	string "VCORE PMIC Model"
-	depends on PMIC_MODE_I2C
+	string
+	default "m88pg86x"  if VCORE_PMIC_MODEL_M88PG86X
+	default "sy8824b"   if VCORE_PMIC_MODEL_SY8824B
+	default "ncp6335d"  if VCORE_PMIC_MODEL_NCP6335D
+	default "mp886x"    if VCORE_PMIC_MODEL_MP886X
+	default "sy8827n"   if VCORE_PMIC_MODEL_SY8827N
+	default "hl7593wl06" if VCORE_PMIC_MODEL_HL7593WL06
+	default "tps62868"  if VCORE_PMIC_MODEL_TPS62868
+	default "rt5739"    if VCORE_PMIC_MODEL_RT5739
+	default "pwm_pmic"  if VCORE_PMIC_MODEL_PWM_PMIC
+	default "tps6287x"  if VCORE_PMIC_MODEL_TPS6287X
+	default "rt5733"    if VCORE_PMIC_MODEL_RT5733
+	default "smtimer"   if VCORE_PMIC_MODEL_SMTIMER
+	default ""          if VCORE_PMIC_MODEL_NONE
+
+config VCORE_PMIC_GPIOH
+	hex "VCORE PMIC ID bit1 GPIO number"
+	depends on PMIC_IF_AUTO
+	default 0xff
 	help
-		Specify the PMIC model to be used for VCORE by the miniloader.
-		Supported models: m88pg86x, sy8824b, ncp6335d, mp886x, sy8827n,
-		hl7593wl06, tps62868, rt573x, fp6359, tps6287x...
-		This configuration will be used to generate a binary configuration
-		file that miniloader reads during boot to select the appropriate
-		PMIC driver for VCORE. Supported PMIC_MODELS list refers to ./gen_pmic_config.sh
+		GPIO number used for PMIC auto-detection.
+		The value sampled from this GPIO is used as PMIC ID bit1.
+		Together with PMIC ID bit0, it forms a 2-bit [bit1:bit0] PMIC
+		identification code.
+		Refer to the board schematic and PMIC datasheet for the
+		corresponding GPIO numbers.
+
+		- SoC GPIO:
+			Enter the GPIO number directly.
+
+		- SM GPIO:
+			Set bit[31:30] to 2'b10 and place the SM GPIO number
+			in bits[29:0].
+
+		- GPIO-X:
+			Set bit[31:30] to 2'b01 and place the GPIO_X number
+			in bits[29:0].
+
+		Examples:
+		SoC GPIO 15:
+			0xf
+
+		SM GPIO 3:
+			0x80000003
+
+		GPIO_X10:
+			0x4000000A
+
+config VCORE_PMIC_GPIOL
+	hex "VCORE PMIC ID bit0 GPIO number"
+	depends on PMIC_IF_AUTO
+	default 0xff
+	help
+		GPIO number used for PMIC auto-detection.
+		The value sampled from this GPIO is used as PMIC ID bit0.
+		Together with PMIC ID bit1, it forms a 2-bit [bit1:bit0] PMIC
+		identification code.
+		Refer to the board schematic and PMIC datasheet for the
+		corresponding GPIO numbers.
+
+		- SoC GPIO:
+			Enter the GPIO number directly.
+
+		- SM GPIO:
+			Set bit[31:30] to 2'b10 and place the SM GPIO number
+			in bits[29:0].
+
+		- GPIO-X:
+			Set bit[31:30] to 2'b01 and place the GPIO_X number
+			in bits[29:0].
+
+		Examples:
+		SoC GPIO 15:
+			0xf
+
+		SM GPIO 3:
+			0x80000003
+
+		GPIO_X10:
+			0x4000000A
+
+config VCORE_PMIC_MODEL_0
+	string "VCORE PMIC model for ID 2'b00"
+	depends on PMIC_IF_AUTO
+	default "none"
+	help
+		PMIC model associated with PMIC ID 2'b00.
+
+		During boot, the values sampled from GPIOH and GPIOL
+		form a 2-bit PMIC identification code:
+
+		GPIOH=0, GPIOL=0  -> PMIC ID = 2'b00
+
+		When this ID is detected, the PMIC model specified
+		here will be used for VCORE control.
+
+		Supported PMIC models are listed in:
+		build/module/preboot/pmic_models
+
+config VCORE_PMIC_MODEL_1
+	string "VCORE PMIC model for ID 2'b01"
+	depends on PMIC_IF_AUTO
+	default "none"
+	help
+		PMIC model associated with PMIC ID 2'b01.
+
+		During boot, the values sampled from GPIOH and GPIOL
+		form a 2-bit PMIC identification code:
+
+		GPIOH=0, GPIOL=1  -> PMIC ID = 2'b01
+
+		When this ID is detected, the PMIC model specified
+		here will be used for VCORE control.
+
+		Supported PMIC models are listed in:
+		build/module/preboot/pmic_models
+
+config VCORE_PMIC_MODEL_2
+	string "VCORE PMIC model for ID 2'b10"
+	depends on PMIC_IF_AUTO
+	default "none"
+	help
+		PMIC model associated with PMIC ID 2'b10.
+
+		During boot, the values sampled from GPIOH and GPIOL
+		form a 2-bit PMIC identification code:
+
+		GPIOH=1, GPIOL=0  -> PMIC ID = 2'b10
+
+		When this ID is detected, the PMIC model specified
+		here will be used for VCORE control.
+
+		Supported PMIC models are listed in:
+		build/module/preboot/pmic_models
+
+config VCORE_PMIC_MODEL_3
+	string "VCORE PMIC model for ID 2'b11"
+	depends on PMIC_IF_AUTO
+	default "none"
+	help
+		PMIC model associated with PMIC ID 2'b11.
+
+		During boot, the values sampled from GPIOH and GPIOL
+		form a 2-bit PMIC identification code:
+
+		GPIOH=1, GPIOL=1  -> PMIC ID = 2'b11
+
+		When this ID is detected, the PMIC model specified
+		here will be used for VCORE control.
+
+		Supported PMIC models are listed in:
+		build/module/preboot/pmic_models
+
+choice
+	prompt "VCPU PMIC Model"
+	default VCPU_PMIC_MODEL_NONE
+	depends on PMIC_IF_I2C
+	help
+		Specify the single PMIC model to be used for VCPU.
+		Select the model that matches the hardware configuration of your board.
+
+config VCPU_PMIC_MODEL_NONE
+	bool "None"
+
+config VCPU_PMIC_MODEL_M88PG86X
+	bool "m88pg86x"
+
+config VCPU_PMIC_MODEL_SY8824B
+	bool "sy8824b"
+
+config VCPU_PMIC_MODEL_NCP6335D
+	bool "ncp6335d"
+
+config VCPU_PMIC_MODEL_MP886X
+	bool "mp886x"
+
+config VCPU_PMIC_MODEL_SY8827N
+	bool "sy8827n"
+
+config VCPU_PMIC_MODEL_HL7593WL06
+	bool "hl7593wl06"
+
+config VCPU_PMIC_MODEL_TPS62868
+	bool "tps62868"
+
+config VCPU_PMIC_MODEL_RT5739
+	bool "rt5739"
+
+config VCPU_PMIC_MODEL_PWM_PMIC
+	bool "pwm_pmic"
+
+config VCPU_PMIC_MODEL_TPS6287X
+	bool "tps6287x"
+
+config VCPU_PMIC_MODEL_RT5733
+	bool "rt5733"
+
+config VCPU_PMIC_MODEL_SMTIMER
+	bool "smtimer"
+
+endchoice
 
 config VCPU_PMIC_MODEL
-	string "VCPU PMIC Model"
-	depends on PMIC_MODE_I2C
-	help
-		Specify the PMIC model to be used for VCPU by the miniloader.
-		Supported models: m88pg86x, sy8824b, ncp6335d, mp886x, sy8827n,
-		hl7593wl06, tps62868, rt573x, fp6359, tps6287x...
-		This configuration will be used to generate a binary configuration
-		file that miniloader reads during boot to select the appropriate
-		PMIC driver for VCPU. Supported PMIC_MODELS list refers to ./gen_pmic_config.sh
+	string
+	default "m88pg86x"  if VCPU_PMIC_MODEL_M88PG86X
+	default "sy8824b"   if VCPU_PMIC_MODEL_SY8824B
+	default "ncp6335d"  if VCPU_PMIC_MODEL_NCP6335D
+	default "mp886x"    if VCPU_PMIC_MODEL_MP886X
+	default "sy8827n"   if VCPU_PMIC_MODEL_SY8827N
+	default "hl7593wl06" if VCPU_PMIC_MODEL_HL7593WL06
+	default "tps62868"  if VCPU_PMIC_MODEL_TPS62868
+	default "rt5739"    if VCPU_PMIC_MODEL_RT5739
+	default "pwm_pmic"  if VCPU_PMIC_MODEL_PWM_PMIC
+	default "tps6287x"  if VCPU_PMIC_MODEL_TPS6287X
+	default "rt5733"    if VCPU_PMIC_MODEL_RT5733
+	default "smtimer"   if VCPU_PMIC_MODEL_SMTIMER
+	default ""          if VCPU_PMIC_MODEL_NONE
 
-config VCORE_PMIC_PWMCH
-	string "VCORE PMIC PWM Channel"
-	depends on PMIC_MODE_PWM
+config VCPU_PMIC_GPIOH
+	hex "VCPU PMIC ID bit1 GPIO number"
+	depends on PMIC_IF_AUTO
+	default 0xff
 	help
-		Specify the PWM channel to be used for VCORE by the miniloader.
-		Supported channels: 0-255, or empty string for not configured.
-		Empty string will be converted to 0xFF (not configured).
-		This configuration will be used to generate a binary configuration
-		file that miniloader reads during boot to select the appropriate
-		PWM channel for VCORE voltage regulation.
+		GPIO number used for PMIC auto-detection.
+		The value sampled from this GPIO is used as PMIC ID bit1.
+		Together with PMIC ID bit0, it forms a 2-bit [bit1:bit0] PMIC
+		identification code.
+		Refer to the board schematic and PMIC datasheet for the
+		corresponding GPIO numbers.
 
-config VCPU_PMIC_PWMCH
-	string "VCPU PMIC PWM Channel"
-	depends on PMIC_MODE_PWM
+		- SoC GPIO:
+			Enter the GPIO number directly.
+
+		- SM GPIO:
+			Set bit[31:30] to 2'b10 and place the SM GPIO number
+			in bits[29:0].
+
+		- GPIO-X:
+			Set bit[31:30] to 2'b01 and place the GPIO_X number
+			in bits[29:0].
+
+		Examples:
+		SoC GPIO 15:
+			0xf
+
+		SM GPIO 3:
+			0x80000003
+
+		GPIO_X10:
+			0x4000000A
+
+config VCPU_PMIC_GPIOL
+	hex "VCPU PMIC ID bit0 GPIO number"
+	depends on PMIC_IF_AUTO
+	default 0xff
 	help
-		Specify the PWM channel to be used for VCPU by the miniloader.
-		Supported channels: 0-255, or empty string for not configured.
-		Empty string will be converted to 0xFF (not configured).
-		This configuration will be used to generate a binary configuration
-		file that miniloader reads during boot to select the appropriate
-		PWM channel for VCPU voltage regulation.
+		GPIO number used for PMIC auto-detection.
+		The value sampled from this GPIO is used as PMIC ID bit0.
+		Together with PMIC ID bit1, it forms a 2-bit [bit1:bit0] PMIC
+		identification code.
+		Refer to the board schematic and PMIC datasheet for the
+		corresponding GPIO numbers.
+
+		- SoC GPIO:
+			Enter the GPIO number directly.
+
+		- SM GPIO:
+			Set bit[31:30] to 2'b10 and place the SM GPIO number
+			in bits[29:0].
+
+		- GPIO-X:
+			Set bit[31:30] to 2'b01 and place the GPIO_X number
+			in bits[29:0].
+
+		Examples:
+		SoC GPIO 15:
+			0xf
+
+		SM GPIO 3:
+			0x80000003
+
+		GPIO_X10:
+			0x4000000A
+
+config VCPU_PMIC_MODEL_0
+	string "VCPU PMIC model for ID 2'b00"
+	depends on PMIC_IF_AUTO
+	default "none"
+	help
+		PMIC model associated with PMIC ID 2'b00.
+
+		During boot, the values sampled from GPIOH and GPIOL
+		form a 2-bit PMIC identification code:
+
+		GPIOH=0, GPIOL=0  -> PMIC ID = 2'b00
+
+		When this ID is detected, the PMIC model specified
+		here will be used for VCPU control.
+
+		Supported PMIC models are listed in:
+		build/module/preboot/pmic_models
+
+config VCPU_PMIC_MODEL_1
+	string "VCPU PMIC model for ID 2'b01"
+	depends on PMIC_IF_AUTO
+	default "none"
+	help
+		PMIC model associated with PMIC ID 2'b01.
+
+		During boot, the values sampled from GPIOH and GPIOL
+		form a 2-bit PMIC identification code:
+
+		GPIOH=0, GPIOL=1  -> PMIC ID = 2'b01
+
+		When this ID is detected, the PMIC model specified
+		here will be used for VCPU control.
+
+		Supported PMIC models are listed in:
+		build/module/preboot/pmic_models
+
+config VCPU_PMIC_MODEL_2
+	string "VCPU PMIC model for ID 2'b10"
+	depends on PMIC_IF_AUTO
+	default "none"
+	help
+		PMIC model associated with PMIC ID 2'b10.
+
+		During boot, the values sampled from GPIOH and GPIOL
+		form a 2-bit PMIC identification code:
+
+		GPIOH=1, GPIOL=0  -> PMIC ID = 2'b10
+
+		When this ID is detected, the PMIC model specified
+		here will be used for VCPU control.
+
+		Supported PMIC models are listed in:
+		build/module/preboot/pmic_models
+
+config VCPU_PMIC_MODEL_3
+	string "VCPU PMIC model for ID 2'b11"
+	depends on PMIC_IF_AUTO
+	default "none"
+	help
+		PMIC model associated with PMIC ID 2'b11.
+
+		During boot, the values sampled from GPIOH and GPIOL
+		form a 2-bit PMIC identification code:
+
+		GPIOH=1, GPIOL=1  -> PMIC ID = 2'b11
+
+		When this ID is detected, the PMIC model specified
+		here will be used for VCPU control.
+
+		Supported PMIC models are listed in:
+		build/module/preboot/pmic_models
+
+config VCORE_PWM_GPIO
+	hex "GPIO used to identify VCORE TYPICAL PWM PIN"
+	depends on PMIC_PWM_BACKEND_PWM
+	default 0xff
+	help
+		The GPIO number identifies the pin connected to the
+		VCORE PWM signal and is used to determine the PWM
+		channel configuration.
+
+		Refer to the board schematic and PMIC datasheet to
+		determine the PWM GPIO connection.
+
+		- SoC GPIO:
+			Enter the GPIO number directly.
+
+		- SM GPIO:
+			Set bit[31:30] to 2'b10 and place the SM GPIO number
+			in bits[29:0].
+
+		- GPIO-X:
+			Set bit[31:30] to 2'b01 and place the GPIO_X number
+			in bits[29:0].
+
+		Examples:
+		SoC GPIO 15:
+			0xf
+
+		SM GPIO 3:
+			0x80000003
+
+		GPIO_X10:
+			0x4000000A
+
+config VCPU_PWM_GPIO
+	hex "GPIO used to identify VCPU TYPICAL PWM PIN"
+	depends on PMIC_PWM_BACKEND_PWM
+	default 0xff
+	help
+		The GPIO number identifies the pin connected to the
+		VCPU PWM signal and is used to determine the PWM
+		channel configuration.
+
+		Refer to the board schematic and PMIC datasheet to
+		determine the PWM GPIO connection.
+
+
+		- SoC GPIO:
+			Enter the GPIO number directly.
+
+		- SM GPIO:
+			Set bit[31:30] to 2'b10 and place the SM GPIO number
+			in bits[29:0].
+
+		- GPIO-X:
+			Set bit[31:30] to 2'b01 and place the GPIO_X number
+			in bits[29:0].
+
+		Examples:
+		SoC GPIO 15:
+			0xf
+
+		SM GPIO 3:
+			0x80000003
+
+		GPIO_X10:
+			0x4000000A
+
+config VCORE_PWM_FREQ_HZ
+	int "VCORE PWM Frequency (Hz)"
+	depends on PMIC_IF_PWM
+	default 100000
+
+config VCORE_PWM_POLARITY
+	int "VCORE PWM Polarity"
+	depends on PMIC_IF_PWM
+	default 0
+
+config VCORE_PWM_VOLT_MIN_UV
+	int "VCORE PWM Voltage Min (uV)"
+	depends on PMIC_IF_PWM
+	default 737500
+
+config VCORE_PWM_VOLT_MAX_UV
+	int "VCORE PWM Voltage Max (uV)"
+	depends on PMIC_IF_PWM
+	default 900000
+
+config VCORE_PWM_DUTY_AT_VOLT_MIN
+	int "VCORE PWM Duty Cycle at Volt Min"
+	depends on PMIC_IF_PWM
+	default 802
+
+config VCORE_PWM_DUTY_AT_VOLT_MAX
+	int "VCORE PWM Duty Cycle at Volt Max"
+	depends on PMIC_IF_PWM
+	default 412
+
+config VCPU_PWM_FREQ_HZ
+	int "VCPU PWM Frequency (Hz)"
+	depends on PMIC_IF_PWM
+	default 100000
+
+config VCPU_PWM_POLARITY
+	int "VCPU PWM Polarity"
+	depends on PMIC_IF_PWM
+	default 0
+
+config VCPU_PWM_VOLT_MIN_UV
+	int "VCPU PWM Voltage Min (uV)"
+	depends on PMIC_IF_PWM
+	default 737500
+
+config VCPU_PWM_VOLT_MAX_UV
+	int "VCPU PWM Voltage Max (uV)"
+	depends on PMIC_IF_PWM
+	default 900000
+
+config VCPU_PWM_DUTY_AT_VOLT_MIN
+	int "VCPU PWM Duty Cycle at Volt Min"
+	depends on PMIC_IF_PWM
+	default 802
+
+config VCPU_PWM_DUTY_AT_VOLT_MAX
+	int "VCPU PWM Duty Cycle at Volt Max"
+	depends on PMIC_IF_PWM
+	default 412
+
+choice
+	prompt "VCORE PMIC I2C pin group"
+	default VCORE_PMIC_I2C_NONE_VAL
+	depends on PMIC_IF_I2C || PMIC_IF_AUTO
+	help
+		Select the I2C pin group connected to the VCORE PMIC.
+
+		This setting identifies the SCL/SDA pins used to access
+		the PMIC and determines the corresponding I2C controller
+		and pinmux configuration.
+
+		Supported values: TW0, TW1, TW1A, TW1B, TW2, TW2A, TW2B, TW3, TW3A, TW3B.
+		The value should be "NONE" if the VCORE rail is not connected to the PMIC.
+
+		Refer to the board schematic and PMIC datasheet for the
+		corresponding PMIC I2C pin group.
+
+config VCORE_PMIC_I2C_NONE_VAL
+	bool "NONE"
+
+config VCORE_PMIC_I2C_TW0_VAL
+	bool "TW0"
+
+config VCORE_PMIC_I2C_TW1_VAL
+	bool "TW1"
+
+config VCORE_PMIC_I2C_TW1A_VAL
+	bool "TW1A"
+
+config VCORE_PMIC_I2C_TW1B_VAL
+	bool "TW1B"
+
+config VCORE_PMIC_I2C_TW2_VAL
+	bool "TW2"
+
+config VCORE_PMIC_I2C_TW2A_VAL
+	bool "TW2A"
+
+config VCORE_PMIC_I2C_TW2B_VAL
+	bool "TW2B"
+
+config VCORE_PMIC_I2C_TW3_VAL
+	bool "TW3"
+
+config VCORE_PMIC_I2C_TW3A_VAL
+	bool "TW3A"
+
+config VCORE_PMIC_I2C_TW3B_VAL
+	bool "TW3B"
+endchoice
+
+config VCORE_PMIC_I2CCH
+	string
+	default "NONE" if VCORE_PMIC_I2C_NONE_VAL
+	default "TW0"  if VCORE_PMIC_I2C_TW0_VAL
+	default "TW1"  if VCORE_PMIC_I2C_TW1_VAL
+	default "TW1A" if VCORE_PMIC_I2C_TW1A_VAL
+	default "TW1B" if VCORE_PMIC_I2C_TW1B_VAL
+	default "TW2"  if VCORE_PMIC_I2C_TW2_VAL
+	default "TW2A" if VCORE_PMIC_I2C_TW2A_VAL
+	default "TW2B" if VCORE_PMIC_I2C_TW2B_VAL
+	default "TW3"  if VCORE_PMIC_I2C_TW3_VAL
+	default "TW3A" if VCORE_PMIC_I2C_TW3A_VAL
+	default "TW3B" if VCORE_PMIC_I2C_TW3B_VAL
+
+config VCORE_PMIC_I2CCH_NUM
+	int
+	depends on PMIC_IF_I2C || PMIC_IF_AUTO
+	default 0 if VCORE_PMIC_I2CCH = "TW0"
+	default 1 if VCORE_PMIC_I2CCH = "TW1"
+	default 2 if VCORE_PMIC_I2CCH = "TW1A"
+	default 3 if VCORE_PMIC_I2CCH = "TW1B"
+	default 4 if VCORE_PMIC_I2CCH = "TW2"
+	default 5 if VCORE_PMIC_I2CCH = "TW2A"
+	default 6 if VCORE_PMIC_I2CCH = "TW2B"
+	default 7 if VCORE_PMIC_I2CCH = "TW3"
+	default 8 if VCORE_PMIC_I2CCH = "TW3A"
+	default 9 if VCORE_PMIC_I2CCH = "TW3B"
+	default 255
+
+choice
+	prompt "VCPU PMIC I2C pin group"
+	default VCPU_PMIC_I2C_NONE_VAL
+	depends on PMIC_IF_I2C || PMIC_IF_AUTO
+	help
+		Select the I2C pin group connected to the VCPU PMIC.
+
+		This setting identifies the SCL/SDA pins used to access
+		the PMIC and determines the corresponding I2C controller
+		and pinmux configuration.
+
+		Supported values: TW0, TW1, TW1A, TW1B, TW2, TW2A, TW2B, TW3, TW3A, TW3B.
+		The value should be "NONE" if the VCPU rail is not connected to the PMIC.
+
+		Refer to the board schematic and PMIC datasheet for the
+		corresponding PMIC I2C pin group.
+
+config VCPU_PMIC_I2C_NONE_VAL
+	bool "NONE"
+
+config VCPU_PMIC_I2C_TW0_VAL
+	bool "TW0"
+
+config VCPU_PMIC_I2C_TW1_VAL
+	bool "TW1"
+
+config VCPU_PMIC_I2C_TW1A_VAL
+	bool "TW1A"
+
+config VCPU_PMIC_I2C_TW1B_VAL
+	bool "TW1B"
+
+config VCPU_PMIC_I2C_TW2_VAL
+	bool "TW2"
+
+config VCPU_PMIC_I2C_TW2A_VAL
+	bool "TW2A"
+
+config VCPU_PMIC_I2C_TW2B_VAL
+	bool "TW2B"
+
+config VCPU_PMIC_I2C_TW3_VAL
+	bool "TW3"
+
+config VCPU_PMIC_I2C_TW3A_VAL
+	bool "TW3A"
+
+config VCPU_PMIC_I2C_TW3B_VAL
+	bool "TW3B"
+endchoice
+
+config VCPU_PMIC_I2CCH
+	string
+	default "NONE" if VCPU_PMIC_I2C_NONE_VAL
+	default "TW0"  if VCPU_PMIC_I2C_TW0_VAL
+	default "TW1"  if VCPU_PMIC_I2C_TW1_VAL
+	default "TW1A" if VCPU_PMIC_I2C_TW1A_VAL
+	default "TW1B" if VCPU_PMIC_I2C_TW1B_VAL
+	default "TW2"  if VCPU_PMIC_I2C_TW2_VAL
+	default "TW2A" if VCPU_PMIC_I2C_TW2A_VAL
+	default "TW2B" if VCPU_PMIC_I2C_TW2B_VAL
+	default "TW3"  if VCPU_PMIC_I2C_TW3_VAL
+	default "TW3A" if VCPU_PMIC_I2C_TW3A_VAL
+	default "TW3B" if VCPU_PMIC_I2C_TW3B_VAL
+
+config VCPU_PMIC_I2CCH_NUM
+	int
+	depends on PMIC_IF_I2C || PMIC_IF_AUTO
+	default 0 if VCPU_PMIC_I2CCH = "TW0"
+	default 1 if VCPU_PMIC_I2CCH = "TW1"
+	default 2 if VCPU_PMIC_I2CCH = "TW1A"
+	default 3 if VCPU_PMIC_I2CCH = "TW1B"
+	default 4 if VCPU_PMIC_I2CCH = "TW2"
+	default 5 if VCPU_PMIC_I2CCH = "TW2A"
+	default 6 if VCPU_PMIC_I2CCH = "TW2B"
+	default 7 if VCPU_PMIC_I2CCH = "TW3"
+	default 8 if VCPU_PMIC_I2CCH = "TW3A"
+	default 9 if VCPU_PMIC_I2CCH = "TW3B"
+	default 255
+
+config VCORE_SMTMR_GPIO
+	hex "GPIO used to identify VCORE SMTIMER PWM PIN"
+	depends on PMIC_PWM_BACKEND_SMTIMER
+	default 0xff
+	help
+		The GPIO number identifies the pin connected to the
+		VCORE PWM signal and is used to determine the PWM
+		channel configuration.
+
+		Refer to the board schematic and PMIC datasheet to
+		determine the PWM GPIO connection.
+
+
+
+		- SoC GPIO:
+			Enter the GPIO number directly.
+
+		- SM GPIO:
+			Set bit[31:30] to 2'b10 and place the SM GPIO number
+			in bits[29:0].
+
+		- GPIO-X:
+			Set bit[31:30] to 2'b01 and place the GPIO_X number
+			in bits[29:0].
+
+		Examples:
+		SoC GPIO 15:
+			0xf
+
+		SM GPIO 3:
+			0x80000003
+
+		GPIO_X10:
+			0x4000000A
+
+config VCPU_SMTMR_GPIO
+	hex "GPIO used to identify VCPU SMTIMER PWM PIN"
+	depends on PMIC_PWM_BACKEND_SMTIMER
+	default 0xff
+	help
+		The GPIO number identifies the pin connected to the
+		VCPU PWM signal and is used to determine the PWM
+		channel configuration.
+
+		Refer to the board schematic and PMIC datasheet to
+		determine the PWM GPIO connection.
+
+
+		- SoC GPIO:
+			Enter the GPIO number directly.
+
+		- SM GPIO:
+			Set bit[31:30] to 2'b10 and place the SM GPIO number
+			in bits[29:0].
+
+		- GPIO-X:
+			Set bit[31:30] to 2'b01 and place the GPIO_X number
+			in bits[29:0].
+
+		Examples:
+		SoC GPIO 15:
+			0xf
+
+		SM GPIO 3:
+			0x80000003
+
+		GPIO_X10:
+			0x4000000A
+
 endmenu

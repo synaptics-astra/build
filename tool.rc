@@ -35,3 +35,45 @@ INSTALL_F ${topdir}/build/tools/bin/gen_bg_crc64 ${workdir_security_tools}/bin/g
 INSTALL_F ${topdir}/build/tools/lib/sec_tools/bin/sign_image_v4 ${workdir_security_tools}/lib/sec_tools/bin/sign_image_v4
 INSTALL_F ${topdir}/build/tools/lib/sec_tools/bin/genx_img ${workdir_security_tools}/lib/sec_tools/bin/genx_img
 INSTALL_F ${topdir}/build/tools/lib/sec_tools/bin/genx_img_v3 ${workdir_security_tools}/lib/sec_tools/bin/genx_img_v3
+
+# Optional python implementation:
+build_python_genx_img() {
+  tool_name="$1"
+  workdir="$2"
+
+  compile_sh="${workdir}/compile.sh"
+  output="${workdir}/../${tool_name}"
+  install_path="${workdir_security_tools}/lib/sec_tools/bin/${tool_name}"
+
+  if [ ! -x "${compile_sh}" ]; then
+    echo "ERROR: Python ${tool_name} compile script not found or not executable: ${compile_sh}"
+    exit 1
+  fi
+
+  echo "Build python ${tool_name}: ${compile_sh}"
+
+  if ! (cd "${workdir}" && "${compile_sh}" "${output}"); then
+    echo "ERROR: Failed to build ${tool_name} in ${workdir}"
+    exit 1
+  fi
+
+  if [ ! -x "${output}" ]; then
+    echo "ERROR: Python ${tool_name} build output not found or not executable: ${output}"
+    exit 1
+  fi
+
+  INSTALL_F "${output}" "${install_path}"
+}
+
+# Optional python implementation:
+if [ "is${CONFIG_GENX_IMG_PY}" = "isy" ]; then
+  build_python_genx_img \
+    "genx_img_py" \
+    "${topdir}/build/tools/lib/sec_tools/bin/genx_img_py_src"
+fi
+
+if [ "is${CONFIG_GENX_IMG_V3_PY}" = "isy" ]; then
+  build_python_genx_img \
+    "genx_img_v3_py" \
+    "${topdir}/build/tools/lib/sec_tools/bin/genx_img_v3_py_src"
+fi

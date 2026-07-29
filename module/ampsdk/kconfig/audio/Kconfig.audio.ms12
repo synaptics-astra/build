@@ -37,21 +37,48 @@ endif
 endif
 
 if AMP_IP_AUDIO_MS12_USE_ARM
-menuconfig AMP_IP_AUDIO_MS12_ARM_V2_4
-	bool "MS12 v2.4"
-	default y
+
+choice
+	prompt "MS12 Version"
+	default AMP_IP_AUDIO_MS12_ARM_V2_4
+
+config AMP_IP_AUDIO_MS12_ARM_V2_4
+	bool "MS12v2.4"
+
+config AMP_IP_AUDIO_MS12_ARM_V2_8_1
+	bool "MS12v2.8.1"
+endchoice
 
 if AMP_IP_AUDIO_MS12_ARM_V2_4
+choice
+	prompt "Configuration"
+	default AMP_IP_AUDIO_MS12_ARM_V2_4_Z
+
 config AMP_IP_AUDIO_MS12_ARM_V2_4_Y_LITE
 	bool "MS12 v2.4 config Y LITE"
-	default n
+
 config AMP_IP_AUDIO_MS12_ARM_V2_4_Y
 	bool "MS12 v2.4 config Y"
-	default n
+
 config AMP_IP_AUDIO_MS12_ARM_V2_4_Z
 	bool "MS12 v2.4 config Z"
-	default y
+endchoice
 endif
+
+if AMP_IP_AUDIO_MS12_ARM_V2_8_1
+choice AMP_IP_AUDIO_MS12_ARM_V2_8_1_Y
+	prompt "Configuration"
+	default AMP_IP_AUDIO_MS12_ARM_V2_8_1_Y
+
+config AMP_IP_AUDIO_MS12_ARM_V2_8_1_Y
+	bool "MS12 v2.8.1 config Y"
+endchoice
+endif
+
+config MS12_VERSION
+	string
+	default "V2_4" if AMP_IP_AUDIO_MS12_ARM_V2_4
+	default "V2_8_1" if AMP_IP_AUDIO_MS12_ARM_V2_8_1
 
 endif
 

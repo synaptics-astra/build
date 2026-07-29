@@ -14,6 +14,13 @@ preboot_outdir_release=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/preboot
 
 preboot_topdir=${topdir}/boot/preboot
 
+# Generate PMIC autogen header
+if [ ! -f "${preboot_module_dir}/gen_pmic_header.sh" ]; then
+    echo "Error: ${preboot_module_dir}/gen_pmic_header.sh not found"
+    exit 1
+fi
+source "${preboot_module_dir}/gen_pmic_header.sh"
+
 run_script build-args.bashrc
 
 run_script func-get-feature-list.bashrc

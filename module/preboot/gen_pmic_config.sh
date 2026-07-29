@@ -1,373 +1,325 @@
 #!/bin/bash
 
-declare -A PMIC_MODELS=(
-    ["unknown"]=0
-    ["m88pg86x"]=1
-    ["sy8824b"]=2
-    ["ncp6335d"]=3
-    ["mp886x"]=4
-    ["sy8827n"]=5
-    ["hl7593wl06"]=6
-    ["tps62868"]=7
-    ["rt573x"]=8
-    ["fp6359"]=9
-    ["tps6287x"]=10
-)
+PMIC_MODELS_CONF="${BUILD_PREBOOT_PATH}/pmic_models"
+
+declare -A PMIC_MODELS
+load_pmic_models() {
+  PMIC_MODELS["unknown"]=0
+  PMIC_MODELS["none"]=0
+
+  if [ -f "$PMIC_MODELS_CONF" ]; then
+    local current_id=1
+    while IFS=', ' read -r name alias || [ -n "$name" ]; do
+      [[ "$name" =~ ^#.* ]] && continue
+      [[ -z "$name" ]] && continue
+      name=$(echo $name | xargs)
+      PMIC_MODELS["$name"]=$current_id
+      current_id=$((current_id + 1))
+    done < "$PMIC_MODELS_CONF"
+  else
+    echo "Error: PMIC models configuration file not found at $PMIC_MODELS_CONF" >&2
+    exit 1
+  fi
+}
+load_pmic_models
 
 PMIC_CONFIG_MAGIC=0x504D4943
 PMIC_CONFIG_VERSION=0x00000001
-PMIC_CONFIG_SIZE=32
+PMIC_CONFIG_SIZE=136
 PMIC_TARGET_SIZE=192
 
 # PWM channel constants
 PWM_INVALID_CHANNEL=255
 
 show_usage() {
-    echo "Usage: $0 [OPTIONS]"
-    echo "Options:"
-    echo "  --vcore-model MODEL    VCORE PMIC model name (e.g., tps6287x, fp6359)"
-    echo "  --vcpu-model MODEL     VCPU PMIC model name (e.g., fp6359, tps62868)"
-    echo "  --vcore-pwm-ch CH      VCORE PWM channel (0-255, empty for 0xFF)"
-    echo "  --vcpu-pwm-ch CH       VCPU PWM channel (0-255, empty for 0xFF)"
-    echo "  --output FILE          Output binary file path"
-    echo "  --list-models          List supported PMIC models"
-    echo "  --help                 Show this help message"
+  echo "Usage: $0 [OPTIONS]"
+  echo "Options:"
+  echo "  --vcore-models M0,M1,M2,M3       VCORE PMIC models for GPIO combinations 0,1,2,3"
+  echo "  --vcpu-models M0,M1,M2,M3        VCPU PMIC models for GPIO combinations 0,1,2,3"
+  echo "  --vcore-i2c-ch CH                VCORE I2C channel numeric value (0-5)"
+  echo "  --vcpu-i2c-ch CH                 VCPU I2C channel numeric value (0-5)"
+  echo "  --vcore-i2c-ch-str STR           VCORE I2C channel name (for display)"
+  echo "  --vcpu-i2c-ch-str STR            VCPU I2C channel name (for display)"
+  echo "  --pmic-type TYPE                 PMIC type (1-I2C, 2-PWM, 3-SM Timer, 4-Auto)"
+  echo "  --vcore-gpioh GPIO               VCORE GPIO high bit for auto detection"
+  echo "  --vcore-gpiol GPIO               VCORE GPIO low bit for auto detection"
+  echo "  --vcpu-gpioh GPIO                VCPU GPIO high bit for auto detection"
+  echo "  --vcpu-gpiol GPIO                VCPU GPIO low bit for auto detection"
+  echo "  --vcore-pwm-gpio VAL             VCORE PWM GPIO"
+  echo "  --vcpu-pwm-gpio VAL              VCPU PWM GPIO"
+  echo "  --vcore-smtmr-gpio VAL           VCORE SM Timer GPIO"
+  echo "  --vcpu-smtmr-gpio VAL            VCPU SM Timer GPIO"
+  echo "  --vcore-pwm-freq VAL             VCORE PWM frequency (Hz)"
+  echo "  --vcore-pwm-polarity VAL         VCORE PWM polarity"
+  echo "  --vcore-pwm-volt-min VAL         VCORE PWM min voltage (uV)"
+  echo "  --vcore-pwm-volt-max VAL         VCORE PWM max voltage (uV)"
+  echo "  --vcore-pwm-duty-min-volt VAL    VCORE PWM duty at min voltage"
+  echo "  --vcore-pwm-duty-max-volt VAL    VCORE PWM duty at max voltage"
+  echo "  --vcpu-pwm-freq VAL              VCPU PWM frequency (Hz)"
+  echo "  --vcpu-pwm-polarity VAL          VCPU PWM polarity"
+  echo "  --vcpu-pwm-volt-min VAL          VCPU PWM min voltage (uV)"
+  echo "  --vcpu-pwm-volt-max VAL          VCPU PWM max voltage (uV)"
+  echo "  --vcpu-pwm-duty-min-volt VAL     VCPU PWM duty at min voltage"
+  echo "  --vcpu-pwm-duty-max-volt VAL     VCPU PWM duty at max voltage"
+  echo "  --output FILE                    Output binary file path"
+  echo "  --list-models                    List supported PMIC models"
+  echo "  --help                           Show this help message"
 }
 
 list_models() {
-    echo "Supported PMIC models:"
-    for model in "${!PMIC_MODELS[@]}"; do
-        if [ "$model" != "unknown" ]; then
-            printf "  %-12s (ID: 0x%02X)\n" "$model" "${PMIC_MODELS[$model]}"
-        fi
-    done
+  echo "Supported PMIC models:"
+  for name in "${!PMIC_MODELS[@]}"; do
+    echo "${PMIC_MODELS[$name]}:$name"
+  done | sort -n | while IFS=':' read -r id name; do
+    if [ "$name" != "unknown" ] && [ "$name" != "none" ]; then
+      printf "  %-12s (ID: 0x%02X)\n" "$name" "$id"
+    fi
+  done
 }
 
 get_pmic_id() {
-    local model="$1"
-    local model_lower=$(echo "$model" | tr '[:upper:]' '[:lower:]')
-
-    if [ -n "${PMIC_MODELS[$model_lower]}" ]; then
-        echo "${PMIC_MODELS[$model_lower]}"
-    else
-        echo "${PMIC_MODELS[unknown]}"
-    fi
+  local model="$1"
+  local model_lower=$(echo "$model" | tr '[:upper:]' '[:lower:]' | xargs)
+  if [ -n "${PMIC_MODELS[$model_lower]}" ]; then
+    echo "${PMIC_MODELS[$model_lower]}"
+  else
+    echo "0"
+  fi
 }
 
-# Parse PWM channel value
-# Args: $1 - PWM channel string (can be empty, number, or quoted string)
-# Returns: PWM channel value (0xFF if empty, otherwise the number)
-parse_pwm_channel() {
-    local pwm_ch="$1"
-
-    # Remove quotes if present
-    pwm_ch=$(echo "$pwm_ch" | sed 's/^"\(.*\)"$/\1/')
-
-    # If empty string, return 0xFF
-    if [ -z "$pwm_ch" ] || [ "$pwm_ch" = "" ]; then
-        echo $PWM_INVALID_CHANNEL
-        return 0
-    fi
-
-    # Validate it's a number
-    if [[ "$pwm_ch" =~ ^[0-9]+$ ]]; then
-        # Check range (0-255)
-        if [ "$pwm_ch" -ge 0 ] && [ "$pwm_ch" -le 255 ]; then
-            echo "$pwm_ch"
-            return 0
-        else
-            echo "Error: PWM channel must be between 0-255, got: $pwm_ch" >&2
-            return 1
-        fi
-    else
-        echo "Error: PWM channel must be a number, got: $pwm_ch" >&2
-        return 1
-    fi
+parse_i2c_channel() {
+  local i2c_ch="$1"
+  i2c_ch=$(echo "$i2c_ch" | sed 's/^"\(.*\)"$/\1/')
+  [[ "$i2c_ch" =~ ^[0-9]+$ ]] && echo "$i2c_ch" || echo 0
 }
 
-# Convert hex string to binary
 hex_to_binary() {
-    local hex_string="$1"
-    local output_file="$2"
+  local hex_string="$1"
+  local output_file="$2"
     local i
 
-    hex_string=$(echo "$hex_string" | tr -d ' \n')
+  hex_string=$(echo "$hex_string" | tr -d ' \n')
 
-    local len=${#hex_string}
+  local len=${#hex_string}
     if [ $((len % 2)) -ne 0 ]; then
         echo "Error: Hex string must have even length" >&2
         return 1
     fi
 
-    : > "$output_file"  # Create/truncate file
-    for ((i=0; i<len; i+=2)); do
-        local byte="${hex_string:$i:2}"
-        printf "\x$byte" >> "$output_file"
-    done
+  : > "$output_file"  # Create/truncate file
+  for ((i=0; i<len; i+=2)); do
+    local byte="${hex_string:$i:2}"
+    printf "\x$byte" >> "$output_file"
+  done
 
-    return 0
+  return 0
 }
 
 calculate_checksum() {
-    local data="$1"
-    local checksum=0
-    local i=0
+  local data="$1"
+  local checksum=0
+  local i=0
 
     # Process 4-byte words (little-endian)
     while [ $i -lt $((${#data} - 8)) ]; do  # Exclude last 4 bytes (checksum field)
-        local byte1=$((0x${data:$i:2}))
-        local byte2=$((0x${data:$((i+2)):2}))
-        local byte3=$((0x${data:$((i+4)):2}))
-        local byte4=$((0x${data:$((i+6)):2}))
+    local byte1=$((0x${data:$i:2}))
+    local byte2=$((0x${data:$((i+2)):2}))
+    local byte3=$((0x${data:$((i+4)):2}))
+    local byte4=$((0x${data:$((i+6)):2}))
 
-        local word=$((byte1 + (byte2 << 8) + (byte3 << 16) + (byte4 << 24)))
-        checksum=$((checksum ^ word))
-        i=$((i + 8))
-    done
-    checksum=$((checksum & 0xFFFFFFFF))
-    echo "$checksum"
+    local word=$((byte1 + (byte2 << 8) + (byte3 << 16) + (byte4 << 24)))
+    checksum=$((checksum ^ word))
+    i=$((i + 8))
+  done
+  checksum=$((checksum & 0xFFFFFFFF))
+  echo "$checksum"
 }
 
 write_le32() {
-    local value=$1
-    printf "%02x%02x%02x%02x" \
-        $((value & 0xFF)) \
-        $(((value >> 8) & 0xFF)) \
-        $(((value >> 16) & 0xFF)) \
-        $(((value >> 24) & 0xFF))
+  local value=$1
+  printf "%02x%02x%02x%02x" \
+    $((value & 0xFF)) \
+    $(((value >> 8) & 0xFF)) \
+    $(((value >> 16) & 0xFF)) \
+    $(((value >> 24) & 0xFF))
 }
 
 generate_pmic_config() {
-    local vcore_model="$1"
-    local vcpu_model="$2"
-    local vcore_pwm_ch="$3"
-    local vcpu_pwm_ch="$4"
-    local output_file="$5"
+  local vcore_models_str="$1"
+  local vcpu_models_str="$2"
+  local vcore_i2c_val_raw="$3"
+  local vcpu_i2c_val_raw="$4"
+  local vcore_pwm_gpio="${5:-255}"
+  local vcpu_pwm_gpio="${6:-255}"
+  local output_file="$7"
+  local vcore_i2c_ch_str="$8"
+  local vcpu_i2c_ch_str="$9"
+  local pmic_type="${10:-1}"
+  local vcore_gpioh="${11:-255}"
+  local vcore_gpiol="${12:-255}"
+  local vcpu_gpioh="${13:-255}"
+  local vcpu_gpiol="${14:-255}"
+  # New PWM fields
+  local vcore_pwm_freq="${15:-0}"
+  local vcore_pwm_polarity="${16:-0}"
+  local vcore_pwm_volt_min_uv="${17:-0}"
+  local vcore_pwm_volt_max_uv="${18:-0}"
+  local vcore_pwm_duty_at_volt_min="${19:-0}"
+  local vcore_pwm_duty_at_volt_max="${20:-0}"
+  local vcpu_pwm_freq="${21:-0}"
+  local vcpu_pwm_polarity="${22:-0}"
+  local vcpu_pwm_volt_min_uv="${23:-0}"
+  local vcpu_pwm_volt_max_uv="${24:-0}"
+  local vcpu_pwm_duty_at_volt_min="${25:-0}"
+  local vcpu_pwm_duty_at_volt_max="${26:-0}"
+  local vcore_smtmr_gpio="${27:-255}"
+  local vcpu_smtmr_gpio="${28:-255}"
 
-    local vcore_id=0
-    local vcpu_id=0
-    local vcore_pwm_val=0
-    local vcpu_pwm_val=0
+  local vcore_i2c_val=$(parse_i2c_channel "$vcore_i2c_val_raw")
+  local vcpu_i2c_val=$(parse_i2c_channel "$vcpu_i2c_val_raw")
 
-    # Check if this is I2C mode BEFORE modifying model names
-    local is_i2c_mode=0
-    if [ -n "$vcore_model" ] && [ "$vcore_model" != "" ] || [ -n "$vcpu_model" ] && [ "$vcpu_model" != "" ]; then
-        is_i2c_mode=1
-    fi
+  # Split models
+  IFS=',' read -r -a vcore_models <<< "$vcore_models_str"
+  IFS=',' read -r -a vcpu_models <<< "$vcpu_models_str"
 
-    # Validate PMIC models and get IDs
-    if [ -z "$vcore_model" ] || [ "$vcore_model" = "" ]; then
-        vcore_id=0
-        vcore_model="none"
-        echo "VCORE PMIC model not specified, using 0x00"
-    else
-        vcore_id=$(get_pmic_id "$vcore_model")
-        if [ "$vcore_id" = "0" ] && [ "$vcore_model" != "unknown" ]; then
-            echo "Warning: Unknown VCORE PMIC model '$vcore_model', using default"
-        fi
-    fi
+  local config_data=""
+  config_data+=$(write_le32 $PMIC_CONFIG_MAGIC)    # 1. magic
+  config_data+=$(write_le32 $PMIC_CONFIG_VERSION)  # 2. version
 
-    if [ -z "$vcpu_model" ] || [ "$vcpu_model" = "" ]; then
-        vcpu_id=0
-        vcpu_model="none"
-        echo "VCPU PMIC model not specified, using 0x00"
-    else
-        vcpu_id=$(get_pmic_id "$vcpu_model")
-        if [ "$vcpu_id" = "0" ] && [ "$vcpu_model" != "unknown" ]; then
-            echo "Warning: Unknown VCPU PMIC model '$vcpu_model', using default"
-        fi
-    fi
+  # 3-6. VCORE IDs
+  for i in {0..3}; do
+    id=$(get_pmic_id "${vcore_models[$i]}")
+    config_data+=$(write_le32 $id)
+  done
 
-    # Parse PWM channels
-    vcore_pwm_val=$(parse_pwm_channel "$vcore_pwm_ch")
-    if [ $? -ne 0 ]; then
-        echo "Error: Invalid VCORE PWM channel: $vcore_pwm_ch"
-        return 1
-    fi
+  # 7-10. VCPU IDs
+  for i in {0..3}; do
+    id=$(get_pmic_id "${vcpu_models[$i]}")
+    config_data+=$(write_le32 $id)
+  done
 
-    vcpu_pwm_val=$(parse_pwm_channel "$vcpu_pwm_ch")
-    if [ $? -ne 0 ]; then
-        echo "Error: Invalid VCPU PWM channel: $vcpu_pwm_ch"
-        return 1
-    fi
+  config_data+=$(write_le32 $vcore_i2c_val)        # 11. vcore_i2c_ch
+  config_data+=$(write_le32 $vcpu_i2c_val)         # 12. vcpu_i2c_ch
+  config_data+=$(write_le32 $vcore_gpioh)          # 13. vcore_gpioh
+  config_data+=$(write_le32 $vcore_gpiol)          # 14. vcore_gpiol
+  config_data+=$(write_le32 $vcpu_gpioh)           # 15. vcpu_gpioh
+  config_data+=$(write_le32 $vcpu_gpiol)           # 16. vcpu_gpiol
+  config_data+=$(write_le32 $pmic_type)            # 17. pmic_type
+  config_data+=$(write_le32 $vcore_pwm_gpio)       # 18. vcore_pwm_gpio
+  config_data+=$(write_le32 $vcpu_pwm_gpio)        # 19. vcpu_pwm_gpio
+  config_data+=$(write_le32 $vcore_smtmr_gpio)     # 20. vcore_smtmr_gpio
+  config_data+=$(write_le32 $vcpu_smtmr_gpio)      # 21. vcpu_smtmr_gpio
 
-    # Apply I2C mode logic - set PWM channels to 0 instead of 0xFF
-    if [ $is_i2c_mode -eq 1 ]; then
-        if [ "$vcore_pwm_val" -eq $PWM_INVALID_CHANNEL ]; then
-            vcore_pwm_val=0
-        fi
-        if [ "$vcpu_pwm_val" -eq $PWM_INVALID_CHANNEL ]; then
-            vcpu_pwm_val=0
-        fi
-    fi
+  # PWM regulator configuration
+  config_data+=$(write_le32 $vcore_pwm_freq)            # 22. vcore_pwm_freq_hz
+  config_data+=$(write_le32 $vcore_pwm_polarity)         # 23. vcore_pwm_polarity
+  config_data+=$(write_le32 $vcore_pwm_volt_min_uv)      # 24. vcore_pwm_volt_min_uv
+  config_data+=$(write_le32 $vcore_pwm_volt_max_uv)      # 25. vcore_pwm_volt_max_uv
+  config_data+=$(write_le32 $vcore_pwm_duty_at_volt_min) # 26. vcore_pwm_duty_at_volt_min
+  config_data+=$(write_le32 $vcore_pwm_duty_at_volt_max) # 27. vcore_pwm_duty_at_volt_max
 
-    # Determine PWM valid flag (1 if any PWM channel is valid, 0 otherwise)
-    local pwm_valid=0
-    if [ $is_i2c_mode -eq 0 ]; then
-        # Not I2C mode - check if any PWM channel was actually specified (not empty)
-        local vcore_pwm_clean=$(echo "$vcore_pwm_ch" | sed 's/^"\(.*\)"$/\1/')
-        local vcpu_pwm_clean=$(echo "$vcpu_pwm_ch" | sed 's/^"\(.*\)"$/\1/')
-        if ([ -n "$vcore_pwm_clean" ] && [ "$vcore_pwm_clean" != "" ]) || ([ -n "$vcpu_pwm_clean" ] && [ "$vcpu_pwm_clean" != "" ]); then
-            pwm_valid=1
-        fi
-    fi
+  config_data+=$(write_le32 $vcpu_pwm_freq)            # 28. vcpu_pwm_freq_hz
+  config_data+=$(write_le32 $vcpu_pwm_polarity)         # 29. vcpu_pwm_polarity
+  config_data+=$(write_le32 $vcpu_pwm_volt_min_uv)      # 30. vcpu_pwm_volt_min_uv
+  config_data+=$(write_le32 $vcpu_pwm_volt_max_uv)      # 31. vcpu_pwm_volt_max_uv
+  config_data+=$(write_le32 $vcpu_pwm_duty_at_volt_min) # 32. vcpu_pwm_duty_at_volt_min
+  config_data+=$(write_le32 $vcpu_pwm_duty_at_volt_max) # 33. vcpu_pwm_duty_at_volt_max
 
-    local config_data=""
-    config_data+=$(write_le32 $PMIC_CONFIG_MAGIC)    # magic
-    config_data+=$(write_le32 $PMIC_CONFIG_VERSION)  # version
-    config_data+=$(write_le32 $vcore_id)             # vcore_id
-    config_data+=$(write_le32 $vcpu_id)              # vcpu_id
-    config_data+=$(write_le32 $pwm_valid)            # pwm_valid
-    config_data+=$(write_le32 $vcore_pwm_val)        # vcore_pwm_ch
-    config_data+=$(write_le32 $vcpu_pwm_val)         # vcpu_pwm_ch
-    config_data+="00000000"                          # checksum placeholder
+  config_data+="00000000"                          # 34. checksum placeholder
 
-    local checksum=$(calculate_checksum "$config_data")
+  local checksum=$(calculate_checksum "$config_data")
+  local checksum_hex=$(write_le32 $checksum)
+  config_data="${config_data:0:-8}$checksum_hex"
 
-    local checksum_hex=$(write_le32 $checksum)
-    config_data="${config_data:0:-8}$checksum_hex"
+  local output_dir=$(dirname "$output_file")
+  [ ! -d "$output_dir" ] && mkdir -p "$output_dir"
+  hex_to_binary "$config_data" "$output_file"
 
-    local output_dir=$(dirname "$output_file")
-    if [ ! -d "$output_dir" ]; then
-        mkdir -p "$output_dir"
-    fi
+  current_size=$(stat -c %s $output_file)
+  padding_size=$((PMIC_TARGET_SIZE - current_size))
+  dd if=/dev/zero bs=1 count=${padding_size} >> $output_file 2>/dev/null
 
-    hex_to_binary "$config_data" "$output_file"
+  # Selective Logging
+  local type_str="Unknown"
+  case "$pmic_type" in 1) type_str="I2C" ;; 2) type_str="PWM" ;; 3) type_str="SM Timer" ;; 4) type_str="Auto Det" ;; esac
 
-    current_size=$(stat -c %s $output_file)
-    if [ $current_size -gt $PMIC_TARGET_SIZE ]; then
-      echo "Error: PMIC configure exceeds available space ($PMIC_TARGET_SIZE)"
-      exit 1
-    fi
+  printf "  PMIC Type: %s (%d)\n" "$type_str" "$pmic_type"
+  if [ "$pmic_type" -eq 1 ] || [ "$pmic_type" -eq 4 ]; then
+    printf "  I2C Ch(vcore/vcpu): %s/%s\n" "${vcore_i2c_ch_str:-NONE}" "${vcpu_i2c_ch_str:-NONE}"
+    printf "  Model(vcore/vcpu): %s/%s\n" "${vcore_models_str:-NONE}" "${vcpu_models_str:-NONE}"
+  fi
+  if [ "$pmic_type" -eq 4 ]; then
+    printf "  GPIO Straps H/L: VCORE:%d/%d, VCPU:%d/%d\n" "$vcore_gpioh" "$vcore_gpiol" "$vcpu_gpioh" "$vcpu_gpiol"
+  fi
+  if [ "$pmic_type" -eq 2 ]; then
+    printf "  PWM GPIOs: VCORE:0x%08x, VCPU:0x%08x\n" "$vcore_pwm_gpio" "$vcpu_pwm_gpio"
+    printf "  PWM Freq: VCORE:%d Hz, VCPU:%d Hz\n" "$vcore_pwm_freq" "$vcpu_pwm_freq"
+  fi
+  if [ "$pmic_type" -eq 3 ]; then
+    printf "  Timer GPIOs: VCORE:0x%08x, VCPU:0x%08x\n" "$vcore_smtmr_gpio" "$vcpu_smtmr_gpio"
+    printf "  PWM Freq: VCORE:%d Hz, VCPU:%d Hz\n" "$vcore_pwm_freq" "$vcpu_pwm_freq"
+  fi
 
-    padding_size=$((PMIC_TARGET_SIZE - current_size))
-    echo "Padding PMIC configure with ${padding_size} bytes"
-    dd if=/dev/zero bs=1 count=${padding_size} >> $output_file 2>/dev/null
 
-    if [ $? -eq 0 ]; then
-        #echo "Generated PMIC config: $output_file"
-        printf "  VCORE Model: %s (ID: 0x%02X)\n" "$vcore_model" "$vcore_id"
-        printf "  VCPU Model: %s (ID: 0x%02X)\n" "$vcpu_model" "$vcpu_id"
-        printf "  PWM Valid: %s\n" "$([ $pwm_valid -eq 1 ] && echo 'Yes' || echo 'No')"
-        if [ "$vcore_pwm_val" -eq $PWM_INVALID_CHANNEL ]; then
-            printf "  VCORE PWM Channel: Not configured (0xFF)\n"
-        else
-            printf "  VCORE PWM Channel: %d (0x%02X)\n" "$vcore_pwm_val" "$vcore_pwm_val"
-        fi
-        if [ "$vcpu_pwm_val" -eq $PWM_INVALID_CHANNEL ]; then
-            printf "  VCPU PWM Channel: Not configured (0xFF)\n"
-        else
-            printf "  VCPU PWM Channel: %d (0x%02X)\n" "$vcpu_pwm_val" "$vcpu_pwm_val"
-        fi
-        echo "  Size: $PMIC_CONFIG_SIZE bytes"
-        printf "  Checksum: 0x%08X\n" "$checksum"
-        return 0
-    else
-        echo "Error: Failed to write PMIC config file: $output_file"
-        return 1
-    fi
+  echo "  Size: $PMIC_CONFIG_SIZE bytes"
+  return 0
 }
 
 main() {
-    local vcore_model=""
-    local vcpu_model=""
-    local vcore_pwm_ch=""
-    local vcpu_pwm_ch=""
-    local output_file=""
-    local list_models_flag=false
+  local vcore_models="" vcpu_models="" vcore_i2c_ch="" vcpu_i2c_ch=""
+  local vcore_i2c_ch_str="" vcpu_i2c_ch_str="" vcore_pwm_gpio=255 vcpu_pwm_gpio=255
+  local pmic_type=1 vcore_gpioh=255 vcore_gpiol=255 vcpu_gpioh=255 vcpu_gpiol=255
+  local vcore_pwm_freq=0 vcore_pwm_polarity=0 vcore_pwm_volt_min_uv=0 vcore_pwm_volt_max_uv=0
+  local vcore_pwm_duty_at_volt_min=0 vcore_pwm_duty_at_volt_max=0
+  local vcpu_pwm_freq=0 vcpu_pwm_polarity=0 vcpu_pwm_volt_min_uv=0 vcpu_pwm_volt_max_uv=0
+  local vcpu_pwm_duty_at_volt_min=0 vcpu_pwm_duty_at_volt_max=0
+  local vcore_smtmr_gpio=255 vcpu_smtmr_gpio=255
+  local output_file=""
 
-    # Parse command line arguments
-    while [ $# -gt 0 ]; do
-        case "$1" in
-            --vcore-model)
-                shift
-                vcore_model="$1"
-                ;;
-            --vcpu-model)
-                shift
-                vcpu_model="$1"
-                ;;
-            --vcore-pwm-ch)
-                shift
-                vcore_pwm_ch="$1"
-                ;;
-            --vcpu-pwm-ch)
-                shift
-                vcpu_pwm_ch="$1"
-                ;;
-            --output)
-                shift
-                output_file="$1"
-                ;;
-            --list-models)
-                list_models_flag=true
-                ;;
-            --help|-h)
-                show_usage
-                return 0
-                ;;
-            *)
-                echo "Error: Unknown option '$1'"
-                show_usage
-                return 1
-                ;;
-        esac
-        shift
-    done
 
-    # Handle list models
-    if [ "$list_models_flag" = true ]; then
-        list_models
-        return 0
-    fi
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --vcore-models) shift; vcore_models="$1" ;;
+      --vcpu-models) shift; vcpu_models="$1" ;;
+      --vcore-i2c-ch) shift; vcore_i2c_ch="$1" ;;
+      --vcpu-i2c-ch) shift; vcpu_i2c_ch="$1" ;;
+      --vcore-i2c-ch-str) shift; vcore_i2c_ch_str="$1" ;;
+      --vcpu-i2c-ch-str) shift; vcpu_i2c_ch_str="$1" ;;
+      --vcore-pwm-gpio) shift; vcore_pwm_gpio="$1" ;;
+      --vcpu-pwm-gpio) shift; vcpu_pwm_gpio="$1" ;;
+      --pmic-type) shift; pmic_type="$1" ;;
+      --vcore-gpioh) shift; vcore_gpioh="$1" ;;
+      --vcore-gpiol) shift; vcore_gpiol="$1" ;;
+      --vcpu-gpioh) shift; vcpu_gpioh="$1" ;;
+      --vcpu-gpiol) shift; vcpu_gpiol="$1" ;;
+      --vcore-pwm-freq) shift; vcore_pwm_freq="$1" ;;
+      --vcore-pwm-polarity) shift; vcore_pwm_polarity="$1" ;;
+      --vcore-pwm-volt-min) shift; vcore_pwm_volt_min_uv="$1" ;;
+      --vcore-pwm-volt-max) shift; vcore_pwm_volt_max_uv="$1" ;;
+      --vcore-pwm-duty-min-volt) shift; vcore_pwm_duty_at_volt_min="$1" ;;
+      --vcore-pwm-duty-max-volt) shift; vcore_pwm_duty_at_volt_max="$1" ;;
+      --vcpu-pwm-freq) shift; vcpu_pwm_freq="$1" ;;
+      --vcpu-pwm-polarity) shift; vcpu_pwm_polarity="$1" ;;
+      --vcpu-pwm-volt-min) shift; vcpu_pwm_volt_min_uv="$1" ;;
+      --vcpu-pwm-volt-max) shift; vcpu_pwm_volt_max_uv="$1" ;;
+      --vcpu-pwm-duty-min-volt) shift; vcpu_pwm_duty_at_volt_min="$1" ;;
+      --vcpu-pwm-duty-max-volt) shift; vcpu_pwm_duty_at_volt_max="$1" ;;
+      --vcore-smtmr-gpio) shift; vcore_smtmr_gpio="$1" ;;
+      --vcpu-smtmr-gpio) shift; vcpu_smtmr_gpio="$1" ;;
+      --output) shift; output_file="$1" ;;
+      --list-models) list_models; return 0 ;;
+      --help|-h) show_usage; return 0 ;;
+      *) echo "Error: Unknown option '$1'"; show_usage; return 1 ;;
+    esac
+    shift
+  done
 
-    # Validate required arguments
-    if [ -z "$output_file" ]; then
-        echo "Error: --output is required when not using --list-models"
-        show_usage
-        return 1
-    fi
+  if [ -z "$output_file" ]; then echo "Error: --output is required"; return 1; fi
 
-    # Check configuration validity: either I2C mode or PWM mode, not both or neither
-    # Check if PWM channels are actually specified (not empty strings or quoted empty strings)
-    vcore_pwm_specified=0
-    vcpu_pwm_specified=0
-    # Remove quotes and check if non-empty
-    vcore_pwm_clean=$(echo "$vcore_pwm_ch" | sed 's/^"\(.*\)"$/\1/')
-    vcpu_pwm_clean=$(echo "$vcpu_pwm_ch" | sed 's/^"\(.*\)"$/\1/')
-    if [ -n "$vcore_pwm_clean" ] && [ "$vcore_pwm_clean" != "" ]; then
-        vcore_pwm_specified=1
-    fi
-    if [ -n "$vcpu_pwm_clean" ] && [ "$vcpu_pwm_clean" != "" ]; then
-        vcpu_pwm_specified=1
-    fi
-
-    if [ -n "$vcore_model" ] || [ -n "$vcpu_model" ]; then
-        # I2C mode: PMIC models provided
-        if [ $vcore_pwm_specified -eq 1 ] || [ $vcpu_pwm_specified -eq 1 ]; then
-            echo "Error: Cannot mix I2C mode (PMIC models) with PWM mode (PWM channels)"
-            echo "Use either --vcore-model/--vcpu-model OR --vcore-pwm-ch/--vcpu-pwm-ch, not both"
-            show_usage
-            return 1
-        fi
-    elif [ $vcore_pwm_specified -eq 1 ] || [ $vcpu_pwm_specified -eq 1 ]; then
-        # PWM mode: PWM channels provided, no PMIC models
-        echo "PWM mode: Using PWM channels for voltage control"
-    else
-        # Neither mode specified
-        echo "Error: Must specify either I2C mode (PMIC models) or PWM mode (PWM channels)"
-        echo "I2C mode: Use --vcore-model and/or --vcpu-model"
-        echo "PWM mode: Use --vcore-pwm-ch and/or --vcpu-pwm-ch (non-empty values)"
-        show_usage
-        return 1
-    fi
-
-    # Generate configuration
-    if ! generate_pmic_config "$vcore_model" "$vcpu_model" "$vcore_pwm_ch" "$vcpu_pwm_ch" "$output_file"; then
-        return 1
-    fi
-
-    return 0
+  generate_pmic_config "$vcore_models" "$vcpu_models" "$vcore_i2c_ch" "$vcpu_i2c_ch" "$vcore_pwm_gpio" "$vcpu_pwm_gpio" "$output_file" "$vcore_i2c_ch_str" "$vcpu_i2c_ch_str" "$pmic_type" "$vcore_gpioh" "$vcore_gpiol" "$vcpu_gpioh" "$vcpu_gpiol" \
+    "$vcore_pwm_freq" "$vcore_pwm_polarity" "$vcore_pwm_volt_min_uv" "$vcore_pwm_volt_max_uv" "$vcore_pwm_duty_at_volt_min" "$vcore_pwm_duty_at_volt_max" \
+    "$vcpu_pwm_freq" "$vcpu_pwm_polarity" "$vcpu_pwm_volt_min_uv" "$vcpu_pwm_volt_max_uv" "$vcpu_pwm_duty_at_volt_min" "$vcpu_pwm_duty_at_volt_max" \
+    "$vcore_smtmr_gpio" "$vcpu_smtmr_gpio"
 }
 
 main "$@"

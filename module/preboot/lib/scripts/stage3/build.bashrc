@@ -2,59 +2,80 @@
 
 gen_pmic_config() {
   # Generate PMIC configuration binary
-  if [ "x${CONFIG_PMIC_MODE_I2C}" = "xy" ]; then
-    # Remove quotes from PMIC model names
-    vcore_model=$(echo ${CONFIG_VCORE_PMIC_MODEL} | sed 's/"//g')
-    vcpu_model=$(echo ${CONFIG_VCPU_PMIC_MODEL} | sed 's/"//g')
+  pmic_generate=n
+  pmic_type=1
 
-    # Only generate PMIC config if at least one PMIC model is specified
-    if [ "x${vcore_model}" != "x" ] || [ "x${vcpu_model}" != "x" ]; then
-      echo "Generating PMIC configuration for I2C mode - VCORE: ${CONFIG_VCORE_PMIC_MODEL}, VCPU: ${CONFIG_VCPU_PMIC_MODEL}"
-
-      # Generate PMIC config binary for I2C mode
-      pmic_args="--output ${preboot_outdir_release}/pmic_config.bin"
-      if [ "x${vcore_model}" != "x" ]; then
-        pmic_args="${pmic_args} --vcore-model ${vcore_model}"
-      fi
-      if [ "x${vcpu_model}" != "x" ]; then
-        pmic_args="${pmic_args} --vcpu-model ${vcpu_model}"
-      fi
-      # Pass empty PWM parameters for I2C mode (gen_pmic_config.sh will set them to 0)
-      pmic_args="${pmic_args} --vcore-pwm-ch \"\" --vcpu-pwm-ch \"\""
+  if [ "x${CONFIG_PMIC_IF_I2C}" = "xy" ] || [ "x${CONFIG_PMIC_IF_AUTO}" = "xy" ]; then
+    if [ "x${CONFIG_PMIC_IF_AUTO}" = "xy" ]; then
+      vcore_models="${CONFIG_VCORE_PMIC_MODEL_0:-none},${CONFIG_VCORE_PMIC_MODEL_1:-none},${CONFIG_VCORE_PMIC_MODEL_2:-none},${CONFIG_VCORE_PMIC_MODEL_3:-none}"
+      vcpu_models="${CONFIG_VCPU_PMIC_MODEL_0:-none},${CONFIG_VCPU_PMIC_MODEL_1:-none},${CONFIG_VCPU_PMIC_MODEL_2:-none},${CONFIG_VCPU_PMIC_MODEL_3:-none}"
+      echo "Generating PMIC configuration with Auto Detection"
+      pmic_type=4
+      pmic_generate=y
     else
-      echo "Info: I2C mode selected but no PMIC models specified, skipping PMIC configuration generation"
-      pmic_args=""
+      vcore_model=$(echo ${CONFIG_VCORE_PMIC_MODEL} | sed 's/"//g')
+      vcpu_model=$(echo ${CONFIG_VCPU_PMIC_MODEL} | sed 's/"//g')
+      vcore_models="${vcore_model:-none},none,none,none"
+      vcpu_models="${vcpu_model:-none},none,none,none"
+      pmic_type=1
+      if [ "x${vcore_model}" != "x" ] || [ "x${vcpu_model}" != "x" ]; then
+        echo "Generating PMIC configuration for I2C mode"
+        pmic_generate=y
+      fi
     fi
 
-  elif [ "x${CONFIG_PMIC_MODE_PWM}" = "xy" ]; then
-    echo "Generating PMIC configuration for PWM mode - VCORE PWM: ${CONFIG_VCORE_PMIC_PWMCH}, VCPU PWM: ${CONFIG_VCPU_PMIC_PWMCH}"
+    if [ "x${pmic_generate}" = "xy" ]; then
+      pmic_args="--output ${preboot_outdir_release}/pmic_config.bin"
+      pmic_args="${pmic_args} --vcore-models ${vcore_models} --vcpu-models ${vcpu_models}"
+      pmic_args="${pmic_args} --vcore-i2c-ch ${CONFIG_VCORE_PMIC_I2CCH_NUM} --vcpu-i2c-ch ${CONFIG_VCPU_PMIC_I2CCH_NUM}"
+      if [ -n "${CONFIG_VCORE_PMIC_I2CCH}" ]; then
+        pmic_args="${pmic_args} --vcore-i2c-ch-str ${CONFIG_VCORE_PMIC_I2CCH}"
+      fi
+      if [ -n "${CONFIG_VCPU_PMIC_I2CCH}" ]; then
+        pmic_args="${pmic_args} --vcpu-i2c-ch-str ${CONFIG_VCPU_PMIC_I2CCH}"
+      fi
+      pmic_args="${pmic_args} --pmic-type ${pmic_type}"
+      pmic_args="${pmic_args} --vcore-gpioh ${CONFIG_VCORE_PMIC_GPIOH:-255} --vcore-gpiol ${CONFIG_VCORE_PMIC_GPIOL:-255}"
+      pmic_args="${pmic_args} --vcpu-gpioh ${CONFIG_VCPU_PMIC_GPIOH:-255} --vcpu-gpiol ${CONFIG_VCPU_PMIC_GPIOL:-255}"
+    fi
 
-    # Remove quotes from PWM channels
-    vcore_pwm_ch=$(echo ${CONFIG_VCORE_PMIC_PWMCH} | sed 's/"//g')
-    vcpu_pwm_ch=$(echo ${CONFIG_VCPU_PMIC_PWMCH} | sed 's/"//g')
+  elif [ "x${CONFIG_PMIC_IF_PWM}" = "xy" ] || [ "x${CONFIG_PMIC_PWM_BACKEND_SMTIMER}" = "xy" ]; then
+    if [ "x${CONFIG_PMIC_PWM_BACKEND_SMTIMER}" = "xy" ]; then
+      echo "Generating PMIC configuration for SM Timer mode"
+      pmic_type=3
+    else
+      echo "Generating PMIC configuration for PWM mode"
+      pmic_type=2
+    fi
 
-    # Generate PMIC config binary for PWM mode
+    vcore_pwm_gpio=$(echo ${CONFIG_VCORE_PWM_GPIO} | sed 's/"//g')
+    vcpu_pwm_gpio=$(echo ${CONFIG_VCPU_PWM_GPIO} | sed 's/"//g')
+
     pmic_args="--output ${preboot_outdir_release}/pmic_config.bin"
-    # No PMIC models for PWM mode
-    pmic_args="${pmic_args} --vcore-pwm-ch \"${vcore_pwm_ch}\" --vcpu-pwm-ch \"${vcpu_pwm_ch}\""
-
-  else
-    echo "Info: No PMIC configuration specified, skipping PMIC configuration generation"
-    pmic_args=""
+    pmic_args="${pmic_args} --pmic-type ${pmic_type} --vcore-pwm-gpio ${vcore_pwm_gpio} --vcpu-pwm-gpio ${vcpu_pwm_gpio}"
+    pmic_args="${pmic_args} --vcore-models none,none,none,none --vcpu-models none,none,none,none"
+    pmic_args="${pmic_args} --vcore-pwm-freq ${CONFIG_VCORE_PWM_FREQ_HZ:-0} --vcore-pwm-polarity ${CONFIG_VCORE_PWM_POLARITY:-0}"
+    pmic_args="${pmic_args} --vcore-pwm-volt-min ${CONFIG_VCORE_PWM_VOLT_MIN_UV:-0} --vcore-pwm-volt-max ${CONFIG_VCORE_PWM_VOLT_MAX_UV:-0}"
+    pmic_args="${pmic_args} --vcore-pwm-duty-min-volt ${CONFIG_VCORE_PWM_DUTY_AT_VOLT_MIN:-0} --vcore-pwm-duty-max-volt ${CONFIG_VCORE_PWM_DUTY_AT_VOLT_MAX:-0}"
+    pmic_args="${pmic_args} --vcpu-pwm-freq ${CONFIG_VCPU_PWM_FREQ_HZ:-0} --vcpu-pwm-polarity ${CONFIG_VCPU_PWM_POLARITY:-0}"
+    pmic_args="${pmic_args} --vcpu-pwm-volt-min ${CONFIG_VCPU_PWM_VOLT_MIN_UV:-0} --vcpu-pwm-volt-max ${CONFIG_VCPU_PWM_VOLT_MAX_UV:-0}"
+    pmic_args="${pmic_args} --vcpu-pwm-duty-min-volt ${CONFIG_VCPU_PWM_DUTY_AT_VOLT_MIN:-0} --vcpu-pwm-duty-max-volt ${CONFIG_VCPU_PWM_DUTY_AT_VOLT_MAX:-0}"
+    pmic_args="${pmic_args} --vcore-smtmr-gpio ${CONFIG_VCORE_SMTMR_GPIO:-255} --vcpu-smtmr-gpio ${CONFIG_VCPU_SMTMR_GPIO:-255}"
+    pmic_generate=y
   fi
 
-  if [ "x${pmic_args}" != "x" ]; then
-
-    ${topdir}/build/module/preboot/gen_pmic_config.sh ${pmic_args}
-
-    if [ $? -eq 0 ]; then
-      echo "PMIC configuration binary generated successfully"
-    else
+  if [ "x${pmic_generate}" = "xy" ]; then
+    SDK_TOP=${topdir}
+    BUILD_PREBOOT_PATH=${SDK_TOP}/build/module/preboot
+    export BUILD_PREBOOT_PATH
+    set -- ${pmic_args}
+    ${topdir}/build/module/preboot/gen_pmic_config.sh "$@"
+    if [ $? -ne 0 ]; then
       echo "Error: Failed to generate PMIC configuration binary"
       exit 1
     fi
   else
-    echo "Info: No PMIC configuration specified, skipping PMIC configuration generation"
+    echo "Info: No PMIC configuration specified, skipping"
   fi
 }
 
@@ -322,7 +343,12 @@ if [ "is${opt_genx_enable}" != "is" ]; then
     /bin/cp $f_gen3_ddr_phy_fw_1 ${preboot_outdir_build_release}/gen3_ddr_phy_fw_1.bin
   fi
 
-  [[ -f $f_K0_BOOT_store && -f $f_K0_TEE_store && -f $f_K1_BOOT_A_store && -f $f_K1_BOOT_B_store && -f $f_K1_TEE_A_store && -f $f_EROM && -f $f_K0_REE_store && -f $f_BCM_Kernel && -f $f_K1_TEE_B_store && -f $f_K1_TEE_C_store && -f $f_K1_TEE_D_store && -f $f_K1_REE_A_store && -f $f_K1_REE_B_store && -f $f_K1_REE_C_store && -f $f_K1_REE_D_store && -f $f_boot_monitor ]]
+  if [ -f "$f_K0_BOOT_store" ] && [ -f "$f_K0_TEE_store" ] && [ -f "$f_K1_BOOT_A_store" ] && [ -f "$f_K1_BOOT_B_store" ] && [ -f "$f_K1_TEE_A_store" ] && [ -f "$f_EROM" ] && [ -f "$f_K0_REE_store" ] && [ -f "$f_BCM_Kernel" ] && [ -f "$f_K1_TEE_B_store" ] && [ -f "$f_K1_TEE_C_store" ] && [ -f "$f_K1_TEE_D_store" ] && [ -f "$f_K1_REE_A_store" ] && [ -f "$f_K1_REE_B_store" ] && [ -f "$f_K1_REE_C_store" ] && [ -f "$f_K1_REE_D_store" ] && [ -f "$f_boot_monitor" ]; then
+    :
+  else
+    echo "Error: missing required prebuilt file(s)" >&2
+    exit 1
+  fi
 
   /bin/cp $f_K0_BOOT_store ${preboot_outdir_build_release}/K0_BOOT_store.bin
   /bin/cp $f_K0_TEE_store ${preboot_outdir_build_release}/K0_TEE_store.bin

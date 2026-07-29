@@ -9,6 +9,7 @@ if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
   config_file=$1
 
   source ${config_file}
+  export CONFIG_PRODUCT_NAME
 
   # Export PMIC configuration for pack script
   if [ "x${CONFIG_VCORE_PMIC_MODEL}" != "x" ]; then
@@ -19,10 +20,55 @@ if [ "is${CONFIG_RDK_SYS}" != "isy" ]; then
   fi
 
   # Export new choice-based PMIC configuration
-  export CONFIG_PMIC_MODE_I2C
-  export CONFIG_PMIC_MODE_PWM
+  export CONFIG_PMIC_IF_I2C
+  export CONFIG_PMIC_IF_PWM
+  export CONFIG_PMIC_IF_AUTO
+  export CONFIG_PMIC_IF_LEGACY
+  export CONFIG_PMIC_PWM_BACKEND_PWM
+  export CONFIG_PMIC_PWM_BACKEND_SMTIMER
   export CONFIG_VCORE_PMIC_PWMCH
   export CONFIG_VCPU_PMIC_PWMCH
+  export CONFIG_PMIC_AUTO_DET_VALID
+  export CONFIG_VCORE_PMIC_GPIOH
+  export CONFIG_VCORE_PMIC_GPIOL
+  export CONFIG_VCPU_PMIC_GPIOH
+  export CONFIG_VCPU_PMIC_GPIOL
+  export CONFIG_VCORE_PMIC_MODEL_0
+  export CONFIG_VCORE_PMIC_MODEL_1
+  export CONFIG_VCORE_PMIC_MODEL_2
+  export CONFIG_VCORE_PMIC_MODEL_3
+  export CONFIG_VCPU_PMIC_MODEL_0
+  export CONFIG_VCPU_PMIC_MODEL_1
+  export CONFIG_VCPU_PMIC_MODEL_2
+  export CONFIG_VCPU_PMIC_MODEL_3
+  export CONFIG_VCORE_PWM_GPIO
+  export CONFIG_VCPU_PWM_GPIO
+  export CONFIG_VCORE_PWM_FREQ_HZ
+  export CONFIG_VCORE_PWM_POLARITY
+  export CONFIG_VCORE_PWM_VOLT_MIN_UV
+  export CONFIG_VCORE_PWM_VOLT_MAX_UV
+  export CONFIG_VCORE_PWM_DUTY_AT_VOLT_MIN
+  export CONFIG_VCORE_PWM_DUTY_AT_VOLT_MAX
+  export CONFIG_VCPU_PWM_FREQ_HZ
+  export CONFIG_VCPU_PWM_POLARITY
+  export CONFIG_VCPU_PWM_VOLT_MIN_UV
+  export CONFIG_VCPU_PWM_VOLT_MAX_UV
+  export CONFIG_VCPU_PWM_DUTY_AT_VOLT_MIN
+  export CONFIG_VCPU_PWM_DUTY_AT_VOLT_MAX
+  export CONFIG_VCORE_PMIC_I2CCH
+  export CONFIG_VCORE_PMIC_I2CCH_NUM
+  export CONFIG_VCPU_PMIC_I2CCH
+  export CONFIG_VCPU_PMIC_I2CCH_NUM
+  export CONFIG_VCORE_SMTMR_GPIO
+  export CONFIG_VCPU_SMTMR_GPIO
+
+  # Export GenX image tool configuration
+  if [ "x${CONFIG_GENX_IMG_PY}" != "x" ]; then
+    export CONFIG_GENX_IMG_PY
+  fi
+  if [ "x${CONFIG_GENX_IMG_V3_PY}" != "x" ]; then
+    export CONFIG_GENX_IMG_V3_PY
+  fi
 
   if [ "$2" == "clean" ]; then
     clean=1;

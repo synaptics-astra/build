@@ -1,0 +1,18 @@
+# Supported PMIC Models configuration
+# Format: <PMIC Model Name>, <DriverOps Alias>
+# Alias can be shared when PMICs use the same driver implementation
+#
+# PMIC Model Name : actual PMIC model name used in configuration
+# DriverOps Alias : registered driver ops name
+m88pg86x, m88pg86x
+sy8824b, sy8824b
+ncp6335d, ncp6335d
+mp886x, mp886x
+sy8827n, sy8827n
+hl7593wl06, hl7593
+tps62868, tps62868
+rt5739, rt5739
+pwm_pmic, pwm_pmic
+tps6287x, tps6287x
+rt5733, rt5739
+smtimer, smtimer

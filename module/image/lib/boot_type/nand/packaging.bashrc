@@ -236,6 +236,9 @@ for part in $part_list_full; do
 		"rootfs_a"|"rootfs_b")
 			module="rootfs"
 			;;
+		"rescue")
+			module="rescue"
+			;;
 		"cmboot_a"|"cmboot_b")
 			module="cmboot"
 			;;

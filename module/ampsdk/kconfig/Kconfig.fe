@@ -1,3 +1,20 @@
+menu "FrontEnd Driver"
+
 config ENABLE_TUNER_DEMOD
     bool "FE Support"
     default n
+
+if ENABLE_TUNER_DEMOD
+choice
+	prompt "Tuner/Demod model selection"
+	default TUNER_DEMOD_CXD2856
+
+config TUNER_DEMOD_CXD2856
+	bool "Sony CXD2856 for Synaptics reference board"
+
+config TUNER_DEMOD_CXD682X
+	bool "Sony CXD682X for customer board"
+endchoice
+endif
+
+endmenu

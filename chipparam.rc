@@ -29,10 +29,17 @@ unset CONFIG_TA_GFX_IMG_LINUX
 unset CONFIG_PR_SYNA_TA
 unset CONFIG_AMPSDK
 unset CONFIG_GENX_MCU
+unset CONFIG_GENX_IMG_PY
+unset CONFIG_GENX_IMG_V3_PY
 
 chip_release_config="${topdir}/out/.config.${chip}"
 
 source ${chip_release_config}
+
+# `unset` above clears export attributes. Re-export so child processes
+# (for example gen_x_secure_image) can read these from environment.
+export CONFIG_GENX_IMG_PY
+export CONFIG_GENX_IMG_V3_PY
 
 j=0
 for ver in $CONFIG_BERLIN_LIST_SOC_VERSION

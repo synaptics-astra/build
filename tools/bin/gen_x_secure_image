@@ -143,16 +143,18 @@ class GenXSecureImage:
       signing_key = self.opts.workdir_security_keys + "/" + rsa_list.get(self.opts.img_type[0])
 
     """ Command and arguments """
-    exec_bin = Path(self.opts.workdir_security_tools) / 'genx_img'
-    exec_bin = exec_bin.as_posix()
+    use_py_impl = (os.environ.get('CONFIG_GENX_IMG_PY') == 'y')
+    preferred_bin = 'genx_img_py' if use_py_impl else 'genx_img'
 
+    exec_bin = (Path(self.opts.workdir_security_tools) / preferred_bin).as_posix()
     if not os.access(exec_bin, os.X_OK):
-        exec_bin = Path(self.opts.workdir_security_tools).parent / 'lib' / 'sec_tools' / 'bin' / 'genx_img'
+        exec_bin = Path(self.opts.workdir_security_tools).parent / 'lib' / 'sec_tools' / 'bin' / preferred_bin
         exec_bin = exec_bin.as_posix()
         if not os.access(exec_bin, os.X_OK):
-            exec_bin = shutil.which('genx_img')
+            exec_bin = shutil.which(preferred_bin)
+
     if not exec_bin:
-      raise Exception("can't find genx_img")
+      raise Exception("can't find {}".format(preferred_bin))
 
     cmd2run = [ exec_bin ]
 
@@ -222,16 +224,18 @@ class GenXSecureImage:
       signing_key = self.opts.workdir_security_keys + "/" + ecc_list.get(self.opts.img_type[0])
 
     """ Command and arguments """
-    exec_bin = Path(self.opts.workdir_security_tools) / 'genx_img_v3'
-    exec_bin = exec_bin.as_posix()
+    use_py_impl = (os.environ.get('CONFIG_GENX_IMG_V3_PY') == 'y')
+    preferred_bin = 'genx_img_v3_py' if use_py_impl else 'genx_img_v3'
 
+    exec_bin = (Path(self.opts.workdir_security_tools) / preferred_bin).as_posix()
     if not os.access(exec_bin, os.X_OK):
-        exec_bin = Path(self.opts.workdir_security_tools).parent / 'lib' / 'sec_tools' / 'bin' / 'genx_img_v3'
+        exec_bin = Path(self.opts.workdir_security_tools).parent / 'lib' / 'sec_tools' / 'bin' / preferred_bin
         exec_bin = exec_bin.as_posix()
         if not os.access(exec_bin, os.X_OK):
-            exec_bin = shutil.which('genx_img_v3')
+            exec_bin = shutil.which(preferred_bin)
+
     if not exec_bin:
-      raise Exception("can't find genx_img_v3")
+      raise Exception("can't find {}".format(preferred_bin))
 
     cmd2run = [ exec_bin ]
 

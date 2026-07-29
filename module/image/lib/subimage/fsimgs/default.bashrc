@@ -301,8 +301,6 @@ mkfsimg_ubifs() {
   fs_srcdir=$1; shift; [ "x${fs_srcdir}" != "x" ]
   fs_dstimg=$1; shift; [ "x${fs_dstimg}" != "x" ]
 
-  [ -d $fs_srcdir ]
-
   ### copy linux kernel into boot folder ###
   mkdir -p ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/rootfs/boot/
   cp ${outdir_subimg_intermediate}/linux_bootimgs.subimg ${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/rootfs/boot/
@@ -330,20 +328,50 @@ mkfsimg_ubifs() {
   actual_vol_size_mib=$(( ${actual_vol_size} / 1024 / 1024 ))
 
   fs_dstubi=${fs_dstimg}.ubifs
+  ubinize_cfg=${fs_dstimg}-ubinize.cfg
+  fs_srcdir=${fs_srcdir%/}
+  if [ "${fs_srcdir##*/}" = "rescue" ]; then
+    fs_srcdir="${fs_srcdir%/*}/rootfs"
+    echo "[uboot-env-volume]" > ${ubinize_cfg}
+    echo "mode=ubi" >> ${ubinize_cfg}
+    echo "vol_id=0" >> ${ubinize_cfg}
+    echo "vol_size=16KiB" >> ${ubinize_cfg}
+    echo "vol_type=dynamic" >> ${ubinize_cfg}
+    echo "vol_name=uboot_env" >> ${ubinize_cfg}
+
+    echo "[uboot-env-r-volume]" >> ${ubinize_cfg}
+    echo "mode=ubi" >> ${ubinize_cfg}
+    echo "vol_id=1" >> ${ubinize_cfg}
+    echo "vol_size=16KiB" >> ${ubinize_cfg}
+    echo "vol_type=dynamic" >> ${ubinize_cfg}
+    echo "vol_name=uboot_env_r" >> ${ubinize_cfg}
+
+    echo "[rescue-volume]" >> ${ubinize_cfg}
+    echo "mode=ubi" >> ${ubinize_cfg}
+    echo "image=${fs_dstubi}" >> ${ubinize_cfg}
+    echo "vol_id=2" >> ${ubinize_cfg}
+    echo "vol_size=${actual_vol_size_mib}MiB" >> ${ubinize_cfg}
+    echo "vol_type=dynamic" >> ${ubinize_cfg}
+    echo "vol_name=${fsname}" >> ${ubinize_cfg}
+    echo "vol_flags=autoresize" >> ${ubinize_cfg}
+  else
+    echo "[rootfs-volume]" > ${ubinize_cfg}
+    echo "mode=ubi" >> ${ubinize_cfg}
+    echo "image=${fs_dstubi}" >> ${ubinize_cfg}
+    echo "vol_id=0" >> ${ubinize_cfg}
+    echo "vol_size=${actual_vol_size_mib}MiB" >> ${ubinize_cfg}
+    echo "vol_type=dynamic" >> ${ubinize_cfg}
+    echo "vol_name=${fsname}" >> ${ubinize_cfg}
+    echo "vol_flags=autoresize" >> ${ubinize_cfg}
+  fi
+
+  [ -d $fs_srcdir ]
+
   exec2run="mkfs.ubifs"
   #cmd_args=" -F -r ${fs_srcdir} -m ${nand_param_page_size} -e ${leb_size} -c ${max_leb_count} -o ${fs_dstubi} --hash-algo=sha256 --auth-cert=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/linux/intermediate/certs/signing_key.x509 --auth-key=${CONFIG_SYNA_SDK_OUT_TARGET_PATH}/linux/intermediate/certs/signing_key.pem"
   cmd_args=" -F -r ${fs_srcdir} -m ${nand_param_page_size} -e ${leb_size} -c ${max_leb_count} -o ${fs_dstubi}"
-  eval $exec2run "$cmd_args"
 
-  ubinize_cfg=${fs_dstimg}-ubinize.cfg
-  echo "[rootfs-volume]" > ${ubinize_cfg}
-  echo "mode=ubi" >> ${ubinize_cfg}
-  echo "image=${fs_dstubi}" >> ${ubinize_cfg}
-  echo "vol_id=0" >> ${ubinize_cfg}
-  echo "vol_size=${actual_vol_size_mib}MiB" >> ${ubinize_cfg}
-  echo "vol_type=dynamic" >> ${ubinize_cfg}
-  echo "vol_name=${fsname}" >> ${ubinize_cfg}
-  echo "vol_flags=autoresize" >> ${ubinize_cfg}
+  eval $exec2run "$cmd_args"
 
   exec2run="ubinize"
   cmd_args=" -vv -o ${fs_dstimg} -m ${nand_param_page_size} -p ${block_size_kib}KiB -s ${nand_param_page_size} ${ubinize_cfg}"

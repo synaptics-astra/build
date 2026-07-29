@@ -164,6 +164,13 @@ build_bootloader() {
   cmd2run1="${cmd2run1} BOOT_TYPE=EMMC_BOOT &&"
   cmd2run1="${cmd2run1} ${cmd2run} make || exit 1"
 
+  # Generate PMIC autogen header
+  if [ ! -f "${topdir}/build/module/bootloader/gen_pmic_header.sh" ]; then
+      echo "Error: ${topdir}/build/module/bootloader/gen_pmic_header.sh not found"
+      exit 1
+  fi
+  source "${topdir}/build/module/bootloader/gen_pmic_header.sh"
+
   pushd ${topdir}/boot/bootloader
   echo $cmd2run1
   eval "$cmd2run1"

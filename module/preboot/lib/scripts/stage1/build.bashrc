@@ -22,15 +22,22 @@ preboot_outdir_build_intermediate="${preboot_build_basedir}/intermediate/obj"
 if [ "is${CONFIG_PREBOOT_PROFILE}" = "isnocs" ]; then
   #if nocs && non-GenX case, build miniloader only
   if [ "{CONFIG_GENX_ENABLE}" = "y" ]; then
-	preboot_build_sysinit=y
+    preboot_build_sysinit=y
   else
-	preboot_build_sysinit=n
+    preboot_build_sysinit=n
   fi
   preboot_build_miniloader=y
 else
   preboot_build_sysinit=y
   preboot_build_miniloader=y
 fi
+
+# Generate PMIC autogen header
+if [ ! -f "${preboot_module_dir}/gen_pmic_header.sh" ]; then
+    echo "Error: ${preboot_module_dir}/gen_pmic_header.sh not found"
+    exit 1
+fi
+source "${preboot_module_dir}/gen_pmic_header.sh"
 
 run_script build-args.bashrc 1
 run_script build-one.bashrc "1"

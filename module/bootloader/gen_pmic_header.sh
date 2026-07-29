@@ -1,0 +1,1 @@
+../preboot/gen_pmic_header.sh
