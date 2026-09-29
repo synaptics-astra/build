@@ -1,25 +1,23 @@
-# Bash script: run selected stages
+# POSIX shell script: run selected stages
 
 #############
 # Functions #
 #############
 
 try_stage_script() {
-  local stage
-  stage=$1; shift
-  only_pack=$1
+  _try_stage_script_stage=$1
+  shift
+  only_pack=${1-}
 
   stage_script_exist=""
 
-  local script_to_run
-  script_to_run=${preboot_module_dir}/lib/scripts/stage${stage}/build.bashrc
+  _try_stage_script_path=${preboot_module_dir}/lib/scripts/stage${_try_stage_script_stage}/build.bashrc
 
-  if [ -f ${script_to_run} ]; then
+  if [ -f "${_try_stage_script_path}" ]; then
     (
       set -- "$only_pack"
-      . ${script_to_run}
+      . "${_try_stage_script_path}"
     )
-    wait $!
 
     stage_script_exist="y"
   else
@@ -28,29 +26,27 @@ try_stage_script() {
 }
 
 try_stages() {
-  local stage_found="n"
+  _try_stages_found="n"
 
   while true
   do
-    local stage_to_run
-
-    stage_to_run=$1
-    if [ "x${stage_to_run}" = "x" ]; then
+    _try_stages_stage=${1-}
+    if [ "x${_try_stages_stage}" = "x" ]; then
       break
     else
       shift
-      only_pack=$1
+      only_pack=${1-}
     fi
 
     # Run stage script if exists
-    try_stage_script ${stage_to_run} ${only_pack}
+    try_stage_script "${_try_stages_stage}" "${only_pack}"
     if [ "is${stage_script_exist}" = "isy" ]; then
-      stage_found="y"
+      _try_stages_found="y"
       break
     fi
   done
 
-  if [ "is${stage_found}" != "isy" ]; then
+  if [ "is${_try_stages_found}" != "isy" ]; then
     echo "ERROR: could not find any script of selected stages"
     /bin/false
   fi

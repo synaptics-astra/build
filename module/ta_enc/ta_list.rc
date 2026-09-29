@@ -318,6 +318,11 @@ fi
 ta_path_list="${ta_path_list} libsimplecas.ta"
 ta_list="${ta_list} libsimplecas.ta"
 
+if [ "is${CONFIG_AMP_ENABLE_ACAS}" = "isy" ]; then
+    ta_path_list="${ta_path_list} libacas.ta"
+    ta_list="${ta_list} libacas.ta"
+fi
+
 if [ "is${CONFIG_TA_IMAGEPROC}" = "isy" ]; then
     ta_path_list="${ta_path_list} libimageproc.ta"
     ta_list="${ta_list} libimageproc.ta"

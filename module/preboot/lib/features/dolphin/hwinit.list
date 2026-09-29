@@ -8,6 +8,9 @@ hwinit		lpddr4x		4GB		3733		y		default/default
 hwinit		lpddr4x		2GB		3733		y		cust1
 hwinit		lpddr4x		3GB		3733		y		cust1
 hwinit		lpddr4x		4GB		3733		y		cust1
+hwinit		lpddr4x		2GB		3733		y		cust1_ch0
+hwinit		lpddr4x		3GB		3733		y		cust1_ch0
+hwinit		lpddr4x		4GB		3733		y		cust1_ch0
 hwinit		lpddr4x		2GB		3733		y		ch0
 hwinit		lpddr4x		3GB		3733		y		ch0
 hwinit		lpddr4x		4GB		3733		y		ch0

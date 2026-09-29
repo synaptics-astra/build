@@ -60,7 +60,7 @@ build_sm() {
         PLATFORM \
         SM_CROSS_COMPILE \
         SM_PLATFORM_DIR"
-    local tc=$(which arm-linux-gnueabihf-gcc)
+    local tc=$(which arm-none-linux-gnueabihf-gcc)
     if [ "null$tc" != "null" ]; then
         SM_CROSS_COMPILE=$(echo "$tc" | sed 's/...$//')
     else

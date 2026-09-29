@@ -1,4 +1,4 @@
-# Bash script: stage 1 build
+# POSIX shell script: stage 1 build
 
 run_script() {
   script_name=$1; shift
@@ -37,7 +37,7 @@ if [ ! -f "${preboot_module_dir}/gen_pmic_header.sh" ]; then
     echo "Error: ${preboot_module_dir}/gen_pmic_header.sh not found"
     exit 1
 fi
-source "${preboot_module_dir}/gen_pmic_header.sh"
+"${preboot_module_dir}/gen_pmic_header.sh" "${CONFIG_SYNA_SDK_PATH}"
 
 run_script build-args.bashrc 1
 run_script build-one.bashrc "1"

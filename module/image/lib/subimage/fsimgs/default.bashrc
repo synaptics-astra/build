@@ -46,32 +46,45 @@ parse_nand_partition_table() {
   grep "^[0-9].*${fs_name}" $f_nand_pt | {
     read size name rest
     if [ -n "$size" ]; then
-      size=${size%M}
-      size=${size%B}
-      echo "${size}"
+      local suffix=${size##*[0-9]}
+      size=${size%${suffix}}
+      case "$suffix" in
+        [Mm]) echo "${size} MiB" ;;
+        [Bb]) echo "${size} blocks" ;;
+        *) echo "${size} MiB" ;;
+      esac
     else
-      echo "0"
+      echo "0 MiB"
     fi
   }
 }
 
 calculate_ubifs_parameters() {
-  local vol_size_mib=$1
-  [ -n "$vol_size_mib" ] || { echo "Error: volume size not provided"; return 1; }
+  local vol_size=$1
+  local vol_unit=$2
+  local bad_block_reserve=$3
+  [ -n "$vol_size" ] || { echo "Error: volume size not provided"; return 1; }
+
+  if [ -z "$vol_unit" ]; then
+    vol_unit="MiB"
+  fi
 
   local page_size=${nand_param_page_size}
   local block_size=${nand_param_block_size}
 
   local leb_size=$(( ${block_size} - 2*${page_size} ))
+  local vol_size_bytes
+  local partition_peb_count
 
-  local vol_size_bytes=$(( ${vol_size_mib} * 1024 * 1024 ))
+  if [ "$vol_unit" = "blocks" ]; then
+    partition_peb_count=$(( ${vol_size} ))
+    vol_size_bytes=$(( ${vol_size} * ${block_size} ))
+  else
+    vol_size_bytes=$(( ${vol_size} * 1024 * 1024 ))
+    partition_peb_count=$(( ${vol_size_bytes} / ${block_size} ))
+  fi
 
-  local partition_peb_count=$(( ${vol_size_bytes} / ${block_size} ))
-
-  local ubi_reserved_pebs=8
-
-  local max_leb_count=$(( ${partition_peb_count} - ${ubi_reserved_pebs} ))
-
+  local max_leb_count=$(( ${partition_peb_count} - ${bad_block_reserve} ))
   local actual_vol_size=$(( ${max_leb_count} * ${leb_size} ))
 
   echo "leb_size=${leb_size},max_leb_count=${max_leb_count},actual_vol_size=${actual_vol_size}"
@@ -311,27 +324,42 @@ mkfsimg_ubifs() {
   local ubifs_params
   local leb_size
   local max_leb_count
-  local vol_size_mib
   local block_size_kib
 
   ### Load NAND flash configuration ###
   load_nand_flash_config || exit 1
 
-  vol_size_mib=$(parse_nand_partition_table "${fsname}")
-  [ $? -eq 0 ] && [ "${vol_size_mib}" -gt 0 ] || { echo "Error: failed to parse partition size for ${fsname}"; return 1; }
+  local size_and_unit
+  local vol_size
+  local vol_unit
 
-  ubifs_params=$(calculate_ubifs_parameters ${vol_size_mib})
+  size_and_unit=$(parse_nand_partition_table "${fsname}")
+  read vol_size vol_unit <<< "${size_and_unit}"
+  [ -n "${vol_size}" ] && [ "${vol_size}" -gt 0 ] || { echo "Error: failed to parse partition size for ${fsname}"; return 1; }
+
+  local bad_block_reserve=0
+  local calc_partition_blocks
+  if [ "$vol_unit" = "blocks" ]; then
+    calc_partition_blocks=$(( ${vol_size} ))
+  else
+    calc_partition_blocks=$(( ${vol_size} * 1024 * 1024 / ${nand_param_block_size} ))
+  fi
+  bad_block_reserve=$(( ${calc_partition_blocks} / 20 ))
+  [ ${bad_block_reserve} -lt 40 ] && bad_block_reserve=40
+
+  ubifs_params=$(calculate_ubifs_parameters ${vol_size} ${vol_unit} ${bad_block_reserve})
   leb_size=$(echo ${ubifs_params} | cut -d',' -f1 | cut -d'=' -f2)
   max_leb_count=$(echo ${ubifs_params} | cut -d',' -f2 | cut -d'=' -f2)
   actual_vol_size=$(echo ${ubifs_params} | cut -d',' -f3 | cut -d'=' -f2)
   block_size_kib=$(( ${nand_param_block_size} / 1024 ))
-  actual_vol_size_mib=$(( ${actual_vol_size} / 1024 / 1024 ))
+  actual_vol_size_kib=$(( ${actual_vol_size} / 1024 ))
 
   fs_dstubi=${fs_dstimg}.ubifs
   ubinize_cfg=${fs_dstimg}-ubinize.cfg
   fs_srcdir=${fs_srcdir%/}
   if [ "${fs_srcdir##*/}" = "rescue" ]; then
-    fs_srcdir="${fs_srcdir%/*}/rootfs"
+    ### U-Boot environment only: no rescue rootfs volume for Linux profile ###
+    #fs_srcdir="${fs_srcdir%/*}/rootfs"
     echo "[uboot-env-volume]" > ${ubinize_cfg}
     echo "mode=ubi" >> ${ubinize_cfg}
     echo "vol_id=0" >> ${ubinize_cfg}
@@ -346,20 +374,24 @@ mkfsimg_ubifs() {
     echo "vol_type=dynamic" >> ${ubinize_cfg}
     echo "vol_name=uboot_env_r" >> ${ubinize_cfg}
 
-    echo "[rescue-volume]" >> ${ubinize_cfg}
-    echo "mode=ubi" >> ${ubinize_cfg}
-    echo "image=${fs_dstubi}" >> ${ubinize_cfg}
-    echo "vol_id=2" >> ${ubinize_cfg}
-    echo "vol_size=${actual_vol_size_mib}MiB" >> ${ubinize_cfg}
-    echo "vol_type=dynamic" >> ${ubinize_cfg}
-    echo "vol_name=${fsname}" >> ${ubinize_cfg}
-    echo "vol_flags=autoresize" >> ${ubinize_cfg}
+#    echo "[rescue-volume]" >> ${ubinize_cfg}
+#    echo "mode=ubi" >> ${ubinize_cfg}
+#    echo "image=${fs_dstubi}" >> ${ubinize_cfg}
+#    echo "vol_id=2" >> ${ubinize_cfg}
+#    echo "vol_size=${actual_vol_size_mib}MiB" >> ${ubinize_cfg}
+#    echo "vol_type=dynamic" >> ${ubinize_cfg}
+#    echo "vol_name=${fsname}" >> ${ubinize_cfg}
+#    echo "vol_flags=autoresize" >> ${ubinize_cfg}
+    exec2run="ubinize"
+    cmd_args=" -vv -o ${fs_dstimg} -m ${nand_param_page_size} -p ${block_size_kib}KiB -s ${nand_param_page_size} ${ubinize_cfg}"
+    eval $exec2run "$cmd_args"
+    return 0
   else
     echo "[rootfs-volume]" > ${ubinize_cfg}
     echo "mode=ubi" >> ${ubinize_cfg}
     echo "image=${fs_dstubi}" >> ${ubinize_cfg}
     echo "vol_id=0" >> ${ubinize_cfg}
-    echo "vol_size=${actual_vol_size_mib}MiB" >> ${ubinize_cfg}
+    echo "vol_size=${actual_vol_size_kib}KiB" >> ${ubinize_cfg}
     echo "vol_type=dynamic" >> ${ubinize_cfg}
     echo "vol_name=${fsname}" >> ${ubinize_cfg}
     echo "vol_flags=autoresize" >> ${ubinize_cfg}

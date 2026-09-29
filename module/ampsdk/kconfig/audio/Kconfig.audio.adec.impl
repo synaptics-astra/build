@@ -68,10 +68,6 @@ config AMP_AUDIO_MP3_USE_ARM
 config AMP_AUDIO_MP3_USE_HIFI
 	bool
 
-#MS11
-config AMP_IP_AUDIO_MS11_USE_ARM
-	bool
-
 #RawPCM
 config AMP_AUDIO_RAWPCM_USE_ARM
 	bool

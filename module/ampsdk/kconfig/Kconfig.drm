@@ -121,4 +121,9 @@ config AMP_GENX_ENABLE
 config AMP_ENABLE_GKL
     bool "Enable GKL TA"
     default n
+
+config AMP_ENABLE_ACAS
+    bool "Enable ACAS TA"
+    default n
+
 endif

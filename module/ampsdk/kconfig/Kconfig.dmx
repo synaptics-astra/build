@@ -8,6 +8,16 @@ config AMP_COMPONENT_DMX_ENABLE
     bool "Dmx Enable"
     default y
 
+config AMP_COMPONENT_DMX_DSS_ENABLE
+    bool "support DirecTV legacy DSS input"
+    depends on AMP_COMPONENT_DMX_ENABLE
+    default y
+
+config AMP_COMPONENT_DMX_WMDEC_FILTER_ENABLE
+    bool "support legacy ES filter"
+    depends on AMP_COMPONENT_DMX_ENABLE
+    default y
+
 config AMP_TSP_NORMAL_CLK
     bool "set TSP as normal clock"
     default y

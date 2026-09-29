@@ -116,7 +116,7 @@ config AMP_AUDIO_MAX_CH_AAC
 	default 8
 
 config AMP_AUDIO_MAX_CH_DOLBY
-	depends on AMP_IP_AUDIO_MS11_SUPPORTED || AMP_IP_AUDIO_DDP_SUPPORTED
+	depends on AMP_IP_AUDIO_DDP_SUPPORTED
 	int "DOLBY MAX Channel Num"
 	default 6
 
@@ -133,12 +133,6 @@ config AMP_IP_AUDIO_MAX_CH_WMA
 config AMP_IP_AUDIO_AC3ONLY
 	depends on AMP_IP_AUDIO_DDP_SUPPORTED
 	bool "AC3 Only"
-	default n
-
-config AMP_AUDIO_ENABLE_MS10_MODE
-	depends on AMP_IP_AUDIO_MS11_SUPPORTED
-	bool
-	prompt "MS10 Mode Enable (DEV)" if AMP_DEVELOPMENT_OPTION
 	default n
 
 config AMP_AUDIO_ENABLE_FILTER_FOR_RAWPCM

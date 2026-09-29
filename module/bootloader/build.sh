@@ -169,7 +169,7 @@ build_bootloader() {
       echo "Error: ${topdir}/build/module/bootloader/gen_pmic_header.sh not found"
       exit 1
   fi
-  source "${topdir}/build/module/bootloader/gen_pmic_header.sh"
+  "${topdir}/build/module/bootloader/gen_pmic_header.sh" "${topdir}"
 
   pushd ${topdir}/boot/bootloader
   echo $cmd2run1

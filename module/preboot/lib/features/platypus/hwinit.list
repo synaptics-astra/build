@@ -15,8 +15,17 @@ hwinit		ddr4		4GB		3200		n		sr_option1
 hwinit		lpddr4x		2GB		3733		n		default/default
 hwinit		lpddr4x		3GB		3733		n		default/default
 hwinit		lpddr4x		4GB		3733		n		default/default
+hwinit		lpddr4x		2GB		3200		n		default/default
+hwinit		lpddr4x		3GB		3200		n		default/default
+hwinit		lpddr4x		4GB		3200		n		default/default
 hwinit		lpddr4		2GB		3733		n		default/default
 hwinit		lpddr4		3GB		3733		n		default/default
 hwinit		lpddr4		4GB		3733		n		default/default
+hwinit		lpddr4		2GB		3200		n		default/default
+hwinit		lpddr4		3GB		3200		n		default/default
+hwinit		lpddr4		4GB		3200		n		default/default
+hwinit		ddr4x16		512MB		3200		n		mapping_b16_0xc3
 hwinit		ddr4x16		1GB		3200		n		default/default
+hwinit		ddr4x16		1GB		3200		n		mapping_b16_0xc3
 hwinit		ddr4x16		2GB		3200		n		default/default
+hwinit		ddr4x16		2GB		3200		n		mapping_b16_0xc3
