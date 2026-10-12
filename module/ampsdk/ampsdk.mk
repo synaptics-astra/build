@@ -7,6 +7,13 @@ ifeq (,$(strip $(CONFIG_RUNTIME_RDK)$(CONFIG_RUNTIME_OE)$(CONFIG_RUNTIME_OE64)))
 AMPSDK_DEPENDENCIES += curl
 endif
 endif
+ifeq ($(CONFIG_AMP_AUDIO_SNDSRV_PATH_ALSA),y)
+ifneq ($(CONFIG_ANDROID_OS),y)
+ifeq ($(CONFIG_ALSA),y)
+AMPSDK_DEPENDENCIES += alsa
+endif
+endif
+endif
 ifeq ($(CONFIG_JSONCPP),y)
 AMPSDK_DEPENDENCIES += jsoncpp
 endif
